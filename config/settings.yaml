@@ -44,6 +44,12 @@ retrieval:             # provisional, tuned in CW-303
 input:
   max_message_chars: 500
 
+fetch:                 # polite download of the eight articles (CW-101)
+  user_agent: "carwise-takehome/0.1 (+https://github.com/GaryShnol/carwise)"
+  delay_s: 3.0         # between requests; robots.txt Crawl-delay wins if larger
+  timeout_s: 20
+  retries: 1           # network errors and 5xx only, never a 4xx
+
 paths:
   raw_dir: data/raw
   index_dir: data/index

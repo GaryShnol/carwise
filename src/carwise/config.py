@@ -61,6 +61,13 @@ class InputConfig(_Strict):
     max_message_chars: int
 
 
+class FetchConfig(_Strict):
+    user_agent: str
+    delay_s: float
+    timeout_s: int
+    retries: int
+
+
 class PathsConfig(_Strict):
     raw_dir: str
     index_dir: str
@@ -76,6 +83,7 @@ class Settings(_Strict):
     chunking: ChunkingConfig
     retrieval: RetrievalConfig
     input: InputConfig
+    fetch: FetchConfig
     paths: PathsConfig
 
     def profile(self, name: str | None = None) -> ProfileConfig:
