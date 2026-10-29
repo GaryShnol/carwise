@@ -94,7 +94,7 @@ Branch: `epic/e1-vertical-slice` | Tag: `v0.1`
 
 | ID | Ticket | Type | Size | Pri | Status | Depends on |
 |---|---|---|---|---|---|---|
-| CW-101 | Download script, cache and clean the eight articles | `feat` | S | P1 | TODO | CW-002 |
+| CW-101 | Download script, cache and clean the eight articles | `feat` | S | P1 | IN PROGRESS | CW-002 |
 | CW-102 | Structure-aware chunking with metadata | `feat` | M | P1 | TODO | CW-101 |
 | CW-103 | Embeddings, Chroma index, per-car retrieval | `feat` | M | P1 | TODO | CW-102 |
 | CW-104 | `LLMClient` interface and one implementation | `feat` | S | P1 | TODO | CW-001 |
