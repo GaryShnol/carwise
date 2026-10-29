@@ -80,7 +80,7 @@ Keep this structure. Do not add top-level folders without asking.
 - `.github/`: CI workflow and pull request template.
 - `LICENSE`: MIT.
 - `pyproject.toml`: dependencies and tool config.
-- `Makefile`: `ingest`, `chat`, `ui`, `eval`, `test`, `lint`, `docker`. These are thin wrappers around `python -m carwise <ingest|chat|eval>`, the primary entry point (it works in PowerShell without `make`).
+- `Makefile`: `ingest`, `chat`, `ui`, `eval`, `test`, `lint`, `docker`. These are thin wrappers around `python -m app <ingest|chat|eval|ui>`, the primary entry point (it works in PowerShell without `make`).
 - `Dockerfile`: short, one run command.
 - `config/settings.yaml`: models, top-k, relevance threshold, temperature, chunk limits, history window. No magic numbers in code.
 - `config/cars.yaml`: the car registry. For each of the eight cars: canonical id, display name, Hebrew and Latin-script aliases, body type and powertrain (taken from the articles, used for suggesting alternatives), article URL. It is the single source for car names in ingestion, the understand prompt, the gate and the post-check.
@@ -93,6 +93,7 @@ Keep this structure. Do not add top-level folders without asking.
   - `guardrails.py`: post-check, refusal messages, injection hygiene.
   - `telemetry.py`: turn logging and cost estimation.
   - `schemas.py`: Pydantic models for all inputs and outputs.
+- `app/__main__.py`: dispatcher for `python -m app <ingest|chat|eval|ui>`; it lives in `app/` so the core package never imports from `app/` or `eval/`.
 - `app/cli.py`: command-line chat.
 - `app/ui.py`: Streamlit UI.
 - `eval/`: question set, runner, and reports.
@@ -243,8 +244,8 @@ The README is half of the grade. It must contain:
 The project is small and has one author, so the workflow is one branch per epic, not per ticket. This keeps overhead low while the history stays readable.
 
 ### Branches
-- `main` is always working. Epic E0 (scaffold and source check) is committed directly to `main`, as the first commits of the repository.
-- Epics E1 to E5 each get one branch: `epic/e1-vertical-slice`, `epic/e2-reliability`, `epic/e3-measurement`, `epic/e4-interface-packaging`, `epic/e5-docs-release`.
+- `main` is always working. Nothing is committed to it directly except the very first scaffold commit (CW-001); all later work goes through a branch and a pull request.
+- Epics E0 to E5 each get one branch: `epic/e0-source-check` (the rest of E0 after CW-001), `epic/e1-vertical-slice`, `epic/e2-reliability`, `epic/e3-measurement`, `epic/e4-interface-packaging`, `epic/e5-docs-release`.
 - Create an epic branch from the latest `main` when its first ticket starts; merge it into `main` through one pull request when the epic is finished.
 
 ### Commits

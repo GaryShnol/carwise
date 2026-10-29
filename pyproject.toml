@@ -1,0 +1,51 @@
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "carwise"
+version = "0.0.1"
+description = "Hebrew RAG chatbot that answers only from eight auto.co.il road tests."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.11"
+# Each dependency is added by the ticket that needs it, with a one-line reason
+# in the pull request (CLAUDE.md section 12.1). Current ones:
+#   pydantic: typed schemas, config and validated structured LLM output.
+#   pyyaml:   reads config/settings.yaml and config/cars.yaml.
+dependencies = [
+  "pydantic==2.13.5",
+  "pyyaml==6.0.3",
+]
+
+[dependency-groups]
+dev = [
+  "pytest==9.1.1",
+  "ruff==0.16.9",
+  "mypy==2.3.1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/carwise"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# app/ and eval/ live at the repository root and depend on src/carwise, never the reverse.
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "."]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+mypy_path = "src"
+
+[[tool.mypy.overrides]]
+module = ["yaml"]
+ignore_missing_imports = true

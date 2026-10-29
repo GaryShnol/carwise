@@ -1,0 +1,50 @@
+# Single place for every tunable value; no magic numbers in code.
+# Values marked "provisional" are placeholders until the eval tunes them
+# (CW-303 for retrieval and chunking, CW-305 for the embedding model).
+
+default_profile: dev   # override with env CARWISE_PROFILE or the --profile flag
+
+profiles:
+  dev:    # almost all development: cheapest model for both calls
+    base_url: null     # null = OpenAI; env OPENAI_BASE_URL overrides
+    understand_model: gpt-5.4-nano
+    generate_model: gpt-5.4-nano
+  final:  # published numbers, sample conversation, screenshots
+    base_url: null
+    understand_model: gpt-5.4-nano
+    generate_model: gpt-5.4-mini
+
+llm:
+  temperature: 0.0     # some reasoning models reject it; see the CW-104 spike
+  seed: 7
+  timeout_s: 30
+  retries: 1
+  history_window: 6    # last N messages sent to the understanding call
+  max_cost_usd: 2.0    # abort a run (eval or chat session) above this
+
+# USD per 1M tokens. Unverified third-party figures; confirm on the official
+# OpenAI pricing page in CW-104.
+prices:
+  gpt-5.4-nano: { input: 0.20, cached_input: 0.02, output: 1.25 }
+  gpt-5.4-mini: { input: 0.75, cached_input: 0.075, output: 4.50 }
+
+embeddings:
+  model: intfloat/multilingual-e5-base   # provisional, chosen by data in CW-305
+  revision: null                         # pinned in CW-103
+
+chunking:              # provisional, tuned in CW-303
+  min_chars: 300
+  max_chars: 1500
+
+retrieval:             # provisional, tuned in CW-303
+  top_k: 5
+  per_car_cap: 3
+  relevance_threshold: 0.0
+
+input:
+  max_message_chars: 500
+
+paths:
+  raw_dir: data/raw
+  index_dir: data/index
+  log_dir: logs

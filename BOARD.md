@@ -66,7 +66,7 @@ Items outside the code that must not be forgotten. Update the status as each is 
 
 | Epic | Milestone / tag | Tickets | Done | Points | Status |
 |---|---|---|---|---|---|
-| E0 Scaffold and source check | none | 3 | 0 | 3 | TODO |
+| E0 Scaffold and source check | none | 3 | 3 | 3 | DONE |
 | E1 Thin vertical slice | `v0.1` | 6 | 0 | 11 | TODO |
 | E2 Reliability and guardrails | none | 6 | 0 | 9 | TODO |
 | E3 Measurement | none | 3 | 0 | 5 | TODO |
@@ -78,13 +78,13 @@ Items outside the code that must not be forgotten. Update the status as each is 
 
 Goal: a clean repository skeleton, and certainty about whether the source articles can be fetched automatically.
 
-Branch: `main` (direct commits, before branch protection) | Tag: none
+Branch: CW-001 was committed to `main` (first scaffold commit); the rest of E0 uses `epic/e0-source-check` | Tag: none
 
 | ID | Ticket | Type | Size | Pri | Status | Depends on |
 |---|---|---|---|---|---|---|
-| CW-001 | Repository scaffold | `chore` | S | P1 | TODO |  |
-| CW-002 | Source access check (spike) | `chore` | S | P1 | TODO | CW-001 |
-| CW-003 | GitHub setup: repo, milestones, issues, PR template | `chore` | S | P2 | TODO | CW-001 |
+| CW-001 | Repository scaffold | `chore` | S | P1 | DONE |  |
+| CW-002 | Source access check (spike) | `chore` | S | P1 | DONE | CW-001 |
+| CW-003 | GitHub setup: repo, milestones, issues, PR template | `chore` | S | P2 | DONE | CW-001 |
 
 ## Epic E1: Thin vertical slice
 
@@ -155,26 +155,26 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 ## Ticket details and acceptance criteria
 
 ### CW-001 Repository scaffold
-- [ ] Folder layout matches `CLAUDE.md` section 6.
-- [ ] `pyproject.toml` with pinned dependencies; `Makefile` with `ingest`, `chat`, `ui`, `eval`, `test`, `lint`, `docker`.
-- [ ] `config/settings.yaml` created; `.env.example` lists the required variables (profile, `OPENAI_API_KEY`, optional base URL override; no secrets).
-- [ ] `python -m carwise <ingest|chat|eval>` is the primary entry point; the `Makefile` only wraps it, so everything works in PowerShell without `make`. Python 3.11 or newer, managed with `uv`.
-- [ ] `.gitignore` excludes `data/raw/`, `data/index/`, `logs/` and `.env`.
-- [ ] `ruff` configured; `make lint` and `make test` run (even if empty).
-- [ ] `LICENSE` (MIT) added.
+- [x] Folder layout matches `CLAUDE.md` section 6.
+- [x] `pyproject.toml` with pinned dependencies; `Makefile` with `ingest`, `chat`, `ui`, `eval`, `test`, `lint`, `docker`.
+- [x] `config/settings.yaml` created; `.env.example` lists the required variables (profile, `OPENAI_API_KEY`, optional base URL override; no secrets).
+- [x] `python -m app <ingest|chat|eval|ui>` is the primary entry point; the `Makefile` only wraps it, so everything works in PowerShell without `make`. Python 3.11 or newer, managed with `uv`.
+- [x] `.gitignore` excludes `data/raw/`, `data/index/`, `logs/` and `.env`.
+- [x] `ruff` configured; `make lint` and `make test` run (even if empty).
+- [x] `LICENSE` (MIT) added.
 
 ### CW-002 Source access check (spike)
-- [ ] Each of the eight URLs is fetched once programmatically, or the failure is documented.
-- [ ] Robots rules checked and respected; a block is never worked around.
-- [ ] Decision recorded in the commit message and in the README data note: automated download, or the user supplies the files manually.
-- [ ] Fallback message drafted for the case where the download fails.
+- [x] Each of the eight URLs is fetched once programmatically, or the failure is documented.
+- [x] Robots rules checked and respected; a block is never worked around.
+- [x] Decision recorded in the commit message and in the README data note: automated download, or the user supplies the files manually. (Recorded in the commit message and the change log; the README data note is written in CW-501.)
+- [x] Fallback message drafted for the case where the download fails.
 
 ### CW-003 GitHub setup
-- [ ] Public repository created, named `carwise`.
-- [ ] Pre-publish check: no secrets, no `.env`, no raw articles, no logs or index in the history.
-- [ ] One GitHub milestone per epic. No per-ticket issues: this board is the single source of truth, and commits reference ticket ids.
-- [ ] `.github/pull_request_template.md` for epic pull requests: tickets completed, key decisions with the alternative considered, how verified, measurements.
-- [ ] Branch protection on `main` requires a pull request and green CI once CI exists (CW-403).
+- [x] Public repository created, named `carwise`.
+- [x] Pre-publish check: no secrets, no `.env`, no raw articles, no logs or index in the history.
+- [x] One GitHub milestone per epic. No per-ticket issues: this board is the single source of truth, and commits reference ticket ids.
+- [x] `.github/pull_request_template.md` for epic pull requests: tickets completed, key decisions with the alternative considered, how verified, measurements.
+- [x] Branch protection on `main` requires a pull request and green CI once CI exists (CW-403). (Protection requires a pull request now; the green-CI requirement is added with CW-403.)
 
 ### CW-101 Download script, cache and clean the eight articles
 - [ ] `config/cars.yaml` lists the eight cars: canonical id, display name, Hebrew and Latin-script aliases, body type and powertrain (as stated in the articles), URL.
@@ -182,6 +182,8 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [ ] Polite fetching: identifiable User-Agent, short delay, one retry, clear error message with manual-placement instructions.
 - [ ] A second run uses the cache and works offline.
 - [ ] Cleaning yields body text only and keeps headings and paragraph breaks.
+- [ ] Findings from the CW-002 probe, to be used by the cleaner: the article body is inside `<main>` and ends at the `כתבות אחרונות` heading; boilerplate headings to skip are the WhatsApp prompt, `תפריט מהיר`, `המומחה האובייקטיבי…`, `כתבות באותם נושאים`, `מותגים מתחרים` and empty headings; the publication date is in the JSON-LD `datePublished`.
+- [ ] The Kia EV9 long-term report has almost no section headings (unlike the road tests, which have about 10 question-style headings), so its chunks fall back to paragraph structure, with the report title as the section.
 
 ### CW-102 Structure-aware chunking with metadata
 - [ ] Splits on headings and paragraphs; merges too-short and splits too-long chunks per config.
@@ -347,4 +349,10 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 | 2026-10-29 | Interviewer answered: Hebrew only; no-answer behavior is at our discretion but without outside information; preferences for one conversation. Dropped English handling and the English eval category, made the no-answer reply helpful and templated, added body type and powertrain to the car registry, promoted CW-404 (right-to-left) to P2. |
 | 2026-10-29 | Feature breakdown review: P1 no longer depends on P2 (UI no longer depends on telemetry, README no longer depends on tuning); eval question set moved to E1 as CW-106 so the eval guides the work; the "close test gaps" ticket removed because tests ship with each ticket; right-to-left merged into the UI ticket; per-ticket GitHub issues dropped (one source of truth). Now 24 tickets, 36 points. |
 | 2026-10-29 | Architecture review: added `unrecognized_cars`, JSON generation output with `used_chunk_ids`, registry as the primary gate, Hebrew-prefix and out-of-corpus brand handling in the post-check; CW-206 promoted from P3 to P2 (P1+P2 is now 36 points). |
-| 2026-10-29 | Provider decision revised: OpenAI only. `dev` = `gpt-5.4-nano`; `final` = nano for understanding and mini for generation. Ollama is optional. Entry point is `python -m carwise`, the Makefile is a thin wrapper. Tags reduced to `v0.1` and `v1.0`. |
+| 2026-10-29 | Provider decision revised: OpenAI only. `dev` = `gpt-5.4-nano`; `final` = nano for understanding and mini for generation. Ollama is optional. Entry point is `python -m app`, the Makefile is a thin wrapper. Tags reduced to `v0.1` and `v1.0`. |
+| 2026-10-29 | CW-001 done. Entry point is `python -m app <ingest|chat|eval|ui>` (not `python -m carwise`), so the core package never imports from `app/` or `eval/`. `LICENSE` (MIT), `.gitignore` and a short `README.md` came from the repository's initial commit and were kept. |
+| 2026-10-29 | Branching tightened: after the first scaffold commit (CW-001) nothing goes to `main` directly. Rest of E0 uses `epic/e0-source-check`; every epic gets a pull request. |
+
+| 2026-10-29 | CW-002 done: all eight URLs return 200 with real article bodies, `robots.txt` was read and allows them. Decision: automatic download (identifiable User-Agent, 3 s delay, cache in `data/raw/`); manual placement stays as the documented fallback. |
+
+| 2026-10-29 | CW-003 done: six milestones (E0 to E5), PR template, pre-publish scan of the history found no secrets or data files, `.gitattributes` added to keep LF line endings (the Makefile needs them). Epic E0 closed. |

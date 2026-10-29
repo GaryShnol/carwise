@@ -218,3 +218,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# carwise: downloaded articles belong to the publisher; index and logs are generated
+data/raw/
+data/index/
+logs/
+.env
