@@ -66,7 +66,7 @@ Items outside the code that must not be forgotten. Update the status as each is 
 
 | Epic | Milestone / tag | Tickets | Done | Points | Status |
 |---|---|---|---|---|---|
-| E0 Scaffold and source check | none | 3 | 0 | 3 | TODO |
+| E0 Scaffold and source check | none | 3 | 1 | 3 | IN PROGRESS |
 | E1 Thin vertical slice | `v0.1` | 6 | 0 | 11 | TODO |
 | E2 Reliability and guardrails | none | 6 | 0 | 9 | TODO |
 | E3 Measurement | none | 3 | 0 | 5 | TODO |
@@ -78,12 +78,12 @@ Items outside the code that must not be forgotten. Update the status as each is 
 
 Goal: a clean repository skeleton, and certainty about whether the source articles can be fetched automatically.
 
-Branch: `main` (direct commits, before branch protection) | Tag: none
+Branch: CW-001 was committed to `main` (first scaffold commit); the rest of E0 uses `epic/e0-source-check` | Tag: none
 
 | ID | Ticket | Type | Size | Pri | Status | Depends on |
 |---|---|---|---|---|---|---|
-| CW-001 | Repository scaffold | `chore` | S | P1 | TODO |  |
-| CW-002 | Source access check (spike) | `chore` | S | P1 | TODO | CW-001 |
+| CW-001 | Repository scaffold | `chore` | S | P1 | DONE |  |
+| CW-002 | Source access check (spike) | `chore` | S | P1 | IN PROGRESS | CW-001 |
 | CW-003 | GitHub setup: repo, milestones, issues, PR template | `chore` | S | P2 | TODO | CW-001 |
 
 ## Epic E1: Thin vertical slice
@@ -155,13 +155,13 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 ## Ticket details and acceptance criteria
 
 ### CW-001 Repository scaffold
-- [ ] Folder layout matches `CLAUDE.md` section 6.
-- [ ] `pyproject.toml` with pinned dependencies; `Makefile` with `ingest`, `chat`, `ui`, `eval`, `test`, `lint`, `docker`.
-- [ ] `config/settings.yaml` created; `.env.example` lists the required variables (profile, `OPENAI_API_KEY`, optional base URL override; no secrets).
-- [ ] `python -m carwise <ingest|chat|eval>` is the primary entry point; the `Makefile` only wraps it, so everything works in PowerShell without `make`. Python 3.11 or newer, managed with `uv`.
-- [ ] `.gitignore` excludes `data/raw/`, `data/index/`, `logs/` and `.env`.
-- [ ] `ruff` configured; `make lint` and `make test` run (even if empty).
-- [ ] `LICENSE` (MIT) added.
+- [x] Folder layout matches `CLAUDE.md` section 6.
+- [x] `pyproject.toml` with pinned dependencies; `Makefile` with `ingest`, `chat`, `ui`, `eval`, `test`, `lint`, `docker`.
+- [x] `config/settings.yaml` created; `.env.example` lists the required variables (profile, `OPENAI_API_KEY`, optional base URL override; no secrets).
+- [x] `python -m app <ingest|chat|eval|ui>` is the primary entry point; the `Makefile` only wraps it, so everything works in PowerShell without `make`. Python 3.11 or newer, managed with `uv`.
+- [x] `.gitignore` excludes `data/raw/`, `data/index/`, `logs/` and `.env`.
+- [x] `ruff` configured; `make lint` and `make test` run (even if empty).
+- [x] `LICENSE` (MIT) added.
 
 ### CW-002 Source access check (spike)
 - [ ] Each of the eight URLs is fetched once programmatically, or the failure is documented.
@@ -347,4 +347,6 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 | 2026-10-29 | Interviewer answered: Hebrew only; no-answer behavior is at our discretion but without outside information; preferences for one conversation. Dropped English handling and the English eval category, made the no-answer reply helpful and templated, added body type and powertrain to the car registry, promoted CW-404 (right-to-left) to P2. |
 | 2026-10-29 | Feature breakdown review: P1 no longer depends on P2 (UI no longer depends on telemetry, README no longer depends on tuning); eval question set moved to E1 as CW-106 so the eval guides the work; the "close test gaps" ticket removed because tests ship with each ticket; right-to-left merged into the UI ticket; per-ticket GitHub issues dropped (one source of truth). Now 24 tickets, 36 points. |
 | 2026-10-29 | Architecture review: added `unrecognized_cars`, JSON generation output with `used_chunk_ids`, registry as the primary gate, Hebrew-prefix and out-of-corpus brand handling in the post-check; CW-206 promoted from P3 to P2 (P1+P2 is now 36 points). |
-| 2026-10-29 | Provider decision revised: OpenAI only. `dev` = `gpt-5.4-nano`; `final` = nano for understanding and mini for generation. Ollama is optional. Entry point is `python -m carwise`, the Makefile is a thin wrapper. Tags reduced to `v0.1` and `v1.0`. |
+| 2026-10-29 | Provider decision revised: OpenAI only. `dev` = `gpt-5.4-nano`; `final` = nano for understanding and mini for generation. Ollama is optional. Entry point is `python -m app`, the Makefile is a thin wrapper. Tags reduced to `v0.1` and `v1.0`. |
+| 2026-10-29 | CW-001 done. Entry point is `python -m app <ingest|chat|eval|ui>` (not `python -m carwise`), so the core package never imports from `app/` or `eval/`. `LICENSE` (MIT), `.gitignore` and a short `README.md` came from the repository's initial commit and were kept. |
+| 2026-10-29 | Branching tightened: after the first scaffold commit (CW-001) nothing goes to `main` directly. Rest of E0 uses `epic/e0-source-check`; every epic gets a pull request. |
