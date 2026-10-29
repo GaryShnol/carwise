@@ -94,7 +94,7 @@ Branch: `epic/e1-vertical-slice` | Tag: `v0.1`
 
 | ID | Ticket | Type | Size | Pri | Status | Depends on |
 |---|---|---|---|---|---|---|
-| CW-101 | Download script, cache and clean the eight articles | `feat` | S | P1 | IN PROGRESS | CW-002 |
+| CW-101 | Download script, cache and clean the eight articles | `feat` | S | P1 | DONE | CW-002 |
 | CW-102 | Structure-aware chunking with metadata | `feat` | M | P1 | TODO | CW-101 |
 | CW-103 | Embeddings, Chroma index, per-car retrieval | `feat` | M | P1 | TODO | CW-102 |
 | CW-104 | `LLMClient` interface and one implementation | `feat` | S | P1 | TODO | CW-001 |
@@ -177,13 +177,13 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [x] Branch protection on `main` requires a pull request and green CI once CI exists (CW-403). (Protection requires a pull request now; the green-CI requirement is added with CW-403.)
 
 ### CW-101 Download script, cache and clean the eight articles
-- [ ] `config/cars.yaml` lists the eight cars: canonical id, display name, Hebrew and Latin-script aliases, body type and powertrain (as stated in the articles), URL.
-- [ ] Script reads the URL list from the car registry and saves raw HTML under `data/raw/` (not committed).
-- [ ] Polite fetching: identifiable User-Agent, short delay, one retry, clear error message with manual-placement instructions.
-- [ ] A second run uses the cache and works offline.
-- [ ] Cleaning yields body text only and keeps headings and paragraph breaks.
-- [ ] Findings from the CW-002 probe, to be used by the cleaner: the article body is inside `<main>` and ends at the `כתבות אחרונות` heading; boilerplate headings to skip are the WhatsApp prompt, `תפריט מהיר`, `המומחה האובייקטיבי…`, `כתבות באותם נושאים`, `מותגים מתחרים` and empty headings; the publication date is in the JSON-LD `datePublished`.
-- [ ] The Kia EV9 long-term report has almost no section headings (unlike the road tests, which have about 10 question-style headings), so its chunks fall back to paragraph structure, with the report title as the section.
+- [x] `config/cars.yaml` lists the eight cars: canonical id, display name, Hebrew and Latin-script aliases, body type and powertrain (as stated in the articles), URL.
+- [x] Script reads the URL list from the car registry and saves raw HTML under `data/raw/` (not committed).
+- [x] Polite fetching: identifiable User-Agent, short delay, one retry, clear error message with manual-placement instructions.
+- [x] A second run uses the cache and works offline.
+- [x] Cleaning yields body text only and keeps headings and paragraph breaks.
+- [x] Findings from the CW-002 probe, to be used by the cleaner: the article body is inside `<main>` and ends at the `כתבות אחרונות` heading; boilerplate headings to skip are the WhatsApp prompt, `תפריט מהיר`, `המומחה האובייקטיבי…`, `כתבות באותם נושאים`, `מותגים מתחרים` and empty headings; the publication date is in the JSON-LD `datePublished`.
+- [x] The Kia EV9 long-term report has almost no section headings (unlike the road tests, which have about 10 question-style headings), so its chunks fall back to paragraph structure, with the report title as the section.
 
 ### CW-102 Structure-aware chunking with metadata
 - [ ] Splits on headings and paragraphs; merges too-short and splits too-long chunks per config.
@@ -356,3 +356,5 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 | 2026-10-29 | CW-002 done: all eight URLs return 200 with real article bodies, `robots.txt` was read and allows them. Decision: automatic download (identifiable User-Agent, 3 s delay, cache in `data/raw/`); manual placement stays as the documented fallback. |
 
 | 2026-10-29 | CW-003 done: six milestones (E0 to E5), PR template, pre-publish scan of the history found no secrets or data files, `.gitattributes` added to keep LF line endings (the Makefile needs them). Epic E0 closed. |
+
+| 2026-10-29 | CW-101 done: `config/cars.yaml` plus `registry.py`, `fetch.py` (the CW-002 probe folded in and deleted), `clean.py` on beautifulsoup4 with `html.parser`, and `python -m app ingest` printing a per-article report. Each registry body type and powertrain carries the article words behind it; the Elantra article never states the Elantra's body type, so that value is null. Cleaner findings: the spec table uses `role=row` markup inside `<li>` and is kept as one line per row; "סיכום AI" is a script-loaded widget and is skipped; the Elantra sections are numbered `<h3>` questions; the Kia report has no subheadings and ends with four label/value stats. |
