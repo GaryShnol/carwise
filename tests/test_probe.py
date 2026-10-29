@@ -38,3 +38,8 @@ def test_analyze_counts_structure() -> None:
     assert result.verdict == "ok"
     assert result.headings == 1
     assert result.paragraphs >= 5
+
+
+def test_article_that_embeds_a_captcha_script_is_still_ok() -> None:
+    body = ARTICLE_BODY + '<script src="https://www.google.com/recaptcha/api.js">captcha</script>'
+    assert classify(200, body) == "ok"

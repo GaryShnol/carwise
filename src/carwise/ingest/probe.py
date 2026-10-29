@@ -79,19 +79,28 @@ def parse_robots(text: str) -> RobotFileParser:
     return parser
 
 
+def looks_like_article(body: str) -> bool:
+    """Enough Hebrew text and paragraphs to be an article body rather than a stub page."""
+    return (
+        len(_HEBREW.findall(body)) >= MIN_HEBREW_CHARS
+        and len(_PARAGRAPH.findall(body)) >= MIN_PARAGRAPHS
+    )
+
+
 def classify(status: int | None, body: str) -> str:
-    """Decide whether a response is a usable article, a block, or something else."""
-    lowered = body.lower()
-    if status in (401, 403, 429) or any(marker in lowered for marker in BLOCK_MARKERS):
+    """Decide whether a response is a usable article, a block, or something else.
+
+    Order matters: real article pages legitimately embed captcha scripts (comment forms),
+    so block markers are only trusted on pages that do not contain an article body.
+    """
+    if status in (401, 403, 429):
         return "blocked"
-    if status != 200:
-        return "error"
-    if (
-        len(_HEBREW.findall(body)) < MIN_HEBREW_CHARS
-        or len(_PARAGRAPH.findall(body)) < MIN_PARAGRAPHS
-    ):
-        return "not_article"  # for example a consent wall or a JavaScript-only shell
-    return "ok"
+    if status == 200 and looks_like_article(body):
+        return "ok"
+    lowered = body.lower()
+    if any(marker in lowered for marker in BLOCK_MARKERS):
+        return "blocked"
+    return "not_article" if status == 200 else "error"
 
 
 def http_get(url: str, retries: int = 1) -> tuple[int | None, str, str]:
