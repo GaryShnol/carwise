@@ -15,15 +15,20 @@ profiles:
     generate_model: gpt-5.4-mini
 
 llm:
-  temperature: 0.0     # some reasoning models reject it; see the CW-104 spike
+  # Sampling controls; null means "do not send". Which ones the models accept
+  # is decided by the CW-104 spike (docs/decisions/0001-llm-sampling-controls.md).
+  temperature: 0.0
+  reasoning_effort: null   # none | minimal | low | medium | high
   seed: 7
   timeout_s: 30
   retries: 1
   history_window: 6    # last N messages sent to the understanding call
   max_cost_usd: 2.0    # abort a run (eval or chat session) above this
 
-# USD per 1M tokens. Unverified third-party figures; confirm on the official
-# OpenAI pricing page in CW-104.
+# USD per 1M tokens, Standard tier. Verified on 2026-10-30 against
+# https://developers.openai.com/api/docs/pricing (CW-104). Reasoning tokens are
+# billed as output tokens. A model missing here is refused by the client; local
+# models get explicit zeros.
 prices:
   gpt-5.4-nano: { input: 0.20, cached_input: 0.02, output: 1.25 }
   gpt-5.4-mini: { input: 0.75, cached_input: 0.075, output: 4.50 }

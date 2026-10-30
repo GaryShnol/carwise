@@ -16,6 +16,7 @@ requires-python = ">=3.11"
 dependencies = [
   "beautifulsoup4==4.13.4",
   "chromadb==1.5.9",
+  "openai==3.41.0",
   "pydantic==2.13.5",
   "pyyaml==6.0.3",
   "sentence-transformers==6.2.0",
@@ -35,10 +36,14 @@ packages = ["src/carwise"]
 testpaths = ["tests"]
 # app/ and eval/ live at the repository root and depend on src/carwise, never the reverse.
 pythonpath = ["."]
-# Slow tests load the real embedding model (1.1 GB download on first run); run them
-# explicitly with `uv run pytest -m slow`, since a later -m overrides this one.
-addopts = "-m 'not slow'"
-markers = ["slow: loads the real embedding model; opt-in with -m slow"]
+# Opt-in markers, deselected by default; a later -m on the command line overrides
+# this one: `uv run pytest -m slow` (real embedding model, 1.1 GB download on first
+# run) or `uv run --env-file .env pytest -m live` (real OpenAI call, costs money).
+addopts = "-m 'not slow and not live'"
+markers = [
+  "slow: loads the real embedding model; opt-in with -m slow",
+  "live: calls the real LLM API (needs OPENAI_API_KEY, costs a fraction of a cent)",
+]
 
 [tool.ruff]
 line-length = 100

@@ -5,7 +5,10 @@ from carwise.config import load_settings
 
 def test_settings_file_is_valid() -> None:
     settings = load_settings()
-    assert settings.llm.temperature <= 0.2  # CLAUDE.md section 9
+    temperature = settings.llm.temperature
+    assert temperature is None or temperature <= 0.2  # CLAUDE.md section 9
+    effort = settings.llm.reasoning_effort
+    assert effort in (None, "none", "minimal", "low")  # low effort when temperature is rejected
     assert settings.chunking.min_chars < settings.chunking.max_chars
 
 

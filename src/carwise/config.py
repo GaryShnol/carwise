@@ -27,8 +27,9 @@ class ProfileConfig(_Strict):
 
 
 class LLMConfig(_Strict):
-    temperature: float
-    seed: int
+    temperature: float | None
+    reasoning_effort: Literal["none", "minimal", "low", "medium", "high"] | None
+    seed: int | None
     timeout_s: int
     retries: int
     history_window: int
