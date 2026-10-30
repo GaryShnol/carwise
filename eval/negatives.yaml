@@ -1,0 +1,33 @@
+# Negative probes for the relevance threshold (CW-303). Car-related questions that no
+# article answers, so the best retrieval score of each is a sample of "no answer here".
+# Kept apart from questions.yaml, which is the hold-out set: CW-303 tunes the threshold
+# on these probes against the answerable questions, and reports on questions.yaml.
+# None names a car, so each one reaches retrieval across all cars unless the
+# understand call already classifies it as out of scope (also recorded).
+
+version: 1
+
+probes:
+  - id: neg-insurance
+    turns: ["כמה עולה ביטוח מקיף לרכב חדש?"]
+    why: Insurance cost; no article discusses insurance.
+
+  - id: neg-change-tyre
+    turns: ["איך מחליפים גלגל בצד הדרך?"]
+    why: A how-to about tyres; the articles mention tyres only as specs.
+
+  - id: neg-driving-lessons
+    turns: ["כמה שיעורי נהיגה צריך לעשות לפני הטסט?"]
+    why: Driving school; car words without any car facts.
+
+  - id: neg-license-fee
+    turns: ["כמה עולה אגרת הרישוי השנתית לרכב?"]
+    why: An annual licence fee; prices in the articles are list prices, not fees.
+
+  - id: neg-dead-battery
+    turns: ["מה עושים כשהמצבר מת בבוקר קר?"]
+    why: Roadside help; "battery" appears in every EV review in another sense.
+
+  - id: neg-sell-used-car
+    turns: ["איך מוכרים רכב יד שנייה במחיר טוב?"]
+    why: Selling a used car; the articles review new cars only.

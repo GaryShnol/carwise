@@ -14,9 +14,10 @@ from pathlib import Path
 
 import pytest
 
+from carwise import guardrails
 from carwise.ingest.clean import BlockKind, Document, clean_html
 from carwise.registry import load_registry
-from eval.questions import Behavior, Category, Question, load_questions
+from eval.questions import Behavior, Category, Question, load_negatives, load_questions
 
 RAW_DIR = Path("data/raw")
 MIN_TRAPS = 4
@@ -45,6 +46,21 @@ def test_there_is_a_multi_turn_preference_scenario() -> None:
     scenarios = [q for q in load_questions().questions if q.expect.preferences]
     assert scenarios
     assert all(len(q.turns) >= 3 for q in scenarios)
+
+
+def test_negative_probes_load_and_never_share_an_id_with_a_question() -> None:
+    # The recording keys questions and probes in one map, so a shared id would overwrite one.
+    probes = load_negatives().probes
+    assert probes
+    question_ids = {question.id for question in load_questions().questions}
+    assert not question_ids & {probe.id for probe in probes}
+
+
+def test_negative_probes_name_no_car() -> None:
+    # A probe that names a car tests the registry gate, not the similarity threshold.
+    registry = load_registry()
+    for probe in load_negatives().probes:
+        assert all(not guardrails.cars_in_text(turn, registry) for turn in probe.turns), probe.id
 
 
 def test_trap_set_covers_the_required_kinds() -> None:

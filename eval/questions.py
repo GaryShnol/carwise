@@ -15,6 +15,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 QUESTIONS_PATH = Path(__file__).with_name("questions.yaml")
+NEGATIVES_PATH = Path(__file__).with_name("negatives.yaml")
 
 
 class Category(StrEnum):
@@ -92,6 +93,35 @@ class QuestionSet(BaseModel):
         return self
 
 
+class Negative(BaseModel):
+    """A question no article answers: a sample of the scores the threshold must reject."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    turns: list[str] = Field(min_length=1)
+    why: str
+
+
+class NegativeSet(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    version: int
+    probes: list[Negative]
+
+    @model_validator(mode="after")
+    def _unique_ids(self) -> NegativeSet:
+        ids = [probe.id for probe in self.probes]
+        if len(ids) != len(set(ids)):
+            raise ValueError("duplicate probe ids")
+        return self
+
+
 def load_questions(path: Path = QUESTIONS_PATH) -> QuestionSet:
     raw: Any = yaml.safe_load(path.read_text(encoding="utf-8"))
     return QuestionSet.model_validate(raw)
+
+
+def load_negatives(path: Path = NEGATIVES_PATH) -> NegativeSet:
+    raw: Any = yaml.safe_load(path.read_text(encoding="utf-8"))
+    return NegativeSet.model_validate(raw)
