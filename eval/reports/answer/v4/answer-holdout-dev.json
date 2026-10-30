@@ -1,0 +1,381 @@
+{
+ "level": "answer",
+ "created": "2026-10-30T21:40:14+00:00",
+ "question_set": "holdout",
+ "profile": "dev",
+ "models": {
+  "understand": "gpt-5.4-nano",
+  "generate": "gpt-5.4-nano",
+  "judge": "gpt-5.4"
+ },
+ "prompts": {
+  "understand": "v1",
+  "generate": "v4",
+  "regenerate": "v2",
+  "judge": "v1",
+  "judge_criteria": "v2"
+ },
+ "runs_per_question": 1,
+ "complete": true,
+ "questions": [
+  {
+   "id": "holdout-fact-c3-power",
+   "category": "single_fact",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "citroen_c3"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 3833,
+     "tokens_out": 108,
+     "cost_usd": 0.000902,
+     "latency_ms": 3009.1454999055713,
+     "generate_ms": 1278.7609999068081,
+     "excerpt_wording": 0
+    }
+   ]
+  },
+  {
+   "id": "holdout-fact-link-trunk",
+   "category": "single_fact",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "link_and_co_01"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4144,
+     "tokens_out": 116,
+     "cost_usd": 0.000974,
+     "latency_ms": 2399.9439999461174,
+     "generate_ms": 1223.7444000784308,
+     "excerpt_wording": 0
+    }
+   ]
+  },
+  {
+   "id": "holdout-fact-elantra-power",
+   "category": "single_fact",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "hyundai_elantra_n"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4328,
+     "tokens_out": 164,
+     "cost_usd": 0.001071,
+     "latency_ms": 2805.0207998603582,
+     "generate_ms": 1619.0975999925286,
+     "excerpt_wording": 0
+    }
+   ]
+  },
+  {
+   "id": "holdout-compare-topspeed-mg-aion",
+   "category": "comparison",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": false,
+       "detail": "200"
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": false,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4582,
+     "tokens_out": 155,
+     "cost_usd": 0.00111,
+     "latency_ms": 3036.6936000064015,
+     "generate_ms": 1541.5787000674754,
+     "excerpt_wording": 0
+    }
+   ]
+  },
+  {
+   "id": "holdout-compare-economy-c3-elantra",
+   "category": "comparison",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "citroen_c3",
+      "hyundai_elantra_n"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 5078,
+     "tokens_out": 190,
+     "cost_usd": 0.001253,
+     "latency_ms": 3151.420900132507,
+     "generate_ms": 1794.3351999856532,
+     "excerpt_wording": 0
+    }
+   ]
+  },
+  {
+   "id": "holdout-rank-most-expensive",
+   "category": "ranking",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "genesis_gv80"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 8663,
+     "tokens_out": 187,
+     "cost_usd": 0.001966,
+     "latency_ms": 3187.4873000197113,
+     "generate_ms": 1450.0031999778003,
+     "excerpt_wording": 0
+    }
+   ]
+  }
+ ],
+ "cost_usd": {
+  "answer": 0.007276,
+  "judge": 0.0
+ },
+ "tokens": {
+  "answer_in": 30628,
+  "answer_out": 920,
+  "judge_in": 0,
+  "judge_out": 0
+ },
+ "latency_ms": {
+  "turn_p50": 3009.1454999055713,
+  "turn_p95": 3187.4873000197113,
+  "generate_p50": 1450.0031999778003,
+  "generate_p95": 1794.3351999856532
+ },
+ "another_article_total": 0,
+ "excerpt_wording_total": 0,
+ "post_check": {
+  "clean": 6
+ }
+}
