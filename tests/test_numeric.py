@@ -5,6 +5,7 @@ tests/test_numeric_integration.py.
 """
 
 import json
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
@@ -88,6 +89,15 @@ def test_millions() -> None:
 
 def test_thousands_written_with_a_point_is_read_both_ways() -> None:
     assert check("המחיר 1.060 שקל בחודש.", "החל מ-₪1,060") == []
+
+
+def test_two_digits_after_a_comma_are_a_decimal_never_a_thousands_group() -> None:
+    # Decided in CW-206: the Audi RS3 article prints the sedan price as "545,00".
+    # It stays the decimal 545.00, so an answer that "fixes" it to 545,000 is flagged.
+    [number] = find_numbers("ובסדאן 545,00 שקלים")
+    assert [(r.value, r.unit) for r in number.readings] == [(Decimal("545.00"), Decimal("0.01"))]
+    assert check('בסדאן 545,000 ש"ח.', "ובסדאן 545,00 שקלים") == ["545,000"]
+    assert check("בסדאן 545,00 שקלים.", "ובסדאן 545,00 שקלים") == []
 
 
 # --- ranges -------------------------------------------------------------------------------

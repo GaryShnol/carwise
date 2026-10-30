@@ -69,7 +69,7 @@ def readings_of(token: str) -> list[tuple[Decimal, Decimal]]:
     if commas:
         if thousands:  # "178,888", "1,060"
             return [_plain(token.replace(",", ""))]
-        if commas == 1:  # "3,8": decimal comma (and the article typo "545,00")
+        if commas == 1:  # "3,8", "545,00": a decimal comma, never a thousands group
             return [_plain(token.replace(",", "."))]
         return [_plain(group) for group in groups]
     if dots == 1:  # "3.8"; "1.234" may also be a thousands group

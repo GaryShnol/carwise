@@ -275,6 +275,7 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [x] Unit tests: matching numbers pass; an invented number is flagged; formatting differences (commas, units) are handled. Also: decimal comma, thousands and "אלף"/"מיליון", ranges, percent, numbers inside car names, years, list markers, rounding (never added precision), derived sums and differences only with both operands in the answer.
 - [x] False-positive suite over the real chunks (229 quoted sentences, 279 reformatted numbers: 0 flagged) and a recall check (every integer nudged by one is caught).
 - [x] Live (`final`): a forced unsupported price was flagged and regenerated away ($0.0039, 3 calls). 10 real answers (46 numbers): 1 flagged, "545,000" where the Audi RS3 article itself prints "545,00" (a publisher typo). Limit: numbers written as words are not checked.
+- [x] Known source case (decided, not a bug): `audi_rs3:002` prints the sedan price as "545,00". It is parsed as the decimal 545.00 like any decimal comma; no special rule. An answer that corrects it to 545,000 is flagged, the one regeneration drops that number, and the answer stays correct (it states only what the articles support).
 
 ### CW-302 Eval runner and per-category report
 - [ ] Retrieval eval (no LLM, deterministic, free): expected car and section among retrieved chunks.
