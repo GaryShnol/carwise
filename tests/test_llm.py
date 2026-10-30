@@ -142,6 +142,18 @@ def test_second_invalid_reply_raises_and_is_still_charged() -> None:
     assert client.total_cost_usd > 0  # the failed attempts were paid for
 
 
+def test_paid_first_attempt_is_charged_when_the_retry_fails_to_connect() -> None:
+    first = _completion("not json", prompt=1000, out=100)
+    stub = StubSDK(
+        first, openai.APIConnectionError(request=httpx.Request("POST", "https://x.test"))
+    )
+    client = _client(stub)
+    with pytest.raises(LLMUnavailableError):
+        _ask(client)
+    assert len(stub.requests) == 2
+    assert client.total_cost_usd == pytest.approx((1000 * 0.20 + 100 * 1.25) / 1e6)
+
+
 def test_budget_refuses_calls_once_exceeded() -> None:
     stub = StubSDK(_completion(VALID, prompt=10_000, out=10_000), _completion(VALID))
     client = _client(stub, max_cost_usd=0.001)

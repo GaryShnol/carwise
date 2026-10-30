@@ -167,7 +167,12 @@ class OpenAIClient:
         usage = Usage()
         started = time.perf_counter()
         for attempt in (1, 2):
-            content, call_usage = self._call(conversation, schema, model)
+            try:
+                content, call_usage = self._call(conversation, schema, model)
+            except LLMUnavailableError:
+                # A failed retry must not hide what the first attempt already cost.
+                self.total_cost_usd += cost_usd(usage, price)
+                raise
             usage += call_usage
             try:
                 parsed = schema.model_validate_json(content)
