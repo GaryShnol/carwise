@@ -208,6 +208,31 @@ def test_unknown_car_refusal_suggests_cars_from_the_users_own_words() -> None:
     assert len(llm.calls) == 1 and retriever.calls == []
 
 
+def test_hint_words_come_only_from_the_users_own_words() -> None:
+    # The rewrite adds "חשמלי" from model knowledge; the user never said it.
+    plan = understanding(unrecognized=["טסלה"], question="כמה טווח יש לרכב החשמלי טסלה?")
+    pipeline, _, _ = make([plan])
+    answer = pipeline.ask("כמה טווח יש לטסלה?", [])
+    assert answer.refusal is RefusalReason.UNKNOWN_CAR and answer.suggested_cars == []
+
+
+def test_hint_words_in_earlier_user_messages_count() -> None:
+    history = [
+        {"role": "user", "content": "אני מחפש רכב פנאי חשמלי"},
+        {"role": "assistant", "content": "יש כמה רכבים חשמליים בכתבות."},
+    ]
+    plan = understanding(unrecognized=["טסלה"], question="כמה טווח יש לטסלה?")
+    pipeline, _, _ = make([plan])
+    answer = pipeline.ask("ומה עם טסלה?", history)
+    assert answer.suggested_cars == ["kia_ev9", "mg_s6", "aion_ht"]
+
+
+def test_assistant_turns_do_not_supply_hint_words() -> None:
+    history = [{"role": "assistant", "content": "הנה הרכבים החשמליים שנבחנו."}]
+    pipeline, _, _ = make([understanding(unrecognized=["טסלה"], question="ומה עם טסלה?")])
+    assert pipeline.ask("ומה עם טסלה?", history).suggested_cars == []
+
+
 # --- similarity gate ---------------------------------------------------------------------
 def test_low_similarity_is_refused_without_a_generation_call() -> None:
     pipeline, llm, _ = make([understanding(cars=["mg_s6"])], threshold=0.99)

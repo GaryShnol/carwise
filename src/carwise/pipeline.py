@@ -127,7 +127,7 @@ class Pipeline:
         # Registry gate first: only cars outside the corpus were named. Known and
         # unknown together go on, and the answer says what is not covered.
         if plan.not_covered and not plan.cars:
-            suggested = self._suggest(message, plan, [])
+            suggested = self._suggest(message, history, [])
             text = guardrails.unknown_car_reply(plan.not_covered, self._registry, suggested)
             return self._reply(turn, text, RefusalReason.UNKNOWN_CAR, plan, suggested=suggested)
         if plan.intent in NO_RETRIEVAL_INTENTS and not plan.cars:
@@ -139,7 +139,7 @@ class Pipeline:
         turn.latency_ms["retrieve"] = (time.perf_counter() - started) * 1000
         threshold = self._settings.retrieval.relevance_threshold
         if not hits or max(hit.score for hit in hits) < threshold:
-            suggested = self._suggest(message, plan, hits)
+            suggested = self._suggest(message, history, hits)
             text = guardrails.low_relevance_reply(self._registry, suggested)
             return self._reply(
                 turn, text, RefusalReason.LOW_RELEVANCE, plan, hits, suggested=suggested
@@ -208,11 +208,20 @@ class Pipeline:
             plan.question, config.cross_car_top_k, config.cross_car_per_car_cap
         )
 
-    def _suggest(self, message: str, plan: _Plan, hits: list[RetrievedChunk]) -> list[str]:
-        """Closest cars for a refusal: the user's own hint words first, then chunk scores."""
+    def _suggest(
+        self, message: str, history: list[Message], hits: list[RetrievedChunk]
+    ) -> list[str]:
+        """Closest cars for a refusal: the user's own hint words first, then chunk scores.
+
+        Hints are read only from what the user wrote (this message and the user turns
+        in the history window), never from the rewritten question: the model may add
+        "electric" or "SUV" there from its own knowledge of the unknown car.
+        """
         config = self._settings.guardrails
+        window = history[-self._settings.llm.history_window :] if history else []
+        user_text = [turn["content"] for turn in window if turn["role"] == "user"]
         hinted = guardrails.hinted_cars(
-            f"{message}\n{plan.question}",
+            "\n".join([*user_text, message]),
             self._registry,
             config.body_type_words,
             config.powertrain_words,
