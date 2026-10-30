@@ -124,7 +124,7 @@ Branch: `epic/e3-measurement` | Tag: none
 
 | ID | Ticket | Type | Size | Pri | Status | Depends on |
 |---|---|---|---|---|---|---|
-| CW-306 | Recommend intent searches all cars; named cars are a hint | `fix` | S | P1 | TODO | CW-303 |
+| CW-306 | Recommend intent searches all cars; named cars are a hint | `fix` | S | P1 | IN PROGRESS | CW-303 |
 | CW-302 | Eval runner and per-category report | `feat` | M | P1 | IN PROGRESS | CW-201, CW-202, CW-106 |
 | CW-305 | Embedding model comparison on the retrieval eval | `feat` | M | P2 | DONE | CW-302 |
 | CW-303 | Tune relevance threshold, top-k and chunk size | `fix` | S | P2 | DONE | CW-302, CW-305 |
