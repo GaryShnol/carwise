@@ -46,6 +46,8 @@ ANOTHER_ARTICLE = (
     "בכתבה נפרדת",
     "in another article",
 )
+# Calling the sources "the excerpts" exposes the pipeline; generate v4 asks for "the articles".
+EXCERPT_WORDING = ("בקטעים", "הקטעים", "קטעים שסופקו", "בקטע ", "excerpt")
 GATE_REFUSALS = {RefusalReason.UNKNOWN_CAR, RefusalReason.LOW_RELEVANCE}
 _CITATION = re.compile(r"\(([^()]*)\)")
 # Sentence ends: punctuation followed by whitespace (not a decimal point), or a line break.
@@ -118,6 +120,11 @@ def behavior_of(answer: Answer) -> str:
 def another_article_count(text: str) -> int:
     lowered = guardrails.normalize(text)
     return sum(lowered.count(guardrails.normalize(phrase)) for phrase in ANOTHER_ARTICLE)
+
+
+def excerpt_wording_count(text: str) -> int:
+    lowered = guardrails.normalize(text)
+    return sum(lowered.count(guardrails.normalize(word)) for word in EXCERPT_WORDING)
 
 
 def _car_values(hits: Iterable[RetrievedChunk]) -> dict[str, set[Decimal]]:

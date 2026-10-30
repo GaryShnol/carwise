@@ -20,7 +20,9 @@ PROMPT_DIR = Path(__file__).parent / "llm" / "prompts"
 # generate v2 (CW-202): excerpts are one set of articles, no "in another article".
 # generate v3 (CW-203): how to use the "User preferences" block for recommendations.
 # regenerate v2 (CW-206): numbers exactly as the excerpts give them; show both operands.
-PROMPT_VERSIONS = {"understand": "v1", "generate": "v3", "regenerate": "v2"}
+# generate v4 (CW-302): compare figures under different labels and say so; correct a
+# premise with the asked car's own figure; call the sources "the articles".
+PROMPT_VERSIONS = {"understand": "v1", "generate": "v4", "regenerate": "v2"}
 
 
 def _load(name: str) -> str:

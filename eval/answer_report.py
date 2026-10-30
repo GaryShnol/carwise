@@ -20,7 +20,7 @@ from carwise.llm.base import LLMClient
 from carwise.pipeline import Pipeline
 from carwise.prompts import PROMPT_VERSIONS
 from carwise.registry import Registry
-from eval.answer import BudgetStopError, Check, behavior_of, checks_for, play
+from eval.answer import BudgetStopError, Check, behavior_of, checks_for, excerpt_wording_count, play
 from eval.judge import PROMPT_VERSION as JUDGE_PROMPT
 from eval.judge import Judged, criteria_version, judge, load_criteria
 from eval.questions import Behavior, Category, Question
@@ -44,6 +44,7 @@ class QuestionRun(BaseModel):
     cost_usd: float  # every turn of the question, judge excluded
     latency_ms: float  # the graded (last) turn, end to end
     generate_ms: float | None
+    excerpt_wording: int = 0  # "the excerpts" instead of "the articles" (a metric, not a check)
 
 
 class AnswerQuestion(BaseModel):
@@ -76,6 +77,7 @@ class AnswerReport(BaseModel):
     tokens: dict[str, int]
     latency_ms: dict[str, float | None]  # p50 / p95 of the graded turn and of generate
     another_article_total: int
+    excerpt_wording_total: int = 0
     post_check: dict[str, int]  # outcome -> count over graded turns
 
 
@@ -141,6 +143,7 @@ def run_answer_eval(
                         cost_usd=round(sum(a.cost_usd for a in played.answers), 6),
                         latency_ms=last.latency_ms.get("total", 0.0),
                         generate_ms=last.latency_ms.get("generate"),
+                        excerpt_wording=excerpt_wording_count(last.text),
                     )
                 )
                 log.write(
@@ -212,6 +215,7 @@ def run_answer_eval(
             int(c.detail) for run in every for c in run.checks if c.name == "another_article"
         ),
         post_check=outcomes,
+        excerpt_wording_total=sum(run.excerpt_wording for run in every),
     )
 
 
@@ -258,7 +262,8 @@ def markdown(report: AnswerReport) -> str:
         "",
         "Post-check outcomes: "
         + (", ".join(f"{k} {v}" for k, v in sorted(report.post_check.items())) or "-")
-        + f'. "Another article" phrasings: {report.another_article_total}.',
+        + f'. "Another article" phrasings: {report.another_article_total}; '
+        + f'"excerpts" wording: {report.excerpt_wording_total}.',
         "",
         "## Summary",
         "",

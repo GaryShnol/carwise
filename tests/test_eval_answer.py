@@ -243,3 +243,42 @@ def test_run_keeps_answers_out_of_the_committed_report(tmp_path: Path) -> None:
     assert SECRET not in committed and "זולה יותר" not in committed
     logged = (tmp_path / "runs" / "answers.jsonl").read_text(encoding="utf-8")
     assert json.loads(logged)["turns"][0]["answer"] == GOOD.answer  # kept locally, gitignored
+
+
+def test_excerpt_wording_is_counted() -> None:
+    from eval.answer import excerpt_wording_count
+
+    assert excerpt_wording_count("בקטעים שסופקו לא מופיע טווח") >= 1
+    assert excerpt_wording_count("הנתון לא מוזכר בכתבה") == 0
+
+
+def test_answer_diff_marks_fixed_and_regressed_questions() -> None:
+    from eval.answer_diff import diff_markdown
+    from eval.answer_report import AnswerQuestion, AnswerReport, QuestionRun
+
+    def report(passes: dict[str, bool], generate: str) -> AnswerReport:
+        def run(ok: bool) -> QuestionRun:
+            return QuestionRun(
+                behavior="answer", checks=[], judge_passed=None if ok else False, passed=ok,
+                post_check="clean", cited_cars=[], llm_calls=2, tokens_in=1, tokens_out=1,
+                cost_usd=0.001, latency_ms=10.0, generate_ms=5.0,
+            )  # fmt: skip
+
+        return AnswerReport(
+            created="x", question_set="tuning", profile="dev", models={},
+            prompts={"generate": generate}, runs_per_question=1, complete=True,
+            questions=[
+                AnswerQuestion(id=q, category=Category.COMPARISON, expected=Behavior.ANSWER,
+                               judged=True, runs=[run(ok)])
+                for q, ok in passes.items()
+            ],
+            cost_usd={"answer": 0.0, "judge": 0.0}, tokens={},
+            latency_ms={"turn_p50": 1.0, "turn_p95": 2.0}, another_article_total=0, post_check={},
+        )  # fmt: skip
+
+    text = diff_markdown(
+        report({"a": False, "b": True}, "v3"), report({"a": True, "b": False}, "v4")
+    )
+    assert "| a | comparison | 0/1 | 1/1 | fixed | judge | - |" in text
+    assert "| b | comparison | 1/1 | 0/1 | REGRESSED | - | judge |" in text
+    assert "generate v3 -> v4" in text
