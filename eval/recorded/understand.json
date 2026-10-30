@@ -3,14 +3,14 @@
  "model": "gpt-5.4-nano",
  "understand_prompt": "v1",
  "understand_system_sha256": "48e31e93c3010be5b0e95e4aacd55c43dc5a2545fb7cbc1c3e9e00bbc48aae3d",
- "recorded_at": "2026-10-30T19:44:51+00:00",
- "calls": 47,
+ "recorded_at": "2026-10-30T21:09:46+00:00",
+ "calls": 53,
  "tokens": {
-  "input": 65590,
+  "input": 71250,
   "cached": 3584,
-  "output": 4671
+  "output": 5021
  },
- "cost_usd": 0.018312,
+ "cost_usd": 0.019882,
  "cases": {
   "fact-mg-real-range": [
    {
@@ -641,6 +641,90 @@
      ],
      "unrecognized_cars": [],
      "standalone_question": "האם ל-GAC איון HT (Aion) יש מערכת מיגון נגד גניבה?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "holdout-fact-c3-power": [
+   {
+    "message_sha256": "9df9c6a346b263457e37943f7b8f35429a8a72f6d927da2c91337a6d18ecdc9f",
+    "understanding": {
+     "intent": "fact",
+     "cars": [
+      "citroen_c3"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "כמה כוח סוס יש לסיטרואן C3 החדשה?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "holdout-fact-link-trunk": [
+   {
+    "message_sha256": "6c2189a2c5d418d1e3a273403ca8ff9d2c72195560abe58777b42450f9624c6e",
+    "understanding": {
+     "intent": "fact",
+     "cars": [
+      "link_and_co_01"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "מה נפח תא המטען של לינק אנד קו 01?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "holdout-fact-elantra-power": [
+   {
+    "message_sha256": "bb559b370e7469d27e2db4901d9ceece01dc5af78464f66a580e6699c8153532",
+    "understanding": {
+     "intent": "fact",
+     "cars": [
+      "hyundai_elantra_n"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "כמה כוח סוס מפיק המנוע של יונדאי אלנטרה N עם תיבת הילוכים ידנית?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "holdout-compare-topspeed-mg-aion": [
+   {
+    "message_sha256": "a05430771f00785e4e710f53d3c5205aee2f2d46088065ec16248795db3e7577",
+    "understanding": {
+     "intent": "compare",
+     "cars": [
+      "mg_s6",
+      "aion_ht"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "למי יש מהירות מרבית גבוהה יותר, MG S6 או GAC איון HT (Aion HT)?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "holdout-compare-economy-c3-elantra": [
+   {
+    "message_sha256": "ffae4b1ca20af561af548a741baf776d9e1df0baaf9d708cf976421afa36c3a0",
+    "understanding": {
+     "intent": "compare",
+     "cars": [
+      "citroen_c3",
+      "hyundai_elantra_n"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "איזו מבין סיטרואן C3 ויונדאי אלנטרה N חסכונית יותר בדלק?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "holdout-rank-most-expensive": [
+   {
+    "message_sha256": "74ed71071192cf034be49670131af339c25fd89395e03c9a8553dd6a24aa2194",
+    "understanding": {
+     "intent": "recommend",
+     "cars": [],
+     "unrecognized_cars": [],
+     "standalone_question": "מהו הרכב הכי יקר מבין הרכבים שנבחנו (מבין שמונת הדגמים שבסקירות)?",
      "preference_updates": []
     }
    }

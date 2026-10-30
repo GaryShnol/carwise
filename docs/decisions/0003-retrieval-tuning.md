@@ -1,6 +1,6 @@
 # ADR 0003: Retrieval tuning (chunk window, spec boxes, k and caps, threshold)
 
-- **Status:** Accepted for steps 1 and 2; steps 3 to 5 follow in the same ticket
+- **Status:** Proposed (all five steps measured; awaiting owner review)
 - **Date:** 2026-10-30
 - **Ticket:** CW-303
 - **Evidence:** `eval/reports/cw303/step<N>/`; every number below is on the same recorded
@@ -137,3 +137,43 @@ yet seen), and would catch 3 of the 7 off-topic texts as a backstop.
    and offer the closest facts the retrieved chunks contain. The post-check then verifies cars
    and numbers. Whether the model follows the rule is measured by the answer eval (CW-302), not
    here.
+
+## Step 5: hold-out questions, written after the settings were frozen
+
+Six new questions in `eval/questions.yaml` (version 3, `holdout: true`, marked "added after
+tuning"): three single facts (C3 power, Link & Co 01 boot volume, Elantra N power), two
+comparisons (top speed MG S6 vs Aion HT, fuel economy C3 vs Elantra N) and one ranking (most
+expensive of the eight, naming no car). Three ask for facts that are only in prose, not in a spec
+box. Their understand outputs were recorded alone and merged into the recording (6 nano calls,
+$0.0016); the hold-out was run once (`python -m app eval --holdout`,
+`eval/reports/cw303/step5/holdout/`).
+
+| Hold-out | Passed | Sources hit | MRR |
+|---|---|---|---|
+| single_fact | 3/3 | 3/3 | 1.000 |
+| comparison | 1/2 | 3/4 | 0.425 |
+| ranking | 1/1 | 1/1 | 0.167 |
+| **total** | **5/6** | **7/8** | **0.669** |
+
+The miss, `holdout-compare-topspeed-mg-aion`: the MG S6 top speed is in a prose chunk that ranks
+fourth within its car, against `per_car_cap` 3. The forced spec box does not help, because top
+speed is not in the spec table. The step 3 sweep suggests `per_car_cap` 4 would retrieve it, but
+the cap is not changed now: choosing it from this result would turn the hold-out into tuning data.
+It is the known weak spot of comparisons: a figure that only the prose states, ranked just
+below the cap. The lowest hold-out score (0.848) is well above the 0.80 threshold, so nothing was
+refused.
+
+Six questions is a very small hold-out (one question is 17 points). It is a sanity check that the
+tuned settings did not only fit the tuning set, not a precise estimate.
+
+## Summary: before and after CW-303
+
+| e5-large, same recording | Passed | Sources hit | MRR | Chunks over window | Threshold |
+|---|---|---|---|---|---|
+| before CW-303 (tuning set) | 21/23 | 24/26 | 0.574 | 5 | 0 (off) |
+| after CW-303 (tuning set) | 22/23 | 25/26 | 0.631 | 0 | 0.80 |
+| after CW-303 (hold-out, run once) | 5/6 | 7/8 | 0.669 | 0 | 0.80 |
+
+Settings now: `chunking.max_chars` 1400, `chunking.embed_section_chars` 60, `chunking.spec_header`
+false, `retrieval.force_spec_box` true, `top_k` 5, `per_car_cap` 3, `cross_car_top_k` 12,
+`cross_car_per_car_cap` 2, `relevance_threshold` 0.80, lexical fusion off.

@@ -11,8 +11,12 @@
 #
 # Version 2 (2026-10-30) only adds the direction-of-comparison block, after the first
 # retrieval baseline and before any tuning; no version-1 question was changed.
+#
+# Version 3 (2026-10-30) adds the hold-out block at the end (`holdout: true`), written after
+# CW-303 froze every retrieval setting and never used to choose one. Its numbers are reported
+# separately; everything above it is the tuning set.
 
-version: 2
+version: 3
 
 shared:
   missing_phrases: &missing
@@ -349,3 +353,88 @@ questions:
       must_include:
         - ["רכב", "מכוני"]
     why: Off-topic request; no retrieval, and the reply restates what the bot can do.
+
+  # ---------------------------------------------------------------- hold-out (version 3)
+  # ADDED AFTER TUNING (CW-303 step 5): written once the chunking, spec-box, k, cap and
+  # threshold settings were frozen; run once, reported apart from the tuning set above.
+  - id: holdout-fact-c3-power
+    category: single_fact
+    holdout: true
+    turns: ["כמה כוח סוס יש לסיטרואן C3 החדשה?"]
+    expect:
+      behavior: answer
+      sources:
+        - {car: citroen_c3, section: "הרכב הנבחן"}
+      must_include:
+        - ["110"]
+    why: The total power of the mild hybrid; the article also gives the electric motor's 22 hp.
+
+  - id: holdout-fact-link-trunk
+    category: single_fact
+    holdout: true
+    turns: ["מה נפח תא המטען של לינק אנד קו 01?"]
+    expect:
+      behavior: answer
+      sources_any:
+        - {car: link_and_co_01, section: "מה נותר כשהיה"}
+        - {car: link_and_co_01, section: "סביבת נהג, נוסעים"}
+      must_include:
+        - ["509"]
+    why: A prose fact stated twice; the article also gives the previous model's 466 litres.
+
+  - id: holdout-fact-elantra-power
+    category: single_fact
+    holdout: true
+    turns: ["כמה כוח סוס מפיק המנוע של יונדאי אלנטרה N הידנית?"]
+    expect:
+      behavior: answer
+      sources_any:
+        - {car: hyundai_elantra_n, section: "מבחן דרכים"}
+        - {car: hyundai_elantra_n, section: "איזה מנוע וביצועים"}
+      must_include:
+        - ["276"]
+    why: Power is in the prose only, not in the spec box.
+
+  - id: holdout-compare-topspeed-mg-aion
+    category: comparison
+    holdout: true
+    turns: ["למי יש מהירות מרבית גבוהה יותר, ל-MG S6 או לאיון HT?"]
+    expect:
+      behavior: answer
+      sources:
+        - {car: mg_s6, section: "מה הממדים והביצועים"}
+        - {car: aion_ht, section: "איזה נתונים עושים את HT"}
+      must_include:
+        - ["200"]
+        - ["183"]
+    why: Top speed is in the prose of both articles, not in the spec boxes the forced inclusion adds.
+
+  - id: holdout-compare-economy-c3-elantra
+    category: comparison
+    holdout: true
+    turns: ["איזו חסכונית יותר בדלק, סיטרואן C3 או יונדאי אלנטרה N?"]
+    expect:
+      behavior: answer
+      sources:
+        - {car: citroen_c3, section: "הרכב הנבחן"}
+        - {car: hyundai_elantra_n, section: "הרכב הנבחן"}
+      must_include:
+        - ["20"]
+        - ["10.3", "10,3"]
+    why: Both figures are in the spec boxes (km per litre); higher is more economical.
+
+  - id: holdout-rank-most-expensive
+    category: ranking
+    holdout: true
+    turns: ["מה הרכב הכי יקר מבין הרכבים שנבחנו?"]
+    expect:
+      behavior: answer
+      sources:
+        - {car: genesis_gv80, section: "הרכב הנבחן"}
+      must_include:
+        - ["ג'נסיס", "GV80"]
+        - ["575", "645"]
+        - *eight
+    why: >
+      The Genesis GV80 (575,990; 645,000 for the luxury trim) is above every Audi RS3 price in
+      its article (at most 571,000). A ranking must cover only the eight reviewed cars.
