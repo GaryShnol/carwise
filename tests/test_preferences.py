@@ -146,6 +146,39 @@ def test_preference_lifted_from_an_assistant_turn_is_rejected() -> None:
     assert "preference_not_from_user" in answer.flags
 
 
+def test_earlier_preference_resent_unchanged_is_kept_without_a_flag() -> None:
+    first, second = "עד 200 אלף, ורק חשמלי", "ומה עם תא המטען?"
+    pipeline, _, _ = make(
+        [
+            said(("budget", "עד 200 אלף"), ("powertrain", "חשמלי")),
+            RECOMMENDATION,
+            # The model repeats both from history, one with different spacing.
+            said(("budget", "עד  200 אלף"), ("powertrain", "חשמלי")),
+            RECOMMENDATION,
+        ]
+    )
+    session = Session(history_window=WINDOW)
+    pipeline.answer(first, session)
+    answer = pipeline.answer(second, session)
+    assert session.preferences.budget == Preference(value="עד 200 אלף", source=first)
+    assert session.preferences.powertrain == Preference(value="חשמלי", source=first)
+    assert answer.updated_preferences == [] and "preference_not_from_user" not in answer.flags
+
+
+def test_new_value_for_a_stored_field_must_still_come_from_the_user() -> None:
+    stored = Preferences(budget=Preference(value="עד 200 אלף", source="x"))
+    update = PreferenceUpdate(field="budget", value="עד 300 אלף")
+    profile, updated, flags = merge(stored, [update], "ומה עם תא המטען?", MAX_CHARS)
+    assert profile == stored and updated == [] and flags == ["preference_not_from_user"]
+
+
+def test_repeat_check_compares_with_the_same_field_only() -> None:
+    stored = Preferences(budget=Preference(value="חשמלי", source="x"))
+    update = PreferenceUpdate(field="powertrain", value="חשמלי")
+    profile, updated, flags = merge(stored, [update], "מה מתאים לי?", MAX_CHARS)
+    assert profile == stored and updated == [] and flags == ["preference_not_from_user"]
+
+
 def test_preference_taken_from_article_text_is_rejected() -> None:
     # "180 אלף" is in the synthetic MG S6 chunk, never in the user's message.
     plan = said(("budget", "180 אלף"), intent=Intent.FACT, cars=["mg_s6"], question="מחיר MG S6")

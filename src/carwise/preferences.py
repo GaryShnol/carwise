@@ -70,6 +70,8 @@ def merge(
 
     A later update on the same field replaces the earlier one, including within
     the same turn. Rejected updates leave the profile untouched and add a flag.
+    An update equal to the stored value is a repeat, not a change: it is skipped
+    without a flag and is not reported as updated.
     """
     known = {item.value for item in PreferenceField}
     changes: dict[str, Preference] = {}
@@ -81,6 +83,11 @@ def merge(
             flags.append("preference_unknown_field")
             continue
         if not value:
+            continue
+        stored = getattr(current, name)
+        if stored is not None and normalize(stored.value) == normalize(value):
+            # The model re-sent an earlier preference from the history window: it is
+            # already grounded in the message it came from, so keep that source.
             continue
         if not grounded_in(value, message):
             flags.append("preference_not_from_user")
