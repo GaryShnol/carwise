@@ -356,6 +356,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Idea | Why it is not in scope | Promote when |
 |---|---|---|
+| Recommendations restricted to cars named by the understand step (CW-303) | In the recorded family scenario the plan named three cars from earlier answers, so the MG S6 and Aion HT were never searched; fixing it means changing the plan step (for example, recommend searches all cars and treats named cars as a hint), which no retrieval setting can do | The answer eval shows the scenario recommending the wrong cars |
 | Hybrid search (keywords plus embeddings) | Adds complexity without evidence of need | Eval shows model names or numbers are missed |
 | Reranker | Corpus is small | Right car is retrieved but ranked too low |
 | LLM judge for groundedness | Imperfect and costs tokens | Keyword checks prove too coarse |

@@ -71,3 +71,32 @@ The one question still missing, `rec-family-electric-scenario`, is not a retriev
 last turn the understand step named Kia EV9, Link & Co 01 and Genesis GV80 (cars from the earlier
 answers), so retrieval searched only those three, and the MG S6 and Aion HT chunks were never
 candidates. ADR 0002 attributed it to the cross-car cap; that was wrong and is corrected there.
+
+## Step 3: top_k and the caps
+
+One knob at a time from the current values (`uv run python -m eval.sweep`, table in
+`eval/reports/cw303/step3/sweep.md`; spec boxes forced as chosen in step 2):
+
+| Setting | Passed | Sources hit | MRR | Mean chunks / characters per answer |
+|---|---|---|---|---|
+| **current: top_k 5, per_car_cap 3, cross_car_top_k 12, cross_car_per_car_cap 2** | **22/23** | **25/26** | **0.631** | **8.50 / 8160** |
+| per_car_cap 2 | 22/23 | 25/26 | 0.636 | 7.05 / 6791 |
+| per_car_cap 4 | 22/23 | 25/26 | 0.626 | 10.15 / 9513 |
+| top_k 3 | 22/23 | 25/26 | 0.631 | 7.70 / 7557 |
+| top_k 4 | 22/23 | 25/26 | 0.631 | 8.10 / 7867 |
+| top_k 7 | 22/23 | 25/26 | 0.631 | 9.30 / 8848 |
+| cross_car_per_car_cap 3 | 22/23 | 25/26 | 0.631 | 8.50 / 8160 |
+| cross_car_top_k 16 | 22/23 | 25/26 | 0.631 | 8.50 / 8160 |
+
+**Decision: no change.** Every setting passes the same 22 questions, and the one miss
+(`rec-family-electric-scenario`) is not reachable by any k or cap, because its recorded plan names
+other cars (step 2). The cross-car settings change nothing here because only one question in the
+set names no car (`rec-manual-sport`); rankings name all eight and use per-car retrieval.
+
+`per_car_cap 2` would send about 17% less chunk text at equal hits. It is not taken: picking
+inside a flat region on 23 questions fits noise, and with the spec box forced, cap 2 leaves only
+two prose chunks per car for the "closest related facts" a comparison answer offers when a detail
+is missing. It is the first lever if generation cost matters (README cost section).
+
+The recommendation miss belongs to the plan, not retrieval: when the understand step names cars
+taken from earlier answers, a recommendation is searched only among them. Logged in the Backlog.
