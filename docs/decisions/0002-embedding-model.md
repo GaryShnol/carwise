@@ -197,6 +197,9 @@ car, against a cap of 3) is a spec-box miss, handled in CW-303 step 2.
 
 ## README note (for CW-501)
 
+Retrieval only; the answer-level results note is in ADR 0004.
+
+
 > **Embedding model.** Four retrieval set-ups were compared on the same recorded plans
 > (23 questions, 8 "no answer here" probes; no tuning): multilingual-e5-base, multilingual-e5-large,
 > bge-m3 (dense), and e5-base with BM25 fused by reciprocal rank fusion. e5-large retrieved the
