@@ -110,7 +110,7 @@ Branch: `epic/e2-reliability` | Tag: none
 | ID | Ticket | Type | Size | Pri | Status | Depends on |
 |---|---|---|---|---|---|---|
 | CW-201 | Relevance gate and fixed refusal | `feat` | M | P1 | DONE | CW-105 |
-| CW-202 | Post-check for cars not retrieved this turn | `feat` | M | P1 | TODO | CW-105 |
+| CW-202 | Post-check for cars not retrieved this turn | `feat` | M | P1 | IN PROGRESS | CW-105 |
 | CW-203 | Preference model and `/prefs` command | `feat` | M | P1 | TODO | CW-105 |
 | CW-204 | Turn telemetry and cost estimate | `feat` | S | P2 | TODO | CW-105 |
 | CW-205 | Injection hygiene and input limits | `feat` | S | P2 | TODO | CW-105 |
