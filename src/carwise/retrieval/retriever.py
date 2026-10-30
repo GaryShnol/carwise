@@ -8,9 +8,10 @@ the car with the wordier review take every slot, and a ranking question
 from __future__ import annotations
 
 from collections import Counter
+from pathlib import Path
 
-from carwise.config import RetrievalConfig
-from carwise.retrieval.embedder import Embedder
+from carwise.config import RetrievalConfig, Settings
+from carwise.retrieval.embedder import Embedder, make_embedder
 from carwise.retrieval.store import ChunkStore
 from carwise.schemas import RetrievedChunk
 
@@ -51,6 +52,17 @@ class Retriever:
         """Across all cars with a cap per car, for ranking and recommendation questions."""
         cap = _default(per_car_cap, self._config.per_car_cap)
         return _capped(self._ranked(query, None), cap, _default(top_k, self._config.top_k))
+
+
+def open_retriever(settings: Settings) -> Retriever:
+    """Retriever over the index in paths.index_dir, using the configured embedder.
+
+    Raises IndexNotReadyError when the index is missing or was built with
+    other embedding settings, because mixing models silently ruins scores.
+    """
+    embedder = make_embedder(settings.embeddings)
+    store = ChunkStore(Path(settings.paths.index_dir), embedder)
+    return Retriever(store, embedder, settings.retrieval)
 
 
 def _default(value: int | None, fallback: int) -> int:

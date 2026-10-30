@@ -152,8 +152,9 @@ def test_store_refuses_a_missing_or_stale_index(tmp_path: Path) -> None:
     with pytest.raises(IndexNotReadyError, match="ingest"):
         ChunkStore(tmp_path / "nothing")
     build_index(_corpus(), FakeEmbedder(), LIMITS, tmp_path)
-    with pytest.raises(IndexNotReadyError, match="out of date"):
-        ChunkStore(tmp_path, expected_fingerprint="other")
+    ChunkStore(tmp_path, FakeEmbedder())  # same embedder: fine
+    with pytest.raises(IndexNotReadyError, match="other embedding settings"):
+        ChunkStore(tmp_path, FakeEmbedder(dimension=128))
 
 
 def test_fake_embedder_prefers_shared_words() -> None:

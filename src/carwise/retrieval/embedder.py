@@ -58,10 +58,23 @@ class SentenceTransformerEmbedder:
     def _load(self) -> SentenceTransformer:
         if self._model is None:
             from sentence_transformers import SentenceTransformer  # heavy import, only when used
+            from transformers.utils import logging as transformers_logging
 
-            self._model = SentenceTransformer(
-                self._config.model, revision=self._config.revision, device=self._config.device
-            )
+            transformers_logging.disable_progress_bar()  # type: ignore[no-untyped-call]  # quiet CLI
+            config = self._config
+
+            def load(local_only: bool) -> SentenceTransformer:
+                return SentenceTransformer(
+                    config.model,
+                    revision=config.revision,
+                    device=config.device,
+                    local_files_only=local_only,
+                )
+
+            try:  # the pinned revision is usually cached: no network, works offline
+                self._model = load(local_only=True)
+            except OSError:  # first run: download once into the Hugging Face cache
+                self._model = load(local_only=False)
         return self._model
 
     def _encode(self, texts: list[str]) -> list[Vector]:

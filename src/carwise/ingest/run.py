@@ -3,13 +3,14 @@
 Why it returns data instead of printing: the core package is UI-agnostic, so the
 command line decides how to show the report. Cleaned documents are rebuilt from
 the HTML cache on every run and never written to disk (the text belongs to the
-publisher, and the cache already makes this fast and offline). Chunks are kept
-in memory the same way until CW-103 writes them to the vector index.
+publisher, and the cache already makes this fast and offline). The vector index
+is built only when every article was cleaned, so a partial corpus never
+replaces a complete index.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 from carwise.config import Settings, load_settings
@@ -17,6 +18,8 @@ from carwise.ingest.chunk import chunk_document
 from carwise.ingest.clean import Document, clean_html
 from carwise.ingest.fetch import Fetcher, FetchResult, fallback_message
 from carwise.registry import Registry, load_registry
+from carwise.retrieval.embedder import Embedder, make_embedder
+from carwise.retrieval.store import IndexBuild, build_index
 from carwise.schemas import Chunk
 
 
@@ -27,10 +30,12 @@ class IngestResult:
     errors: dict[str, str] = field(default_factory=dict)  # car id -> why clean or chunk failed
     chunks: list[Chunk] = field(default_factory=list)  # article order, then chunk order
     fallback: str | None = None
+    index: IndexBuild | None = None  # None when the corpus was incomplete or the build failed
+    index_error: str | None = None
 
     @property
     def ok(self) -> bool:
-        return self.fallback is None and not self.errors
+        return self.fallback is None and not self.errors and self.index_error is None
 
 
 def ingest(
@@ -38,8 +43,9 @@ def ingest(
     registry: Registry | None = None,
     *,
     fetcher: Fetcher | None = None,
+    embedder: Embedder | None = None,
 ) -> IngestResult:
-    """Fetch every registry article into the cache, then clean and chunk what is available."""
+    """Fetch, clean and chunk every registry article, then build the index if all succeeded."""
     settings = settings or load_settings()
     registry = registry or load_registry()
     raw_dir = Path(settings.paths.raw_dir)
@@ -59,4 +65,13 @@ def ingest(
         except (OSError, ValueError) as error:
             errors[car.id] = str(error)
     fallback = fallback_message(fetches, raw_dir)
-    return IngestResult(fetches, documents, errors, chunks, fallback)
+    outcome = IngestResult(fetches, documents, errors, chunks, fallback)
+    if not outcome.ok:
+        return outcome
+    embedder = embedder or make_embedder(settings.embeddings)
+    index_dir = Path(settings.paths.index_dir)
+    try:
+        index = build_index(chunks, embedder, settings.chunking, index_dir)
+    except OSError as error:  # model download or disk failure; Hugging Face errors are OSErrors
+        return replace(outcome, index_error=f"index not built: {error}")
+    return replace(outcome, index=index)

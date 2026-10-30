@@ -1,4 +1,4 @@
-"""`python -m app ingest`: fetch, clean, chunk and report on the eight articles.
+"""`python -m app ingest`: fetch, clean, chunk and index the eight articles, then report.
 
 Why the report shows counts and headings only: the repository and its CI logs
 are public, and the article body belongs to the publisher.
@@ -6,6 +6,7 @@ are public, and the article body belongs to the publisher.
 
 from __future__ import annotations
 
+import argparse
 from collections import Counter
 from statistics import median
 
@@ -55,6 +56,17 @@ def format_chunk_stats(chunks: list[Chunk]) -> str:
     return "\n".join(lines)
 
 
+def format_index(result: IngestResult) -> str:
+    if result.index_error:
+        return result.index_error
+    if result.index is None:
+        return "index not built: some articles are missing or could not be processed"
+    index = result.index
+    if not index.rebuilt:
+        return f"index up to date ({index.chunks} chunks, checked in {index.seconds:.1f}s)"
+    return f"index built: {index.chunks} chunks in {index.seconds:.1f}s"
+
+
 def format_report(result: IngestResult) -> str:
     statuses = Counter(fetch.status.value for fetch in result.fetches)
     summary = ", ".join(f"{count} {status}" for status, count in sorted(statuses.items()))
@@ -64,11 +76,11 @@ def format_report(result: IngestResult) -> str:
     if result.fallback:
         lines += ["", result.fallback]
     lines.append(f"cleaned {len(result.documents)} of {len(result.fetches)} articles")
-    lines += ["", format_chunk_stats(result.chunks)]
+    lines += ["", format_chunk_stats(result.chunks), "", format_index(result)]
     return "\n".join(lines)
 
 
-def run() -> int:
+def run(args: argparse.Namespace) -> int:
     result = ingest()
     print(format_report(result))
     return 0 if result.ok else 1

@@ -29,6 +29,7 @@ from carwise.schemas import Chunk
 
 COLLECTION = "chunks"
 FINGERPRINT_KEY = "fingerprint"
+EMBEDDER_KEY = "embedder"  # lets a reader refuse an index built by another model
 # Chroma returns float32 distances; rounding keeps equal scores equal across runs,
 # so the chunk-id tie-break decides and the ranking stays deterministic.
 SCORE_DECIMALS = 6
@@ -92,14 +93,21 @@ def _chunk(text: str, meta: dict[str, Any]) -> Chunk:
     )
 
 
-def stored_fingerprint(index_dir: Path) -> str | None:
+def _identity(embedder: Embedder) -> str:
+    return json.dumps(embedder.identity, sort_keys=True)
+
+
+def _stored_metadata(index_dir: Path) -> dict[str, Any] | None:
     if not index_dir.exists():
         return None
-    try:
-        collection = _client(index_dir).get_collection(COLLECTION)
-    except Exception:  # noqa: BLE001 - Chroma raises different types for "not found" across versions
+    client = _client(index_dir)
+    if COLLECTION not in {collection.name for collection in client.list_collections()}:
         return None
-    value = (collection.metadata or {}).get(FINGERPRINT_KEY)
+    return dict(client.get_collection(COLLECTION).metadata or {})
+
+
+def stored_fingerprint(index_dir: Path) -> str | None:
+    value = (_stored_metadata(index_dir) or {}).get(FINGERPRINT_KEY)
     return str(value) if value is not None else None
 
 
@@ -118,7 +126,7 @@ def build_index(
     collection = client.create_collection(
         COLLECTION,
         configuration={"hnsw": {"space": "cosine"}},
-        metadata={FINGERPRINT_KEY: expected},
+        metadata={FINGERPRINT_KEY: expected, EMBEDDER_KEY: _identity(embedder)},
     )
     if chunks:
         collection.add(
@@ -133,12 +141,14 @@ def build_index(
 class ChunkStore:
     """Read side of the index: exact cosine scores for every candidate chunk."""
 
-    def __init__(self, index_dir: Path, expected_fingerprint: str | None = None) -> None:
-        stored = stored_fingerprint(index_dir)
+    def __init__(self, index_dir: Path, embedder: Embedder | None = None) -> None:
+        stored = _stored_metadata(index_dir)
         if stored is None:
             raise IndexNotReadyError(f"No index in {index_dir}; run `python -m app ingest`.")
-        if expected_fingerprint is not None and stored != expected_fingerprint:
-            raise IndexNotReadyError("The index is out of date; run `python -m app ingest`.")
+        if embedder is not None and stored.get(EMBEDDER_KEY) != _identity(embedder):
+            raise IndexNotReadyError(
+                "The index was built with other embedding settings; run `python -m app ingest`."
+            )
         self._collection: Collection = _client(index_dir).get_collection(COLLECTION)
 
     def count(self) -> int:
