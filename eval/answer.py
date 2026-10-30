@@ -50,6 +50,7 @@ ANOTHER_ARTICLE = (
 EXCERPT_WORDING = ("בקטעים", "הקטעים", "קטעים שסופקו", "בקטע ", "excerpt")
 GATE_REFUSALS = {RefusalReason.UNKNOWN_CAR, RefusalReason.LOW_RELEVANCE}
 _CITATION = re.compile(r"\(([^()]*)\)")
+_CLAUSE_END = ",;:—–"  # a number's clause ends at these (a hyphen is part of "ב-EV9", not one)
 # Sentence ends: punctuation followed by whitespace (not a decimal point), or a line break.
 _SENTENCE_END = re.compile(r"(?<=[.!?…])\s+|\n+")
 # Small Hebrew number words, for a passenger count written as a word ("חמישה").
@@ -147,6 +148,48 @@ def _blank(text: str, spans: Iterable[tuple[int, int]]) -> str:
     return "".join(chars)
 
 
+def _without_car_names(text: str, registry: Registry) -> str:
+    """Car names blanked, so "S6" or "01" is never read as a quantity."""
+    return _blank(text, [(start, end) for start, end, _ in guardrails.car_mentions(text, registry)])
+
+
+def _nearest(
+    sentence: str, mentions: list[tuple[int, int, str]], start: int, end: int
+) -> str | None:
+    """The car mentioned closest to a number in its clause, before or after it.
+
+    Hebrew names the car on either side of a figure: "ב-EV9 הוא 397 ק"מ" and
+    "370 ק"מ באיון HT". A clause ends at a comma, semicolon, colon or dash, and a
+    mention after the number that opens with the conjunction "ו" starts a new clause
+    ("MG S6 המחיר 179,990 ולאיון HT ..."). A tie goes to the car before. With no car in
+    the clause, the nearest car named before the number in the sentence owns it.
+    """
+
+    def ends_clause(i: int) -> bool:
+        if sentence[i] not in _CLAUSE_END:
+            return False
+        between_digits = 0 < i < len(sentence) - 1 and sentence[i - 1 : i + 2 : 2].isdigit()
+        return not (sentence[i] == "," and between_digits)  # "168,888" is one number
+
+    left = max((i for i in range(start) if ends_clause(i)), default=-1)
+    right = next((i for i in range(end, len(sentence)) if ends_clause(i)), len(sentence))
+    best: tuple[int, int, str] | None = None
+    for m_start, m_end, car in mentions:
+        before = m_end <= start
+        if before and m_start <= left:
+            continue
+        if not before and (m_start >= right or sentence[m_start] == "ו"):
+            continue
+        distance = start - m_end if before else m_start - end
+        key = (distance, 0 if before else 1)
+        if best is None or key < best[:2]:
+            best = (key[0], key[1], car)
+    if best:
+        return best[2]
+    earlier = [car for m_start, _, car in mentions if m_start < start]
+    return earlier[-1] if earlier else None
+
+
 def attribution_problems(
     answer: str, hits: Sequence[RetrievedChunk], user_texts: Iterable[str], registry: Registry
 ) -> list[Attribution]:
@@ -168,6 +211,7 @@ def attribution_problems(
     }
     problems: list[Attribution] = []
     normalized = "\n".join(guardrails.normalize(line) for line in answer.splitlines())
+    in_answer = numbers.find_numbers(_without_car_names(normalized, registry))
     for sentence in _SENTENCE_END.split(normalized):
         citations = [
             (m.start(), m.end(), guardrails.cars_in_text(m.group(1), registry))
@@ -177,12 +221,13 @@ def attribution_problems(
         mentions = guardrails.car_mentions(outside, registry)
         plain = _blank(outside, [(start, end) for start, end, _ in mentions])
         for number in numbers.find_numbers(plain):
+            if guardrails.derived(number, [n for n in in_answer if n.text != number.text]):
+                continue  # a sum or difference of two numbers the answer states
             cited = next((cars for start, _, cars in citations if start > number.start), [])
             if len(cited) == 1:
                 owner: str | None = cited[0]
-            else:  # no citation after it, or one citing several cars: the car named before it
-                before = [car for start, _, car in mentions if start < number.start]
-                owner = before[-1] if before else None
+            else:  # no citation after it, or one citing several cars: the nearest car named
+                owner = _nearest(outside, mentions, number.start, number.start + len(number.token))
             if owner is None or owner not in by_car or _backed(number, from_user):
                 continue
             if _backed(number, by_car[owner]):

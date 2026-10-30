@@ -217,7 +217,7 @@ def unsupported_numbers(
         number.text
         for number in found
         if not _backed(number, from_chunks | from_user | allowed)
-        and not _derived(number, [other for other in operands if other is not number])
+        and not derived(number, [other for other in operands if other is not number])
     ]
     return list(dict.fromkeys(problems))
 
@@ -226,7 +226,7 @@ def _backed(number: numbers.Number, values: set[Decimal]) -> bool:
     return any(reading.backed_by(value) for reading in number.readings for value in values)
 
 
-def _derived(number: numbers.Number, operands: list[numbers.Number]) -> bool:
+def derived(number: numbers.Number, operands: list[numbers.Number]) -> bool:
     """True when the number is the sum or difference of two other numbers in the answer."""
     for first, second in combinations(operands, 2):
         for a, b, n in product(first.readings, second.readings, number.readings):

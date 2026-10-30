@@ -84,7 +84,7 @@ def test_a_swapped_price_is_caught_by_the_citation_that_follows_it() -> None:
     ]
 
 
-def test_without_citations_the_car_named_before_the_number_owns_it() -> None:
+def test_without_citations_the_car_in_the_numbers_clause_owns_it() -> None:
     answer = "ל-MG S6 המחיר 179,990 ולאיון HT המחיר 168,888."
     found = attribution_problems(answer, HITS, [], REGISTRY)
     assert {(p.number, p.placed_with) for p in found} == {
@@ -118,6 +118,54 @@ def test_a_number_word_the_user_did_not_write_does_not_cover_the_number() -> Non
     assert [(p.number, p.placed_with, p.backed_by) for p in found] == [
         ("5", "mg_s6", ["hyundai_elantra_n"])
     ]
+
+
+RANGE_HITS = [
+    RetrievedChunk(chunk=_chunk("kia_ev9", 0, 'טווח ממוצע מצטבר: 397 ק"מ', "טבלה"), score=0.9),
+    RetrievedChunk(
+        chunk=_chunk("aion_ht", 0, 'טווח נסיעה בפועל: 370 ק"מ', "הרכב הנבחן"), score=0.9
+    ),
+]
+SPRINT_HITS = [
+    RetrievedChunk(chunk=_chunk("audi_rs3", 0, "0 ל-100 ב-3.8 שניות", "הרכב הנבחן"), score=0.9),
+    RetrievedChunk(
+        chunk=_chunk("hyundai_elantra_n", 0, "מנוע 2.0 ליטר, 0 ל-100 ב-5.8 שניות"), score=0.9
+    ),
+]
+
+
+def test_a_car_named_after_its_number_owns_it() -> None:
+    """Hebrew order: the figure first, then the car ("370 ק"מ באיון HT")."""
+    answer = (
+        "טווח ממוצע מצטבר ב-EV9 הוא 397 ק״מ, לעומת טווח בפועל של 370 ק״מ באיון HT "
+        "(קיה EV9, טבלה; GAC איון HT, הרכב הנבחן)."
+    )
+    assert attribution_problems(answer, RANGE_HITS, [], REGISTRY) == []
+
+
+def test_a_swap_in_the_hebrew_order_is_still_caught() -> None:
+    answer = (
+        "טווח ממוצע ב-EV9 הוא 370 ק״מ, לעומת 397 ק״מ באיון HT "
+        "(קיה EV9, טבלה; GAC איון HT, הרכב הנבחן)."
+    )
+    found = attribution_problems(answer, RANGE_HITS, [], REGISTRY)
+    assert {(p.number, p.placed_with) for p in found} == {("370", "kia_ev9"), ("397", "aion_ht")}
+
+
+def test_a_car_after_the_conjunction_starts_a_new_clause() -> None:
+    # "ולאיון" right after 179,990 is the next clause's car, not this number's.
+    answer = "ל-MG S6 המחיר 168,888 ולאיון HT המחיר 179,990."
+    assert attribution_problems(answer, HITS, [], REGISTRY) == []
+
+
+def test_a_difference_of_two_stated_numbers_is_not_attributed() -> None:
+    """5.8 - 3.8 = 2.0, which also happens to be the Elantra's engine size."""
+    answer = (
+        "אלנטרה N מגיעה ל-100 ב-5.8 שניות (יונדאי אלנטרה N, פרק). אודי RS3 מגיעה ב-3.8 "
+        "שניות (אודי RS3, הרכב הנבחן). לכן האודי RS3 מהירה יותר בפער של 2.0 שניות "
+        "(אודי RS3, הרכב הנבחן; יונדאי אלנטרה N, פרק)."
+    )
+    assert attribution_problems(answer, SPRINT_HITS, [], REGISTRY) == []
 
 
 def test_another_article_phrasings_are_counted() -> None:
