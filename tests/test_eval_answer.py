@@ -365,3 +365,46 @@ def test_rescore_recomputes_attribution_from_the_logged_answer(tmp_path: Path) -
                     judge_client=None, judge_model="j", source="runs")  # fmt: skip
     assert old.questions[0].passed_runs == 0 and fixed.questions[0].passed_runs == 1
     assert "Re-scored offline from runs" in fixed.notes[-1]
+
+
+def test_stated_numbers_skip_car_names_and_ignore_formatting() -> None:
+    from eval.answer import stated_numbers
+
+    assert stated_numbers("ל-MG S6 טווח 430 ק״מ ומחיר 168,888", REGISTRY) == ["168888", "430"]
+    assert stated_numbers("לינק אנד קו 01 מאיצה ב-7.7", REGISTRY) == ["7.7"]
+
+
+def test_stability_counts_behavior_numbers_and_identical_pairs() -> None:
+    from eval.answer_report import AnswerQuestion, QuestionRun, stability_of
+
+    def run(behavior: str, text: str, nums: str) -> QuestionRun:
+        return QuestionRun(
+            behavior=behavior, checks=[], judge_passed=None, passed=True, post_check=None,
+            cited_cars=[], llm_calls=1, tokens_in=1, tokens_out=1, cost_usd=0.0,
+            latency_ms=1.0, generate_ms=None, text_sha=text, numbers_sha=nums,
+        )  # fmt: skip
+
+    steady = AnswerQuestion(
+        id="a", category=Category.SINGLE_FACT, expected=Behavior.ANSWER, judged=False,
+        runs=[run("answer", "t1", "n"), run("answer", "t1", "n"), run("answer", "t2", "n")],
+    )  # fmt: skip
+    shaky = steady.model_copy(
+        update={"id": "b", "runs": [run("answer", "t1", "n1"), run("refusal", "t2", "n2")]}
+    )
+    assert (steady.same_behavior, steady.same_numbers) == (True, True)
+    assert steady.identical_text_share == 1 / 3  # one identical pair of three
+    assert (shaky.same_behavior, shaky.same_numbers, shaky.identical_text_share) == (
+        False, False, 0.0,
+    )  # fmt: skip
+    assert stability_of([steady, shaky]) == {
+        "questions": 2, "same_behavior": 1, "same_numbers": 1, "identical_text_mean": 0.167,
+    }  # fmt: skip
+
+
+def test_pipeline_can_use_an_older_generate_prompt() -> None:
+    from carwise.prompts import generate_system
+
+    llm = FakeLLMClient([PLAN, GOOD])
+    pipeline = Pipeline(SETTINGS, REGISTRY, RETRIEVER, llm, generate_version="v3")
+    pipeline.ask("מה זול יותר, MG S6 או איון HT?", [])
+    assert llm.calls[1].system == generate_system("v3") != generate_system()

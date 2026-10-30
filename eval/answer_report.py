@@ -20,7 +20,16 @@ from carwise.llm.base import LLMClient
 from carwise.pipeline import Pipeline
 from carwise.prompts import PROMPT_VERSIONS
 from carwise.registry import Registry
-from eval.answer import BudgetStopError, Check, behavior_of, checks_for, excerpt_wording_count, play
+from eval.answer import (
+    BudgetStopError,
+    Check,
+    behavior_of,
+    checks_for,
+    excerpt_wording_count,
+    fingerprint,
+    play,
+    stated_numbers,
+)
 from eval.judge import PROMPT_VERSION as JUDGE_PROMPT
 from eval.judge import Judged, criteria_change, criteria_version, judge, load_criteria
 from eval.questions import Behavior, Category, Question
@@ -45,6 +54,9 @@ class QuestionRun(BaseModel):
     latency_ms: float  # the graded (last) turn, end to end
     generate_ms: float | None
     excerpt_wording: int = 0  # "the excerpts" instead of "the articles" (a metric, not a check)
+    # Stability across runs, without storing text: hashes of the answer and of its numbers.
+    text_sha: str = ""
+    numbers_sha: str = ""
 
 
 class AnswerQuestion(BaseModel):
@@ -59,6 +71,21 @@ class AnswerQuestion(BaseModel):
     @property
     def passed_runs(self) -> int:
         return sum(run.passed for run in self.runs)
+
+    @property
+    def same_behavior(self) -> bool:
+        return len({run.behavior for run in self.runs}) == 1
+
+    @property
+    def same_numbers(self) -> bool:
+        return len({run.numbers_sha for run in self.runs}) == 1
+
+    @property
+    def identical_text_share(self) -> float:
+        """Share of run pairs whose answers are word for word the same (1.0 with one run)."""
+        hashes = [run.text_sha for run in self.runs]
+        pairs = [(a, b) for i, a in enumerate(hashes) for b in hashes[i + 1 :]]
+        return sum(a == b for a, b in pairs) / len(pairs) if pairs else 1.0
 
 
 class AnswerReport(BaseModel):
@@ -80,6 +107,9 @@ class AnswerReport(BaseModel):
     excerpt_wording_total: int | None = None  # None: a report from before the metric existed
     notes: list[str] = []  # why the judge criteria changed, re-scoring provenance, ...
     runs_log: str | None = None  # the eval/runs/ folder holding this run's answers
+    # Questions with the same behavior / the same numbers in every run, and the mean share
+    # of identical answer pairs. Empty for reports made before the metric existed.
+    stability: dict[str, float] = {}
     post_check: dict[str, int]  # outcome -> count over graded turns
 
 
@@ -95,6 +125,7 @@ def run_answer_eval(
     runs: int,
     question_set: str,
     runs_dir: Path,
+    generate_version: str | None = None,
 ) -> AnswerReport:
     """Play every question `runs` times through the real pipeline, check it, judge it."""
     criteria = load_criteria()
@@ -146,6 +177,8 @@ def run_answer_eval(
                         latency_ms=last.latency_ms.get("total", 0.0),
                         generate_ms=last.latency_ms.get("generate"),
                         excerpt_wording=excerpt_wording_count(last.text),
+                        text_sha=fingerprint(last.text),
+                        numbers_sha=fingerprint(" ".join(stated_numbers(last.text, registry))),
                     )
                 )
                 log.write(
@@ -193,7 +226,13 @@ def run_answer_eval(
         question_set=question_set,
         profile=profile,
         models=models,
-        prompts={**PROMPT_VERSIONS, "judge": JUDGE_PROMPT, "judge_criteria": criteria_version()},
+        prompts={
+            **PROMPT_VERSIONS,
+            "generate": generate_version or PROMPT_VERSIONS["generate"],
+            "judge": JUDGE_PROMPT,
+            "judge_criteria": criteria_version(),
+        },
+        stability=stability_of(results),
         runs_per_question=runs,
         complete=complete,
         questions=results,
@@ -225,11 +264,34 @@ def run_answer_eval(
     )
 
 
+def stability_of(questions: Sequence[AnswerQuestion]) -> dict[str, float]:
+    if not questions:
+        return {}
+    return {
+        "questions": len(questions),
+        "same_behavior": sum(q.same_behavior for q in questions),
+        "same_numbers": sum(q.same_numbers for q in questions),
+        "identical_text_mean": round(
+            sum(q.identical_text_share for q in questions) / len(questions), 3
+        ),
+    }
+
+
 def _failed(run: QuestionRun) -> str:
     names = [c.name for c in run.checks if not c.passed]
     if run.judge_passed is False:
         names.append("judge")
     return ", ".join(names) or "-"
+
+
+def _stable(question: AnswerQuestion) -> str:
+    def yes(flag: bool) -> str:
+        return "yes" if flag else "NO"
+
+    return (
+        f"{yes(question.same_behavior)} / {yes(question.same_numbers)} / "
+        f"{question.identical_text_share:.0%}"
+    )
 
 
 def markdown(report: AnswerReport) -> str:
@@ -274,6 +336,18 @@ def markdown(report: AnswerReport) -> str:
         + f'"excerpts" wording: {excerpts}.',
         "",
         *([f"Notes: {' '.join(report.notes)}", ""] if report.notes else []),
+        *(
+            [
+                f"Stability over {report.runs_per_question} runs: same behavior in "
+                f"{report.stability['same_behavior']:.0f}/{report.stability['questions']:.0f} "
+                f"questions, same numbers in {report.stability['same_numbers']:.0f}/"
+                f"{report.stability['questions']:.0f}, identical text in "
+                f"{report.stability['identical_text_mean']:.0%} of answer pairs (mean).",
+                "",
+            ]
+            if report.stability
+            else []
+        ),
         "## Summary",
         "",
         *summary,
@@ -281,8 +355,8 @@ def markdown(report: AnswerReport) -> str:
         "## Questions",
         "",
         "| Question | Category | Behavior | Post-check | Judge | Failed checks (first run) | "
-        "Passed | Cost $ | Latency ms |",
-        "|---|---|---|---|---|---|---|---|---|",
+        "Passed | Same behavior / numbers / text | Cost $ | Latency ms |",
+        "|---|---|---|---|---|---|---|---|---|---|",
     ]
     for q in report.questions:
         first = q.runs[0]
@@ -297,7 +371,8 @@ def markdown(report: AnswerReport) -> str:
         cost = sum(run.cost_usd for run in q.runs)
         lines.append(
             f"| {q.id} | {q.category.value} | {behavior} | {first.post_check or '-'} | "
-            f"{judge_cell} | {_failed(first)} | {q.passed_runs}/{len(q.runs)} | {cost:.4f} | "
+            f"{judge_cell} | {_failed(first)} | {q.passed_runs}/{len(q.runs)} | "
+            f"{_stable(q)} | {cost:.4f} | "
             f"{first.latency_ms:.0f} |"
         )
     return "\n".join(lines) + "\n"

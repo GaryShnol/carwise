@@ -21,6 +21,7 @@ What is checked on the last answer of each question:
 
 from __future__ import annotations
 
+import hashlib
 import re
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
@@ -121,6 +122,18 @@ def behavior_of(answer: Answer) -> str:
 def another_article_count(text: str) -> int:
     lowered = guardrails.normalize(text)
     return sum(lowered.count(guardrails.normalize(phrase)) for phrase in ANOTHER_ARTICLE)
+
+
+def fingerprint(text: str) -> str:
+    """A short hash: two runs can be compared without storing what they said."""
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
+
+
+def stated_numbers(text: str, registry: Registry) -> list[str]:
+    """The numbers an answer states, as values, sorted; car names ("S6", "01") excluded."""
+    normalized = "\n".join(guardrails.normalize(line) for line in text.splitlines())
+    found = numbers.find_numbers(_without_car_names(normalized, registry))
+    return sorted({format(n.readings[0].value.normalize(), "f") for n in found if n.readings})
 
 
 def excerpt_wording_count(text: str) -> int:

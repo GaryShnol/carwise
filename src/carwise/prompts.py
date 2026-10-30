@@ -25,14 +25,22 @@ PROMPT_DIR = Path(__file__).parent / "llm" / "prompts"
 PROMPT_VERSIONS = {"understand": "v1", "generate": "v4", "regenerate": "v2"}
 
 
-def _load(name: str) -> str:
-    path = PROMPT_DIR / f"{name}.{PROMPT_VERSIONS[name]}.txt"
+def _load(name: str, version: str | None = None) -> str:
+    path = PROMPT_DIR / f"{name}.{version or PROMPT_VERSIONS[name]}.txt"
     return path.read_text(encoding="utf-8").strip()
+
+
+def generate_system(version: str | None = None) -> str:
+    """The generate prompt of a given version; the configured one by default.
+
+    The eval compares versions side by side (CW-302), so an older file stays loadable.
+    """
+    return _load("generate", version)
 
 
 # string.Template ($name) rather than str.format: prompt text may contain braces.
 UNDERSTAND_SYSTEM_TEMPLATE = Template(_load("understand"))
-GENERATE_SYSTEM = _load("generate")
+GENERATE_SYSTEM = generate_system()
 REGENERATE_TEMPLATE = Template(_load("regenerate"))
 
 

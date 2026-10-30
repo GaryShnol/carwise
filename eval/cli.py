@@ -17,7 +17,7 @@ from carwise.config import Settings, load_settings
 from carwise.llm.base import LLMClient, LLMConfigError
 from carwise.llm.openai_client import OpenAIClient
 from carwise.pipeline import Pipeline
-from carwise.prompts import understand_system
+from carwise.prompts import PROMPT_VERSIONS, understand_system
 from carwise.registry import Registry, load_registry
 from carwise.retrieval.retriever import ChunkRetriever, Retriever, open_retriever
 from carwise.retrieval.store import IndexNotReadyError
@@ -75,6 +75,10 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
         "--holdout",
         action="store_true",
         help="run only the hold-out questions written after CW-303 (default: the tuning set)",
+    )
+    parser.add_argument(
+        "--generate-prompt",
+        help="answer level: generate prompt version to use (default: the configured one)",
     )
     parser.add_argument("--out", type=Path, default=REPORTS_DIR, help="report directory")
     parser.add_argument(
@@ -345,11 +349,19 @@ def _answer(
 
     def make_pipeline() -> Pipeline:
         # One client for the whole run, so the cap bounds the run, not a question.
-        return Pipeline(answer_settings, registry, retriever, answer_client, profile=profile_name)
+        return Pipeline(
+            answer_settings,
+            registry,
+            retriever,
+            answer_client,
+            profile=profile_name,
+            generate_version=args.generate_prompt,
+        )
 
     question_set = "holdout" if args.holdout else "tuning"
     stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-    runs_dir = RUNS_DIR / f"answer-{question_set}-{name}-{stamp}"
+    prompt = args.generate_prompt or PROMPT_VERSIONS["generate"]
+    runs_dir = RUNS_DIR / f"answer-{question_set}-{name}-generate{prompt}-{stamp}"
     print(
         f"answer eval: {len(questions)} questions x {args.runs} on {name} "
         f"({models['generate']}), caps ${answer_cap:.2f} answers / ${judge_cap:.2f} judge",
@@ -367,6 +379,7 @@ def _answer(
         runs=args.runs,
         question_set=question_set,
         runs_dir=runs_dir,
+        generate_version=args.generate_prompt,
     )
     paths = write_answer_report(report, args.out)
     print(answer_markdown(report).split("## Questions")[0].rstrip())

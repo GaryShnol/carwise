@@ -32,6 +32,7 @@ from carwise.preferences import Session, prompt_block
 from carwise.preferences import merge as merge_preferences
 from carwise.prompts import (
     GENERATE_SYSTEM,
+    generate_system,
     generation_input,
     regenerate_instruction,
     understand_system,
@@ -141,8 +142,13 @@ class Pipeline:
         *,
         profile: str | None = None,
         logger: TurnLogger | None = None,
+        generate_version: str | None = None,
     ) -> None:
         self._settings = settings
+        # The configured generate prompt unless the eval asks for another version.
+        self._generate_system = (
+            generate_system(generate_version) if generate_version else GENERATE_SYSTEM
+        )
         self._registry = registry
         self._retriever = retriever
         self._llm = llm
@@ -438,7 +444,7 @@ class Pipeline:
         started = time.perf_counter()
         try:
             result = self._llm.complete_json(
-                GENERATE_SYSTEM, messages, Generation, model=self._models.generate_model
+                self._generate_system, messages, Generation, model=self._models.generate_model
             )
             return turn.charge(result, stage)
         finally:
