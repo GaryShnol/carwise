@@ -97,7 +97,7 @@ Branch: `epic/e1-vertical-slice` | Tag: `v0.1`
 | CW-101 | Download script, cache and clean the eight articles | `feat` | S | P1 | DONE | CW-002 |
 | CW-102 | Structure-aware chunking with metadata | `feat` | M | P1 | DONE | CW-101 |
 | CW-103 | Embeddings, Chroma index, per-car retrieval | `feat` | M | P1 | DONE | CW-102 |
-| CW-104 | `LLMClient` interface and one implementation | `feat` | S | P1 | TODO | CW-001 |
+| CW-104 | `LLMClient` interface and one implementation | `feat` | S | P1 | IN PROGRESS | CW-001 |
 | CW-105 | Basic pipeline (understand, generate) and CLI | `feat` | L | P1 | TODO | CW-103, CW-104 |
 | CW-106 | Eval question set (about 15, with trap questions), written before the guardrails | `feat` | M | P1 | DONE | CW-102 |
 
