@@ -408,3 +408,32 @@ def test_pipeline_can_use_an_older_generate_prompt() -> None:
     pipeline = Pipeline(SETTINGS, REGISTRY, RETRIEVER, llm, generate_version="v3")
     pipeline.ask("מה זול יותר, MG S6 או איון HT?", [])
     assert llm.calls[1].system == generate_system("v3") != generate_system()
+
+
+def test_a_question_mark_inside_a_citation_does_not_end_the_sentence() -> None:
+    """Seen on the final profile: "מה התחדש?" is a section name inside the citation."""
+    hits = [
+        RetrievedChunk(chunk=_chunk("hyundai_elantra_n", 0, "מחיר: 224,900"), score=0.9),
+        RetrievedChunk(chunk=_chunk("link_and_co_01", 0, "מחיר: 198,900, 199,000"), score=0.9),
+    ]
+    answer = (
+        "יונדאי אלנטרה N יקרה יותר: המחיר שלה 224,900 שקלים, בעוד שלינק אנד קו 01 מוצע "
+        "ב-198,900–199,000 שקלים (יונדאי אלנטרה N, הרכב הנבחן; לינק אנד קו 01, מה התחדש? "
+        "/ הרכב הנבחן)."
+    )
+    assert attribution_problems(answer, hits, [], REGISTRY) == []
+
+
+def test_nested_parentheses_are_one_citation_and_sentences_split_outside_them() -> None:
+    from eval.answer import citation_spans, sentences
+
+    text = "טווח 397 (קיה EV9, אוטו ארוך־טווח (דוח מס' 4)). שאלה? (סעיף: מה התחדש? כן) סוף"
+    assert [text[a:b] for a, b in citation_spans(text)] == [
+        "(קיה EV9, אוטו ארוך־טווח (דוח מס' 4))",
+        "(סעיף: מה התחדש? כן)",
+    ]
+    assert sentences(text) == [
+        "טווח 397 (קיה EV9, אוטו ארוך־טווח (דוח מס' 4)).",
+        " שאלה?",
+        " (סעיף: מה התחדש? כן) סוף",
+    ]

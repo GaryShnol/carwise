@@ -50,10 +50,8 @@ ANOTHER_ARTICLE = (
 # Calling the sources "the excerpts" exposes the pipeline; generate v4 asks for "the articles".
 EXCERPT_WORDING = ("בקטעים", "הקטעים", "קטעים שסופקו", "בקטע ", "excerpt")
 GATE_REFUSALS = {RefusalReason.UNKNOWN_CAR, RefusalReason.LOW_RELEVANCE}
-_CITATION = re.compile(r"\(([^()]*)\)")
 _CLAUSE_END = ",;:—–"  # a number's clause ends at these (a hyphen is part of "ב-EV9", not one)
-# Sentence ends: punctuation followed by whitespace (not a decimal point), or a line break.
-_SENTENCE_END = re.compile(r"(?<=[.!?…])\s+|\n+")
+_SENTENCE_PUNCTUATION = ".!?…"
 # Small Hebrew number words, for a passenger count written as a word ("חמישה").
 _NUMBER_WORDS = {
     "אחד": 1, "אחת": 1, "שניים": 2, "שתיים": 2, "שני": 2, "שתי": 2, "שלושה": 3, "שלוש": 3,
@@ -161,6 +159,43 @@ def _blank(text: str, spans: Iterable[tuple[int, int]]) -> str:
     return "".join(chars)
 
 
+def citation_spans(text: str) -> list[tuple[int, int]]:
+    """Top-level "(...)" spans, nesting allowed: "(קיה EV9, ... (דוח מס' 4))" is one citation."""
+    spans: list[tuple[int, int]] = []
+    depth, opened = 0, 0
+    for i, ch in enumerate(text):
+        if ch == "(":
+            if depth == 0:
+                opened = i
+            depth += 1
+        elif ch == ")" and depth:
+            depth -= 1
+            if depth == 0:
+                spans.append((opened, i + 1))
+    return spans
+
+
+def sentences(text: str) -> list[str]:
+    """Split at a line break, or at . ! ? … followed by whitespace, outside parentheses.
+
+    Section names inside citations end with "?" ("מה התחדש?"); splitting there would
+    cut a citation in two and turn its car names into claims.
+    """
+    parts: list[str] = []
+    depth, begin = 0, 0
+    for i, ch in enumerate(text):
+        if ch == "(":
+            depth += 1
+        elif ch == ")" and depth:
+            depth -= 1
+        at_end = ch in _SENTENCE_PUNCTUATION and i + 1 < len(text) and text[i + 1].isspace()
+        if ch == "\n" or (depth == 0 and at_end):
+            parts.append(text[begin : i + 1])
+            begin = i + 1
+    parts.append(text[begin:])
+    return [part for part in parts if part.strip()]
+
+
 def _without_car_names(text: str, registry: Registry) -> str:
     """Car names blanked, so "S6" or "01" is never read as a quantity."""
     return _blank(text, [(start, end) for start, end, _ in guardrails.car_mentions(text, registry)])
@@ -225,10 +260,10 @@ def attribution_problems(
     problems: list[Attribution] = []
     normalized = "\n".join(guardrails.normalize(line) for line in answer.splitlines())
     in_answer = numbers.find_numbers(_without_car_names(normalized, registry))
-    for sentence in _SENTENCE_END.split(normalized):
+    for sentence in sentences(normalized):
         citations = [
-            (m.start(), m.end(), guardrails.cars_in_text(m.group(1), registry))
-            for m in _CITATION.finditer(sentence)
+            (start, end, guardrails.cars_in_text(sentence[start + 1 : end - 1], registry))
+            for start, end in citation_spans(sentence)
         ]
         outside = _blank(sentence, [(start, end) for start, end, _ in citations])
         mentions = guardrails.car_mentions(outside, registry)
