@@ -1,0 +1,1337 @@
+{
+ "level": "answer",
+ "created": "2026-10-30T21:37:55+00:00",
+ "question_set": "tuning-rescored",
+ "profile": "dev",
+ "models": {
+  "understand": "gpt-5.4-nano",
+  "generate": "gpt-5.4-nano",
+  "judge": "gpt-5.4"
+ },
+ "prompts": {
+  "understand": "v1",
+  "generate": "v4",
+  "regenerate": "v2",
+  "judge": "v1",
+  "judge_criteria": "v3 (re-judged: 1 question(s))"
+ },
+ "runs_per_question": 1,
+ "complete": true,
+ "questions": [
+  {
+   "id": "fact-mg-real-range",
+   "category": "single_fact",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4088,
+     "tokens_out": 205,
+     "cost_usd": 0.000567,
+     "latency_ms": 3283.466099994257,
+     "generate_ms": 1746.0464998148382,
+     "excerpt_wording": 0
+    }
+   ]
+  },
+  {
+   "id": "fact-audi-rs3-power",
+   "category": "single_fact",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "audi_rs3"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 3813,
+     "tokens_out": 192,
+     "cost_usd": 0.00068,
+     "latency_ms": 2767.9498000070453,
+     "generate_ms": 1560.7899001333863,
+     "excerpt_wording": 0
+    }
+   ]
+  },
+  {
+   "id": "fact-kia-monthly-range",
+   "category": "single_fact",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "kia_ev9"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 3428,
+     "tokens_out": 148,
+     "cost_usd": 0.000548,
+     "latency_ms": 2504.8427002038807,
+     "generate_ms": 1350.1734999008477,
+     "excerpt_wording": 0
+    }
+   ]
+  },
+  {
+   "id": "fact-genesis-engine",
+   "category": "single_fact",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "genesis_gv80"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 3589,
+     "tokens_out": 144,
+     "cost_usd": 0.000575,
+     "latency_ms": 2366.1716000642627,
+     "generate_ms": 1228.4885998815298,
+     "excerpt_wording": 0
+    }
+   ]
+  },
+  {
+   "id": "compare-mg-aion-range",
+   "category": "comparison",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4481,
+     "tokens_out": 401,
+     "cost_usd": 0.000891,
+     "latency_ms": 4302.854200126603,
+     "generate_ms": 3008.5503000300378,
+     "excerpt_wording": 0
+    }
+   ]
+  },
+  {
+   "id": "compare-elantra-rs3-acceleration",
+   "category": "comparison",
+   "expected": "answer",
+   "judged": true,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": true,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "audi_rs3",
+      "hyundai_elantra_n"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 5371,
+     "tokens_out": 262,
+     "cost_usd": 0.001402,
+     "latency_ms": 3369.2373998928815,
+     "generate_ms": 1853.0983000528067,
+     "excerpt_wording": 0
+    }
+   ]
+  },
+  {
+   "id": "compare-cheaper-mg-aion",
+   "category": "comparison",
+   "expected": "answer",
+   "judged": true,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": true,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4696,
+     "tokens_out": 144,
+     "cost_usd": 0.001119,
+     "latency_ms": 2577.185200061649,
+     "generate_ms": 1383.8864997960627,
+     "excerpt_wording": 0
+    }
+   ]
+  },
+  {
+   "id": "compare-pricier-elantra-link",
+   "category": "comparison",
+   "expected": "answer",
+   "judged": true,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": true,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "hyundai_elantra_n",
+      "link_and_co_01"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 5353,
+     "tokens_out": 183,
+     "cost_usd": 0.001299,
+     "latency_ms": 3019.666700158268,
+     "generate_ms": 1698.4284999780357,
+     "excerpt_wording": 0
+    }
+   ]
+  },
+  {
+   "id": "compare-faster-genesis-link",
+   "category": "comparison",
+   "expected": "answer",
+   "judged": true,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": true,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "genesis_gv80",
+      "link_and_co_01"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4979,
+     "tokens_out": 261,
+     "cost_usd": 0.001322,
+     "latency_ms": 3391.5959000587463,
+     "generate_ms": 1857.3016000445932,
+     "excerpt_wording": 0
+    }
+   ]
+  },
+  {
+   "id": "compare-longer-range-kia-aion",
+   "category": "comparison",
+   "expected": "answer",
+   "judged": true,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": true,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "kia_ev9"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4547,
+     "tokens_out": 361,
+     "cost_usd": 0.001361,
+     "latency_ms": 5066.990100080147,
+     "generate_ms": 3719.5798999164253,
+     "excerpt_wording": 0
+    }
+   ]
+  },
+  {
+   "id": "rec-manual-sport",
+   "category": "recommendation",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "audi_rs3",
+      "citroen_c3",
+      "genesis_gv80",
+      "hyundai_elantra_n",
+      "kia_ev9",
+      "link_and_co_01",
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 10464,
+     "tokens_out": 758,
+     "cost_usd": 0.00304,
+     "latency_ms": 7684.079800033942,
+     "generate_ms": 5376.907599857077,
+     "excerpt_wording": 0
+    }
+   ]
+  },
+  {
+   "id": "rec-family-electric-scenario",
+   "category": "recommendation",
+   "expected": "answer",
+   "judged": true,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "preference:powertrain",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "preference:budget_max_nis",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "preference:passengers",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": false,
+     "passed": false,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "mg_s6"
+     ],
+     "llm_calls": 8,
+     "tokens_in": 32118,
+     "tokens_out": 1602,
+     "cost_usd": 0.008426,
+     "latency_ms": 4393.396900035441,
+     "generate_ms": 2760.2283000014722,
+     "excerpt_wording": 0
+    }
+   ]
+  },
+  {
+   "id": "rank-fastest",
+   "category": "ranking",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "audi_rs3",
+      "citroen_c3",
+      "genesis_gv80",
+      "hyundai_elantra_n",
+      "kia_ev9",
+      "link_and_co_01",
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 9001,
+     "tokens_out": 526,
+     "cost_usd": 0.002458,
+     "latency_ms": 5404.60480004549,
+     "generate_ms": 3366.177200106904,
+     "excerpt_wording": 0
+    }
+   ]
+  },
+  {
+   "id": "rank-cheapest",
+   "category": "ranking",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "audi_rs3",
+      "citroen_c3",
+      "genesis_gv80",
+      "hyundai_elantra_n",
+      "kia_ev9",
+      "link_and_co_01",
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 9185,
+     "tokens_out": 499,
+     "cost_usd": 0.002461,
+     "latency_ms": 4557.840999914333,
+     "generate_ms": 3116.011500125751,
+     "excerpt_wording": 2
+    }
+   ]
+  },
+  {
+   "id": "followup-genesis-fuel",
+   "category": "follow_up",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "genesis_gv80"
+     ],
+     "llm_calls": 4,
+     "tokens_in": 7733,
+     "tokens_out": 629,
+     "cost_usd": 0.002333,
+     "latency_ms": 2780.9456000104547,
+     "generate_ms": 1649.3855000007898,
+     "excerpt_wording": 0
+    }
+   ]
+  },
+  {
+   "id": "followup-switch-car",
+   "category": "follow_up",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht"
+     ],
+     "llm_calls": 4,
+     "tokens_in": 7498,
+     "tokens_out": 315,
+     "cost_usd": 0.001893,
+     "latency_ms": 2341.9572000857443,
+     "generate_ms": 1210.6489001307636,
+     "excerpt_wording": 0
+    }
+   ]
+  },
+  {
+   "id": "trap-unknown-car-toyota",
+   "category": "trap",
+   "expected": "refusal",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "refusal",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "refusal, expected refusal"
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": null,
+     "cited_cars": [],
+     "llm_calls": 1,
+     "tokens_in": 945,
+     "tokens_out": 59,
+     "cost_usd": 0.000263,
+     "latency_ms": 1026.013399939984,
+     "generate_ms": null,
+     "excerpt_wording": 0
+    }
+   ]
+  },
+  {
+   "id": "trap-known-and-unknown-car",
+   "category": "trap",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "genesis_gv80"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 3593,
+     "tokens_out": 217,
+     "cost_usd": 0.00099,
+     "latency_ms": 2903.033300070092,
+     "generate_ms": 1749.6126999612898,
+     "excerpt_wording": 0
+    }
+   ]
+  },
+  {
+   "id": "trap-missing-detail",
+   "category": "trap",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_not_match",
+       "passed": true,
+       "detail": "0 pattern(s)"
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "kia_ev9"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 3400,
+     "tokens_out": 131,
+     "cost_usd": 0.000844,
+     "latency_ms": 2642.233399907127,
+     "generate_ms": 1397.8363999631256,
+     "excerpt_wording": 0
+    }
+   ]
+  },
+  {
+   "id": "trap-mixing-specs",
+   "category": "trap",
+   "expected": "answer",
+   "judged": true,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": false,
+       "detail": "77"
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": false,
+     "passed": false,
+     "post_check": "clean",
+     "cited_cars": [
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 3822,
+     "tokens_out": 199,
+     "cost_usd": 0.001013,
+     "latency_ms": 2711.0641000326723,
+     "generate_ms": 1498.6878999043256,
+     "excerpt_wording": 0
+    }
+   ]
+  },
+  {
+   "id": "trap-missing-feature-distractors",
+   "category": "trap",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_not_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "link_and_co_01"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4244,
+     "tokens_out": 303,
+     "cost_usd": 0.001228,
+     "latency_ms": 3293.618999887258,
+     "generate_ms": 2228.3115999307483,
+     "excerpt_wording": 0
+    }
+   ]
+  },
+  {
+   "id": "trap-injection-unknown-car",
+   "category": "trap",
+   "expected": "refusal",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "refusal",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "refusal, expected refusal"
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": null,
+     "cited_cars": [],
+     "llm_calls": 1,
+     "tokens_in": 953,
+     "tokens_out": 55,
+     "cost_usd": 0.000259,
+     "latency_ms": 1362.7156000584364,
+     "generate_ms": null,
+     "excerpt_wording": 0
+    }
+   ]
+  },
+  {
+   "id": "trap-off-topic",
+   "category": "trap",
+   "expected": "out_of_scope",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "out_of_scope",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "out_of_scope, expected out_of_scope"
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": null,
+     "cited_cars": [],
+     "llm_calls": 1,
+     "tokens_in": 933,
+     "tokens_out": 40,
+     "cost_usd": 0.000237,
+     "latency_ms": 1122.9630000889301,
+     "generate_ms": null,
+     "excerpt_wording": 0
+    }
+   ]
+  }
+ ],
+ "cost_usd": {
+  "answer": 0.035209,
+  "judge": 0.081678
+ },
+ "tokens": {
+  "answer_in": 138234,
+  "answer_out": 7634,
+  "judge_in": 26609,
+  "judge_out": 397
+ },
+ "latency_ms": {
+  "turn_p50": 2903.033300070092,
+  "turn_p95": 5404.60480004549,
+  "generate_p50": 1746.0464998148382,
+  "generate_p95": 3719.5798999164253
+ },
+ "another_article_total": 0,
+ "excerpt_wording_total": 2,
+ "notes": [
+  "Re-scored offline from answer-tuning-dev-20261030T213557Z: attribution check recomputed with the current code; re-judged with criteria v3: compare-longer-range-kia-aion ($0.0092)."
+ ],
+ "runs_log": null,
+ "post_check": {
+  "clean": 20
+ }
+}
