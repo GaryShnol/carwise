@@ -15,22 +15,31 @@ from carwise.registry import Registry
 from carwise.schemas import RetrievedChunk
 
 PROMPT_DIR = Path(__file__).parent / "llm" / "prompts"
-PROMPT_VERSION = "v1"
+# Each prompt is versioned on its own, so changing one keeps the others comparable.
+# generate v2 (CW-202): excerpts are one set of articles, no "in another article".
+PROMPT_VERSIONS = {"understand": "v1", "generate": "v2", "regenerate": "v1"}
 
 
 def _load(name: str) -> str:
-    return (PROMPT_DIR / f"{name}.{PROMPT_VERSION}.txt").read_text(encoding="utf-8").strip()
+    path = PROMPT_DIR / f"{name}.{PROMPT_VERSIONS[name]}.txt"
+    return path.read_text(encoding="utf-8").strip()
 
 
 # string.Template ($name) rather than str.format: prompt text may contain braces.
 UNDERSTAND_SYSTEM_TEMPLATE = Template(_load("understand"))
 GENERATE_SYSTEM = _load("generate")
+REGENERATE_TEMPLATE = Template(_load("regenerate"))
 
 
 def understand_system(registry: Registry) -> str:
     """The understand prompt with the registry inlined, so aliases resolve to ids."""
     lines = [f"- {car.id}: {', '.join(dict.fromkeys(car.aliases))}" for car in registry.cars]
     return UNDERSTAND_SYSTEM_TEMPLATE.substitute(car_registry="\n".join(lines))
+
+
+def regenerate_instruction(problems: list[str]) -> str:
+    """The follow-up user message of the one stricter retry after a failed post-check."""
+    return REGENERATE_TEMPLATE.substitute(problems="; ".join(problems) + ".")
 
 
 def generation_input(question: str, chunks: list[RetrievedChunk], not_covered: list[str]) -> str:

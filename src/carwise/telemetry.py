@@ -15,7 +15,7 @@ from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
 
-from carwise.prompts import PROMPT_VERSION
+from carwise.prompts import PROMPT_VERSIONS
 from carwise.schemas import Answer
 
 LOG_FILE = "turns.jsonl"
@@ -28,7 +28,7 @@ def turn_record(
         "ts": datetime.now(UTC).isoformat(timespec="seconds"),
         "profile": profile,
         "models": models,
-        "prompt_version": PROMPT_VERSION,
+        "prompt_versions": PROMPT_VERSIONS,
         "message_chars": message_chars,
         "intent": answer.intent.value if answer.intent else None,
         "cars": answer.cars,
@@ -41,6 +41,7 @@ def turn_record(
         "used_chunk_ids": [source.chunk_id for source in answer.sources],
         "dropped_chunk_ids": answer.dropped_chunk_ids,
         "flags": answer.flags,
+        "post_check": answer.post_check.model_dump(mode="json") if answer.post_check else None,
         "llm_calls": answer.llm_calls,
         "tokens": asdict(answer.usage),
         "cost_usd": round(answer.cost_usd, 8),

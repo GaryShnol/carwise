@@ -68,11 +68,11 @@ Items outside the code that must not be forgotten. Update the status as each is 
 |---|---|---|---|---|---|
 | E0 Scaffold and source check | none | 3 | 3 | 3 | DONE |
 | E1 Thin vertical slice | `v0.1` | 6 | 6 | 11 | DONE |
-| E2 Reliability and guardrails | none | 6 | 1 | 9 | IN PROGRESS |
+| E2 Reliability and guardrails | none | 6 | 2 | 9 | IN PROGRESS |
 | E3 Measurement | none | 3 | 0 | 5 | TODO |
 | E4 Interface and packaging | none | 3 | 0 | 4 | TODO |
 | E5 Documentation and release | `v1.0` | 3 | 0 | 4 | TODO |
-| **Total** |  | **24** | **10** | **36** |  |
+| **Total** |  | **24** | **11** | **36** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -110,7 +110,7 @@ Branch: `epic/e2-reliability` | Tag: none
 | ID | Ticket | Type | Size | Pri | Status | Depends on |
 |---|---|---|---|---|---|---|
 | CW-201 | Relevance gate and fixed refusal | `feat` | M | P1 | DONE | CW-105 |
-| CW-202 | Post-check for cars not retrieved this turn | `feat` | M | P1 | IN PROGRESS | CW-105 |
+| CW-202 | Post-check for cars not retrieved this turn | `feat` | M | P1 | DONE | CW-105 |
 | CW-203 | Preference model and `/prefs` command | `feat` | M | P1 | TODO | CW-105 |
 | CW-204 | Turn telemetry and cost estimate | `feat` | S | P2 | TODO | CW-105 |
 | CW-205 | Injection hygiene and input limits | `feat` | S | P2 | TODO | CW-105 |
@@ -243,10 +243,12 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [x] As built: the unknown car is never classified (that would be outside knowledge); suggestions come from the user's own words (the current message and the user turns in the history window, never the model's rewritten question, which can add "electric" from model knowledge of the unknown car), via hint words in `guardrails.body_type_words` and `powertrain_words` mapped to the registry values (a car scores one point per matching dimension; within a dimension the kind with the most hint words wins, so "היברידי נטען" is plug-in only). Without a hint, the low-relevance refusal suggests the cars of the best-scoring chunks; with neither, every refusal lists the eight cars grouped by powertrain with their body type. `Answer.suggested_cars` and the telemetry line record what was offered; at most `guardrails.max_suggestions` cars.
 
 ### CW-202 Post-check
-- [ ] A car named in the answer is acceptable only if it was retrieved this turn or appears in the text of the retrieved chunks (articles may mention rival cars legitimately); otherwise the answer is suspect.
-- [ ] Name matching normalizes Hebrew prefixes, and a small configurable list of well-known brands outside the corpus is also checked.
-- [ ] Suspect answers are regenerated once with a stricter instruction, or replaced with a safe fallback.
-- [ ] Unit tests cover the flagged case, the clean case, and a rival car mentioned in a retrieved chunk.
+- [x] A car named in the answer is acceptable only if it was retrieved this turn or appears in the text of the retrieved chunks (articles may mention rival cars legitimately); otherwise the answer is suspect.
+- [x] Name matching normalizes Hebrew prefixes, and a small configurable list of well-known brands outside the corpus is also checked.
+- [x] Suspect answers are regenerated once with a stricter instruction, or replaced with a safe fallback.
+- [x] Unit tests cover the flagged case, the clean case, and a rival car mentioned in a retrieved chunk.
+- [x] As built: `guardrails.unsupported_cars` also accepts an outside brand the user asked about (`not_covered`), since the answer must say the articles do not cover it. A suspect answer gets exactly one retry (the rejected answer as an assistant turn, then `regenerate.v1.txt` with the reasons); if the retry is still suspect or the call fails, `guardrails.unverified_reply` (no model text; only where in the articles the closest information is) is shown with refusal `unverified`. `Answer.post_check` (outcome `clean` / `regenerated` / `fallback`, findings per attempt), the flags `postcheck_suspect`, `postcheck_regenerated`, `postcheck_fallback`, and the telemetry line record it. Prompts are versioned per prompt (`PROMPT_VERSIONS`); `generate.v2.txt` says the excerpts are one set of articles, forbids "בכתבה אחרת"-style phrasing and names outside the excerpts; v1 is kept. Known limits: a model name with no registry alias and no listed brand is not caught; a brand written in the other script than the chunk (BMW vs ב.מ.וו) is flagged even when the chunk names it.
+- [x] Live check of the CW-105 "another article" issue: not reproduced in 9 runs with generate v1 (3 comparison questions on `dev` and `final`, one of them 3 times) nor in 3 runs with v2. The v2 rule stays as prevention; CW-302 should count this phrasing in the answer eval.
 
 ### CW-203 Preference model and `/prefs`
 - [ ] Typed preference object updated every turn; each field records its source message.
@@ -363,6 +365,8 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 | 2026-10-29 | CW-002 done: all eight URLs return 200 with real article bodies, `robots.txt` was read and allows them. Decision: automatic download (identifiable User-Agent, 3 s delay, cache in `data/raw/`); manual placement stays as the documented fallback. |
 
 | 2026-10-29 | CW-003 done: six milestones (E0 to E5), PR template, pre-publish scan of the history found no secrets or data files, `.gitattributes` added to keep LF line endings (the Makefile needs them). Epic E0 closed. |
+
+| 2026-10-30 | CW-202 done: car-name post-check with one stricter regeneration, then a code-built fallback; per-prompt versions, generate v2. CW-201 fix: hint words come only from the user's own messages. |
 
 | 2026-10-30 | CW-201 done: refusals suggest the closest of the eight cars (hint words from the user's message, else best-scoring chunks, else all eight grouped by powertrain and body type) and invite a follow-up; similarity threshold stays configurable at 0 until CW-303. |
 

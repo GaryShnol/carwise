@@ -94,6 +94,42 @@ def not_covered(llm_names: list[str], brand_hits: list[str]) -> list[str]:
     return list(dict.fromkeys(names))
 
 
+# --- post-check of the generated answer (CW-202) -------------------------------------
+def unsupported_cars(
+    answer: str,
+    hits: Iterable[RetrievedChunk],
+    not_covered: Iterable[str],
+    registry: Registry,
+    outside_brands: Iterable[str],
+) -> list[str]:
+    """Car names in the answer that this turn's sources cannot back.
+
+    A corpus car is backed when it was retrieved, or when a retrieved chunk names
+    it (a review may compare against a rival). An outside brand is backed only by
+    a retrieved chunk that names it, or by the user's own question (`not_covered`,
+    where the answer is expected to say the articles do not cover it). Anything
+    else came from the model's own knowledge, which is what this check exists for.
+    Limit: a model name with no registry alias and no listed brand is not caught.
+    """
+    hits = list(hits)
+    sources = "\n".join(hit.chunk.text for hit in hits)
+    retrieved = {hit.chunk.car for hit in hits}
+    asked = "\n".join(not_covered)
+    problems = [
+        car.display_name
+        for car in registry.cars
+        if car.id not in retrieved
+        and mentioned(answer, car.aliases)
+        and not mentioned(sources, car.aliases)
+    ]
+    problems += [
+        brand
+        for brand in mentioned(answer, outside_brands)
+        if not mentioned(sources, [brand]) and not mentioned(asked, [brand])
+    ]
+    return problems
+
+
 # --- suggestions inside the corpus (CW-201) -------------------------------------------
 def hinted_cars(
     text: str,
@@ -215,6 +251,21 @@ def out_of_scope_reply(registry: Registry) -> str:
     return (
         "אני עוזר רק בשאלות על רכבים, לפי כתבות המבחן של שמונה רכבים - "
         f"{corpus_overview(registry)}. אפשר לשאול על נתונים, השוואות או המלצות."
+    )
+
+
+def unverified_reply(registry: Registry, hits: list[RetrievedChunk], limit: int) -> str:
+    """Safe fallback when two answers failed the post-check: no model text at all,
+    only where in the articles the closest information is."""
+    places = []
+    for car_id in closest_by_score(hits, limit):
+        sections = [hit.chunk.section for hit in hits if hit.chunk.car == car_id]
+        places.append(f"{registry.get(car_id).display_name} ({', '.join(dict.fromkeys(sections))})")
+    where = f" המידע הקרוב ביותר נמצא בכתבות על {'; '.join(places)}." if places else ""
+    return (
+        "לא הצלחתי לנסח תשובה שנשענת רק על הכתבות, ולכן לא אציג אותה."
+        + where
+        + " אפשר לנסח את השאלה מחדש, או לשאול על רכב אחד בכל פעם."
     )
 
 

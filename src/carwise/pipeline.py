@@ -1,7 +1,8 @@
 """The single orchestrator of a conversation turn (CLAUDE.md section 3.2).
 
 Fixed order: validate input, understand (LLM call 1), registry gate, retrieve,
-similarity gate, generate (LLM call 2), check citations. Every refusal happens
+similarity gate, generate (LLM call 2), post-check (one stricter regeneration,
+then a safe fallback), check citations. Every refusal happens
 before the generation call and is filled in by code, so the cheapest and most
 reliable path is also the one taken when the corpus cannot answer; it still
 helps, by suggesting the closest of the eight cars. CLI, UI and
@@ -25,14 +26,22 @@ from carwise.llm.base import (
     T,
     Usage,
 )
-from carwise.prompts import GENERATE_SYSTEM, generation_input, understand_system
+from carwise.prompts import (
+    GENERATE_SYSTEM,
+    generation_input,
+    regenerate_instruction,
+    understand_system,
+)
 from carwise.registry import Registry
 from carwise.retrieval.retriever import ChunkRetriever
 from carwise.schemas import (
     Answer,
+    CheckFindings,
     Citation,
     Generation,
     Intent,
+    PostCheck,
+    PostCheckOutcome,
     RefusalReason,
     RetrievedChunk,
     Understanding,
@@ -152,7 +161,54 @@ class Pipeline:
             turn.flags.append(f"generate_{type(error).__name__}")
             text = guardrails.LLM_ERROR_REPLY
             return self._reply(turn, text, RefusalReason.LLM_ERROR, plan, hits)
-        return self._grounded(turn, plan, hits, generation)
+        return self._checked(turn, plan, hits, generation)
+
+    def _checked(
+        self, turn: _Turn, plan: _Plan, hits: list[RetrievedChunk], generation: Generation
+    ) -> Answer:
+        """Post-check; a suspect answer gets one stricter retry, then a code-built fallback.
+
+        Why at most one retry: each is a full generation call, and a model that
+        failed twice on the same excerpts is unlikely to pass a third time, so the
+        bounded path (one extra call, then a safe reply) keeps cost and latency fixed.
+        """
+        findings = self._post_check(plan, hits, generation)
+        if not findings.suspect:
+            check = PostCheck(outcome=PostCheckOutcome.CLEAN, attempts=[findings])
+            return self._grounded(turn, plan, hits, generation, check)
+
+        turn.flags.append("postcheck_suspect")
+        attempts = [findings]
+        try:
+            retry = self._generate(plan, hits, turn, retry_of=(generation, findings))
+        except (LLMOutputError, LLMUnavailableError) as error:
+            turn.charge_failure(error)
+            turn.flags.append(f"regenerate_{type(error).__name__}")
+        else:
+            retry_findings = self._post_check(plan, hits, retry)
+            attempts.append(retry_findings)
+            if not retry_findings.suspect:
+                turn.flags.append("postcheck_regenerated")
+                check = PostCheck(outcome=PostCheckOutcome.REGENERATED, attempts=attempts)
+                return self._grounded(turn, plan, hits, retry, check)
+
+        turn.flags.append("postcheck_fallback")
+        check = PostCheck(outcome=PostCheckOutcome.FALLBACK, attempts=attempts)
+        limit = self._settings.guardrails.max_suggestions
+        text = guardrails.unverified_reply(self._registry, hits, limit)
+        return self._reply(turn, text, RefusalReason.UNVERIFIED, plan, hits, post_check=check)
+
+    def _post_check(
+        self, plan: _Plan, hits: list[RetrievedChunk], generation: Generation
+    ) -> CheckFindings:
+        cars = guardrails.unsupported_cars(
+            generation.answer,
+            hits,
+            plan.not_covered,
+            self._registry,
+            self._settings.guardrails.outside_brands,
+        )
+        return CheckFindings(cars=cars)
 
     def _understand(self, message: str, history: list[Message], turn: _Turn) -> _Plan:
         window = history[-self._settings.llm.history_window :] if history else []
@@ -229,22 +285,40 @@ class Pipeline:
         )
         return hinted or guardrails.closest_by_score(hits, config.max_suggestions)
 
-    def _generate(self, plan: _Plan, hits: list[RetrievedChunk], turn: _Turn) -> Generation:
+    def _generate(
+        self,
+        plan: _Plan,
+        hits: list[RetrievedChunk],
+        turn: _Turn,
+        *,
+        retry_of: tuple[Generation, CheckFindings] | None = None,
+    ) -> Generation:
+        """One generate call; on a retry the rejected answer and the reasons follow it."""
         content = generation_input(plan.question, hits, plan.not_covered)
+        messages: list[Message] = [{"role": "user", "content": content}]
+        if retry_of:
+            rejected, findings = retry_of
+            messages += [
+                {"role": "assistant", "content": rejected.model_dump_json()},
+                {"role": "user", "content": regenerate_instruction(findings.problems())},
+            ]
+        stage = "regenerate" if retry_of else "generate"
         started = time.perf_counter()
         try:
             result = self._llm.complete_json(
-                GENERATE_SYSTEM,
-                [{"role": "user", "content": content}],
-                Generation,
-                model=self._models.generate_model,
+                GENERATE_SYSTEM, messages, Generation, model=self._models.generate_model
             )
             return turn.charge(result)
         finally:
-            turn.latency_ms["generate"] = (time.perf_counter() - started) * 1000
+            turn.latency_ms[stage] = (time.perf_counter() - started) * 1000
 
     def _grounded(
-        self, turn: _Turn, plan: _Plan, hits: list[RetrievedChunk], generation: Generation
+        self,
+        turn: _Turn,
+        plan: _Plan,
+        hits: list[RetrievedChunk],
+        generation: Generation,
+        check: PostCheck,
     ) -> Answer:
         """Citations are checked in code: an id the model did not receive is dropped."""
         by_id = {hit.chunk.chunk_id: hit.chunk for hit in hits}
@@ -262,7 +336,9 @@ class Pipeline:
             )
             for chunk in (by_id[chunk_id] for chunk_id in cited if chunk_id in by_id)
         ]
-        return self._reply(turn, generation.answer, None, plan, hits, sources, dropped)
+        return self._reply(
+            turn, generation.answer, None, plan, hits, sources, dropped, post_check=check
+        )
 
     # --- helpers ------------------------------------------------------------------------
     @staticmethod
@@ -276,6 +352,7 @@ class Pipeline:
         dropped: list[str] | None = None,
         *,
         suggested: list[str] | None = None,
+        post_check: PostCheck | None = None,
     ) -> Answer:
         plan = plan or _Plan()
         return Answer(
@@ -289,6 +366,7 @@ class Pipeline:
             standalone_question=plan.question,
             retrieved=hits or [],
             dropped_chunk_ids=dropped or [],
+            post_check=post_check,
             flags=list(turn.flags),
             llm_calls=turn.llm_calls,
             usage=turn.usage,

@@ -115,6 +115,38 @@ class RefusalReason(StrEnum):
     LOW_RELEVANCE = "low_relevance"  # similarity gate: best score below the threshold
     OUT_OF_SCOPE = "out_of_scope"  # chitchat or off-topic: no retrieval at all
     LLM_ERROR = "llm_error"  # provider unavailable or unusable output
+    UNVERIFIED = "unverified"  # post-check failed on the answer and on its one regeneration
+
+
+class CheckFindings(BaseModel):
+    """What the post-check found wrong with one generated answer; empty means clean."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    cars: list[str]  # car names the retrieved chunks and the question cannot back
+
+    @property
+    def suspect(self) -> bool:
+        return bool(self.cars)
+
+    def problems(self) -> list[str]:
+        """English sentences for the regenerate instruction."""
+        if not self.cars:
+            return []
+        return [f"it names cars that the excerpts do not support: {', '.join(self.cars)}"]
+
+
+class PostCheckOutcome(StrEnum):
+    CLEAN = "clean"  # the first answer passed
+    REGENERATED = "regenerated"  # the first failed, the one stricter retry passed
+    FALLBACK = "fallback"  # both failed (or the retry errored): a code-built reply was shown
+
+
+class PostCheck(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    outcome: PostCheckOutcome
+    attempts: list[CheckFindings]  # one per generated answer, in order
 
 
 class Citation(BaseModel):
@@ -142,6 +174,7 @@ class Answer(BaseModel):
     standalone_question: str
     retrieved: list[RetrievedChunk]
     dropped_chunk_ids: list[str]  # cited by the model but not retrieved this turn
+    post_check: PostCheck | None  # None when no answer was generated
     flags: list[str]
     llm_calls: int
     usage: Usage

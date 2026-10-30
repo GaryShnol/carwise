@@ -258,7 +258,8 @@ def test_follow_up_uses_history_and_the_rewritten_question() -> None:
         {"role": "assistant", "content": "המחיר הוא 180 אלף שקל (MG S6, פרק 1)."},
     ]
     plan = understanding(cars=["aion_ht"], question="מה המחיר של איון HT?")
-    pipeline, llm, retriever = make([plan, generation(ids=["aion_ht:001"])])
+    reply = generation("המחיר הוא 170 אלף שקל (GAC איון HT, פרק 1).", ["aion_ht:001"])
+    pipeline, llm, retriever = make([plan, reply])
     answer = pipeline.ask("ומה לגבי איון?", history)
     assert llm.calls[0].messages == [*history, {"role": "user", "content": "ומה לגבי איון?"}]
     assert retriever.calls == [("search", ["aion_ht"])]
