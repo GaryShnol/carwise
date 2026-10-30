@@ -72,7 +72,7 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E3 Measurement | none | 3 | 0 | 5 | TODO |
 | E4 Interface and packaging | none | 3 | 0 | 4 | TODO |
 | E5 Documentation and release | `v1.0` | 3 | 0 | 4 | TODO |
-| **Total** |  | **24** | **0** | **36** |  |
+| **Total** |  | **24** | **8** | **36** |  |
 
 ## Epic E0: Scaffold and source check
 
