@@ -18,6 +18,7 @@ from carwise import guardrails
 from carwise.config import Settings
 from carwise.guardrails import escape_text
 from carwise.llm.base import (
+    BudgetExceededError,
     LLMClient,
     LLMError,
     LLMOutputError,
@@ -43,6 +44,7 @@ from carwise.schemas import (
     Citation,
     Generation,
     Intent,
+    LLMCall,
     PostCheck,
     PostCheckOutcome,
     Preferences,
@@ -69,18 +71,53 @@ class _Turn:
     preferences: Preferences = field(default_factory=Preferences)
     updated_preferences: list[str] = field(default_factory=list)
 
-    def charge(self, result: LLMResult[T]) -> T:
+    calls: list[LLMCall] = field(default_factory=list)
+
+    def charge(self, result: LLMResult[T], stage: str) -> T:
         self.usage += result.usage
         self.cost_usd += result.cost_usd
         self.llm_calls += result.attempts
+        self.calls.append(
+            _call(
+                stage,
+                result.model,
+                result.attempts,
+                result.latency_ms,
+                result.usage,
+                result.cost_usd,
+            )
+        )
         if result.attempts > 1:
             self.flags.append(f"{type(result.parsed).__name__.lower()}_retried")
         return result.parsed
 
-    def charge_failure(self, error: LLMError) -> None:
+    def charge_failure(self, error: LLMError, stage: str) -> None:
         self.usage += error.usage
         self.cost_usd += error.cost_usd
         self.llm_calls += error.attempts
+        self.calls.append(_call(stage, None, error.attempts, None, error.usage, error.cost_usd))
+
+
+def _call(
+    stage: str,
+    model: str | None,
+    attempts: int,
+    latency: float | None,
+    usage: Usage,
+    cost: float,
+) -> LLMCall:
+    """A successful call has a model and a latency; a failed one has neither."""
+    return LLMCall(
+        stage=stage,
+        model=model,
+        ok=model is not None,
+        attempts=attempts,
+        latency_ms=latency,
+        input_tokens=usage.input_tokens,
+        cached_tokens=usage.cached_tokens,
+        output_tokens=usage.output_tokens,
+        cost_usd=cost,
+    )
 
 
 @dataclass
@@ -129,11 +166,19 @@ class Pipeline:
         """Stateless turn: the caller passes the memory in and keeps what comes back."""
         started = time.perf_counter()
         turn = _Turn(preferences=preferences or Preferences())
-        answer = self._ask(message.strip(), history, turn)
+        try:
+            answer = self._ask(message.strip(), history, turn)
+        except BudgetExceededError:
+            # The cap is per client (one chat session or one eval run): the refused
+            # call never reached the provider (nothing to charge), and every later
+            # call would be refused too, so the caller ends the session.
+            turn.flags.append("budget_exceeded")
+            text = guardrails.budget_reply(self._settings.llm.max_cost_usd)
+            answer = self._reply(turn, text, RefusalReason.BUDGET_EXCEEDED)
         latency = {**turn.latency_ms, "total": (time.perf_counter() - started) * 1000}
         answer = answer.model_copy(update={"latency_ms": latency})
         if self._logger:
-            self._logger.log(answer, message_chars=len(message))
+            self._logger.log(answer, message_chars=len(message), history_messages=len(history))
         return answer
 
     # --- steps --------------------------------------------------------------------------
@@ -148,7 +193,7 @@ class Pipeline:
         try:
             plan = self._understand(message, history, turn)
         except LLMUnavailableError as error:
-            turn.charge_failure(error)
+            turn.charge_failure(error, "understand")
             turn.flags.append("understand_unavailable")
             return self._reply(turn, guardrails.LLM_ERROR_REPLY, RefusalReason.LLM_ERROR)
 
@@ -176,7 +221,7 @@ class Pipeline:
         try:
             generation = self._generate(plan, hits, turn)
         except (LLMOutputError, LLMUnavailableError) as error:
-            turn.charge_failure(error)
+            turn.charge_failure(error, "generate")
             turn.flags.append(f"generate_{type(error).__name__}")
             text = guardrails.LLM_ERROR_REPLY
             return self._reply(turn, text, RefusalReason.LLM_ERROR, plan, hits)
@@ -202,7 +247,7 @@ class Pipeline:
         try:
             retry = self._generate(plan, hits, turn, retry_of=(generation, findings))
         except (LLMOutputError, LLMUnavailableError) as error:
-            turn.charge_failure(error)
+            turn.charge_failure(error, "regenerate")
             turn.flags.append(f"regenerate_{type(error).__name__}")
         else:
             retry_findings = self._post_check(plan, hits, retry, turn)
@@ -275,11 +320,11 @@ class Pipeline:
                 Understanding,
                 model=self._models.understand_model,
             )
-            understanding = turn.charge(result)
+            understanding = turn.charge(result, "understand")
         except LLMOutputError as error:
             # Fall back to the raw message: deterministic car matching still works,
             # and retrieval does not need a rewritten question to be useful.
-            turn.charge_failure(error)
+            turn.charge_failure(error, "understand")
             turn.flags.append("understand_fallback")
             understanding = None
         finally:
@@ -372,7 +417,7 @@ class Pipeline:
             result = self._llm.complete_json(
                 GENERATE_SYSTEM, messages, Generation, model=self._models.generate_model
             )
-            return turn.charge(result)
+            return turn.charge(result, stage)
         finally:
             turn.latency_ms[stage] = (time.perf_counter() - started) * 1000
 
@@ -435,6 +480,7 @@ class Pipeline:
             updated_preferences=list(turn.updated_preferences),
             flags=list(turn.flags),
             llm_calls=turn.llm_calls,
+            calls=list(turn.calls),
             usage=turn.usage,
             cost_usd=turn.cost_usd,
             latency_ms=dict(turn.latency_ms),

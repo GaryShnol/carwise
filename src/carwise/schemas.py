@@ -157,6 +157,7 @@ class RefusalReason(StrEnum):
     OUT_OF_SCOPE = "out_of_scope"  # chitchat or off-topic: no retrieval at all
     LLM_ERROR = "llm_error"  # provider unavailable or unusable output
     UNVERIFIED = "unverified"  # post-check failed on the answer and on its one regeneration
+    BUDGET_EXCEEDED = "budget_exceeded"  # llm.max_cost_usd reached: the session must stop
 
 
 class CheckFindings(BaseModel):
@@ -213,6 +214,27 @@ class Citation(BaseModel):
     source_url: str
 
 
+class LLMCall(BaseModel):
+    """One LLM call of a turn, for telemetry (CW-204).
+
+    Why per call and not only per turn: the stage latency includes our own code,
+    while `latency_ms` here is the client's own measure of the request, so a slow
+    first call (a cold connection) shows up as such, and each stage's cost is visible.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    stage: str  # understand | generate | regenerate
+    model: str | None  # None when the call failed before the provider named it
+    ok: bool
+    attempts: int
+    latency_ms: float | None  # None for a failed call (the stage latency still has it)
+    input_tokens: int
+    cached_tokens: int
+    output_tokens: int
+    cost_usd: float
+
+
 class Answer(BaseModel):
     """Everything a caller (CLI, UI, eval) needs to show or grade one turn."""
 
@@ -233,6 +255,7 @@ class Answer(BaseModel):
     updated_preferences: list[str]  # field names this turn set or changed
     flags: list[str]
     llm_calls: int
+    calls: list[LLMCall]  # one record per LLM call, in order
     usage: Usage
     cost_usd: float
     latency_ms: dict[str, float]  # per stage, plus "total"

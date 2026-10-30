@@ -13,7 +13,7 @@ from pathlib import Path
 
 from carwise.config import load_settings
 from carwise.guardrails import section_label
-from carwise.llm.base import BudgetExceededError, LLMConfigError
+from carwise.llm.base import LLMConfigError
 from carwise.llm.openai_client import OpenAIClient
 from carwise.pipeline import Pipeline
 from carwise.preferences import RESET_REPLY, Session
@@ -21,7 +21,7 @@ from carwise.preferences import describe as describe_preferences
 from carwise.registry import load_registry
 from carwise.retrieval.retriever import open_retriever
 from carwise.retrieval.store import IndexNotReadyError
-from carwise.schemas import Answer
+from carwise.schemas import Answer, RefusalReason
 from carwise.telemetry import TurnLogger
 
 EXIT_COMMANDS = {"/exit", "/quit", "יציאה"}
@@ -40,6 +40,11 @@ def run_command(line: str, session: Session) -> str | None:
         session.reset()
         return RESET_REPLY
     return None
+
+
+def ends_session(answer: Answer) -> bool:
+    """The cost cap ends the chat: every later call would be refused (CW-204)."""
+    return answer.refusal is RefusalReason.BUDGET_EXCEEDED
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
@@ -112,11 +117,7 @@ def run(args: argparse.Namespace) -> int:
         if output is not None:
             print(output)
             continue
-        try:
-            answer = pipeline.answer(message, session)
-        except BudgetExceededError as error:
-            print(error)
-            return 1
+        answer = pipeline.answer(message, session)
         print(
             format_answer(
                 answer,
@@ -124,3 +125,5 @@ def run(args: argparse.Namespace) -> int:
                 max_section_chars=settings.display.max_section_chars,
             )
         )
+        if ends_session(answer):
+            return 1

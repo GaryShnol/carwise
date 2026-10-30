@@ -68,11 +68,11 @@ Items outside the code that must not be forgotten. Update the status as each is 
 |---|---|---|---|---|---|
 | E0 Scaffold and source check | none | 3 | 3 | 3 | DONE |
 | E1 Thin vertical slice | `v0.1` | 6 | 6 | 11 | DONE |
-| E2 Reliability and guardrails | none | 6 | 5 | 9 | IN PROGRESS |
+| E2 Reliability and guardrails | none | 6 | 6 | 9 | DONE |
 | E3 Measurement | none | 3 | 0 | 5 | TODO |
 | E4 Interface and packaging | none | 3 | 0 | 4 | TODO |
 | E5 Documentation and release | `v1.0` | 3 | 0 | 4 | TODO |
-| **Total** |  | **24** | **14** | **36** |  |
+| **Total** |  | **24** | **15** | **36** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -112,7 +112,7 @@ Branch: `epic/e2-reliability` | Tag: none
 | CW-201 | Relevance gate and fixed refusal | `feat` | M | P1 | DONE | CW-105 |
 | CW-202 | Post-check for cars not retrieved this turn | `feat` | M | P1 | DONE | CW-105 |
 | CW-203 | Preference model and `/prefs` command | `feat` | M | P1 | DONE | CW-105 |
-| CW-204 | Turn telemetry and cost estimate | `feat` | S | P2 | IN PROGRESS | CW-105 |
+| CW-204 | Turn telemetry and cost estimate | `feat` | S | P2 | DONE | CW-105 |
 | CW-205 | Injection hygiene and input limits | `feat` | S | P2 | DONE | CW-105 |
 | CW-206 | Numeric claim check in post-check | `feat` | S | P2 | DONE | CW-202 |
 
@@ -259,10 +259,12 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [x] Live 4-turn run (dev): the budget change replaced the earlier budget and kept the powertrain; on follow-up turns the model re-sends earlier preferences, which the grounding check drops (flagged, harmless). Notes for CW-302: one answer called Aion HT (187,000) "cheaper" than MG S6 (178,888), a comparison error the planned numeric check cannot catch; very long merged section names make citations noisy (chunking, CW-303).
 
 ### CW-204 Turn telemetry and cost estimate
-- [ ] One JSON line per turn: chunk ids, scores, intent, tokens in and out, estimated cost, latency, post-check result.
-- [ ] Prices come from config (zero for local models); secrets are never logged.
-- [ ] Unit test for the cost calculation (tokens times configured price).
-- [ ] Each line records the profile and model name; a `max_cost_usd` cap in config aborts a run (eval or chat session) when exceeded.
+- [x] One JSON line per turn: chunk ids, scores, intent, tokens in and out, estimated cost, latency per stage, post-check result (cars and numbers per attempt), flags, prompt versions.
+- [x] Per-call detail (`llm_calls_detail`: stage, model, ok, attempts, client latency, tokens, cost) and cold-start signals (`process_turn`, `history_messages`), so a slow first call can be told apart from a slow stage.
+- [x] Prices come from config (zero for local models); secrets are never logged (tested with a planted API key).
+- [x] Unit test for the cost calculation (tokens times configured price), at client level and per turn through the pipeline.
+- [x] Each line records the profile and model name; the `max_cost_usd` cap ends a chat session with a fixed Hebrew message (refusal `budget_exceeded`); tested through the pipeline with the real client over a stub SDK. The eval runner (CW-302) must stop on the same refusal.
+- [x] Latency finding: of 15 first turns in `logs/` (before this ticket), 5 exceeded 10 s in total, 2 in the understand stage alone (58.9 s and 12.7 s). The 58.9 s is longer than `llm.timeout_s` (30), so it was most likely a timeout plus a silent SDK retry, not a connection warm-up: other first turns on fresh clients in the same minute took 1.3 s. See the Backlog item on SDK retries.
 
 ### CW-205 Injection hygiene and input limits
 - [x] System prompt states that article text is data, never instructions (generate rule 5; the understand prompt treats user messages as data).
@@ -349,6 +351,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 | Second LLM provider (for example Bedrock) | One provider is enough | Provider switching becomes a requirement |
 | Cross-session memory | Out of scope for a proof of concept | Persistent users are required |
 | Agent loop with tools | Flow is linear | Live prices or external tools are needed |
+| Make SDK-level retries visible (`retries_taken`) and revisit `llm.timeout_s` | The SDK retries a timed-out request silently, so a 30 s timeout can cost about 60 s while `attempts` stays 1 (seen once in CW-206) | More than an occasional turn exceeds 10 s in the eval or the demo |
 
 ## Change log
 
@@ -380,3 +383,4 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 | 2026-10-30 | CW-201 done: refusals suggest the closest of the eight cars (hint words from the user's message, else best-scoring chunks, else all eight grouped by powertrain and body type) and invite a follow-up; similarity threshold stays configurable at 0 until CW-303. |
 
 | 2026-10-29 | CW-101 done: `config/cars.yaml` plus `registry.py`, `fetch.py` (the CW-002 probe folded in and deleted), `clean.py` on beautifulsoup4 with `html.parser`, and `python -m app ingest` printing a per-article report. Each registry body type and powertrain carries the article words behind it; the Elantra article never states the Elantra's body type, so that value is null. Cleaner findings: the spec table uses `role=row` markup inside `<li>` and is kept as one line per row; "סיכום AI" is a script-loaded widget and is skipped; the Elantra sections are numbered `<h3>` questions; the Kia report has no subheadings and ends with four label/value stats. |
+| 2026-10-30 | E2 done (CW-201 to CW-206). CW-206 decision: "545,00" in the Audi RS3 article stays a decimal (known source case). CW-205 bounds the whole turn input with `input.max_turn_input_chars`; user messages in the history obey `max_message_chars`. Backlog: SDK-level retries. |
