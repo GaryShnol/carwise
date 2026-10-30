@@ -286,7 +286,8 @@ def test_run_keeps_answers_out_of_the_committed_report(tmp_path: Path) -> None:
         runs_dir=tmp_path / "runs",
     )
     assert report.complete and report.questions[0].passed_runs == 1
-    assert report.prompts["judge_criteria"] == criteria_version() == "v2"
+    assert report.prompts["judge_criteria"] == criteria_version() == "v3"
+    assert "aligned with the keyword check" in report.notes[0]
     committed = markdown(report) + report.model_dump_json()
     assert SECRET not in committed and "זולה יותר" not in committed
     logged = (tmp_path / "runs" / "answers.jsonl").read_text(encoding="utf-8")

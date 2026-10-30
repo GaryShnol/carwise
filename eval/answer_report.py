@@ -22,7 +22,7 @@ from carwise.prompts import PROMPT_VERSIONS
 from carwise.registry import Registry
 from eval.answer import BudgetStopError, Check, behavior_of, checks_for, excerpt_wording_count, play
 from eval.judge import PROMPT_VERSION as JUDGE_PROMPT
-from eval.judge import Judged, criteria_version, judge, load_criteria
+from eval.judge import Judged, criteria_change, criteria_version, judge, load_criteria
 from eval.questions import Behavior, Category, Question
 from eval.retrieval import percentile
 
@@ -78,6 +78,7 @@ class AnswerReport(BaseModel):
     latency_ms: dict[str, float | None]  # p50 / p95 of the graded turn and of generate
     another_article_total: int
     excerpt_wording_total: int | None = None  # None: a report from before the metric existed
+    notes: list[str] = []  # why the judge criteria changed, re-scoring provenance, ...
     post_check: dict[str, int]  # outcome -> count over graded turns
 
 
@@ -216,6 +217,9 @@ def run_answer_eval(
         ),
         post_check=outcomes,
         excerpt_wording_total=sum(run.excerpt_wording for run in every),
+        notes=[f"judge criteria {criteria_version()}: {criteria_change()}"]
+        if criteria_change()
+        else [],
     )
 
 
@@ -267,6 +271,7 @@ def markdown(report: AnswerReport) -> str:
         + f'. "Another article" phrasings: {report.another_article_total}; '
         + f'"excerpts" wording: {excerpts}.',
         "",
+        *([f"Notes: {' '.join(report.notes)}", ""] if report.notes else []),
         "## Summary",
         "",
         *summary,

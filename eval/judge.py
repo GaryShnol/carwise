@@ -58,6 +58,12 @@ def criteria_version(path: Path = CRITERIA_PATH) -> str:
     return f"v{raw['version']}"
 
 
+def criteria_change(path: Path = CRITERIA_PATH) -> str:
+    """Why the current criteria version differs from the previous one ("" for version 1)."""
+    raw: Any = yaml.safe_load(path.read_text(encoding="utf-8"))
+    return " ".join(str(raw.get("changes", {}).get(raw["version"], "")).split())
+
+
 def judge_input(criterion: str, user_turns: list[str], answer: Answer) -> str:
     """The judge's user message: the criterion, the conversation, the answer, the excerpts."""
     turns = "\n".join(f"{i}. {escape_text(turn)}" for i, turn in enumerate(user_turns, 1))

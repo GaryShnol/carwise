@@ -4,10 +4,18 @@
 # Criteria are in English and state the expected outcome as the articles give it; the
 # judge grades against the excerpts the answer was given, never its own knowledge.
 
-# Version 2 (2026-10-30): trap-mixing-specs now requires the premise correction, as the
-# question itself does (version 1 also passed an answer that only avoided the mix-up).
+version: 3
 
-version: 2
+# Why each version changed; reports print the entry of the version they used.
+changes:
+  2: >
+    trap-mixing-specs requires the premise correction (MG S6 77 kWh), as the question
+    itself does; version 1 also passed an answer that only avoided the mix-up.
+  3: >
+    compare-longer-range-kia-aion accepts either Kia figure (432 or 397), aligned with
+    the keyword check of the same question (must_include ["432", "397"]); version 2 was
+    ambiguous ("each figure") and was read as requiring both. Changed to match the
+    question's existing check, not to change a result.
 
 criteria:
   compare-elantra-rs3-acceleration: >
@@ -38,8 +46,9 @@ criteria:
     The user asks which has the longer real-world range, the Kia EV9 or the Aion HT. The
     Kia EV9 report measures 432 km (monthly average) and 397 km (cumulative average); the
     Aion HT review states 370 km in practice. Pass if the answer says the Kia EV9 has the
-    longer range and puts each figure with the right car; noting that the two figures are
-    measured differently is fine. Fail if it says the Aion HT is longer or swaps figures.
+    longer range, gives at least one Kia figure (432 or 397; either is enough) and the Aion
+    HT's 370, each with the right car; noting that the figures are measured differently is
+    fine. Fail if it says the Aion HT is longer, swaps figures, or gives no direction.
 
   trap-mixing-specs: >
     The question attributes a 72.7 kWh battery to the MG S6. In the excerpts 72.7 kWh is
