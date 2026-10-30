@@ -27,6 +27,8 @@ from eval.recording import (
     Recording,
     RecordingError,
     load_recording,
+    merge,
+    missing,
     record,
     save_recording,
     stale_reasons,
@@ -60,6 +62,16 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
         "--record",
         action="store_true",
         help="record the understand outputs with the real model (costs money, needs a key)",
+    )
+    parser.add_argument(
+        "--record-missing",
+        action="store_true",
+        help="record only the cases the recording lacks (same model and prompt), and merge",
+    )
+    parser.add_argument(
+        "--holdout",
+        action="store_true",
+        help="run only the hold-out questions written after CW-303 (default: the tuning set)",
     )
     parser.add_argument("--out", type=Path, default=REPORTS_DIR, help="report directory")
     parser.add_argument(
@@ -100,15 +112,18 @@ def run(args: argparse.Namespace) -> int:
     except IndexNotReadyError as error:
         print(error)
         return 1
-    questions = load_questions().questions
+    every_question = load_questions().questions
     probes = load_negatives().probes
+    # The hold-out set is reported on its own, never mixed into the tuning numbers.
+    questions = [q for q in every_question if q.holdout == args.holdout]
     system = understand_system(registry)
 
     def make_pipeline(llm: LLMClient) -> Pipeline:
         return Pipeline(settings, registry, retriever, llm, profile=profile_name)
 
-    if args.record:
-        return _record(settings, profile_name, [*questions, *probes], make_pipeline, system)
+    if args.record or args.record_missing:
+        cases: list[Question | Negative] = [*every_question, *probes]
+        return _record(settings, profile_name, cases, make_pipeline, system, args.record_missing)
     if args.level == "answer":
         print("The answer level is not implemented yet (second half of CW-302).")
         return 2
@@ -119,7 +134,7 @@ def run(args: argparse.Namespace) -> int:
     reasons = (
         ["no recording found"]
         if recording is None
-        else stale_reasons(recording, [*questions, *probes], system=system, model=model)
+        else stale_reasons(recording, [*every_question, *probes], system=system, model=model)
     )
     if recording is None or reasons:
         print("The recorded understand outputs cannot be used:")
@@ -131,7 +146,13 @@ def run(args: argparse.Namespace) -> int:
     retriever.warm_up()
     warm_up_s = time.perf_counter() - started
     report = retrieval_report(
-        settings, retriever, make_pipeline, recording, questions, probes, args.runs
+        settings,
+        retriever,
+        make_pipeline,
+        recording,
+        questions,
+        [] if args.holdout else probes,
+        args.runs,
     )
     report = report.model_copy(update={"warm_up_s": round(warm_up_s, 2)})
     if prepared:  # the model was loaded (and timed) while preparing the candidate
@@ -214,6 +235,7 @@ def _record(
     cases: Sequence[Question | Negative],
     make_pipeline: PipelineFactory,
     system: str,
+    only_missing: bool = False,
 ) -> int:
     cap = settings.eval.record_max_cost_usd
     capped = with_cost_cap(settings, cap)
@@ -223,6 +245,20 @@ def _record(
     except LLMConfigError as error:
         print(error)
         return 1
+    existing = load_recording() if only_missing else None
+    if only_missing:
+        if existing is None:
+            print("no recording to add to; run --record first")
+            return 1
+        reasons = stale_reasons(existing, [], system=system, model=profile.understand_model)
+        if reasons:
+            print("the recording was made with another model or prompt; run --record instead:")
+            print("\n".join(f"  - {reason}" for reason in reasons))
+            return 1
+        cases = missing(existing, cases)
+        if not cases:
+            print("nothing to record: every case is in the recording")
+            return 0
     print(f"recording {len(cases)} cases with {profile.understand_model} (cap ${cap:.2f})...")
     try:
         recording = record(
@@ -236,14 +272,22 @@ def _record(
     except RecordingError as error:
         print(f"recording stopped, nothing written: {error} (spent ${llm.total_cost_usd:.4f})")
         return 1
+    added = recording
+    if existing is not None:
+        recording = merge(existing, recording)
     save_recording(recording)
+    print(
+        f"this run: {len(added.cases)} cases, {added.calls} calls, "
+        f"tokens in {added.tokens['input']} out {added.tokens['output']}, "
+        f"cost ${added.cost_usd:.4f}"
+    )
     fallbacks = [
         case_id
         for case_id, turns in recording.cases.items()
         if any(turn.understanding is None for turn in turns)
     ]
     print(
-        f"recorded {len(recording.cases)} cases: {recording.calls} calls, "
+        f"recording now holds {len(recording.cases)} cases: {recording.calls} calls, "
         f"tokens in {recording.tokens['input']} out {recording.tokens['output']}, "
         f"cost ${recording.cost_usd:.4f}"
     )

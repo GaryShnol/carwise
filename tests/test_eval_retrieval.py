@@ -34,6 +34,8 @@ from eval.recording import (
     Recording,
     RecordingError,
     ReplayClient,
+    merge,
+    missing,
     record,
     sha256,
     stale_reasons,
@@ -384,3 +386,32 @@ def test_markdown_report_holds_metrics_and_no_chunk_text() -> None:
     assert "| neg-behavior | behavior | answer | fact |" in text
     assert "| threshold_probes | 0 |" in text
     assert SECRET_TEXT not in text
+
+
+# ---------------------------------------------------------------- incremental recording
+def test_missing_lists_new_and_changed_cases_only() -> None:
+    kept = question("kept", ["מה הטווח של MG S6?"])
+    changed = question("changed", ["שאלה חדשה"])
+    new = question("new", ["עוד שאלה"])
+    rec = recording_for(
+        {
+            "kept": recorded(None, turns=kept.turns),
+            "changed": recorded(None, turns=["שאלה ישנה"]),
+        }
+    )
+    assert [c.id for c in missing(rec, [kept, changed, new])] == ["changed", "new"]
+
+
+def test_merge_adds_cases_and_spend_and_refuses_another_model() -> None:
+    old = recording_for({"a": recorded(None, turns=["א"])}).model_copy(
+        update={"calls": 3, "cost_usd": 0.01, "tokens": {"input": 10, "cached": 0, "output": 2}}
+    )
+    new = recording_for({"b": recorded(None, turns=["ב"])}).model_copy(
+        update={"calls": 1, "cost_usd": 0.002, "tokens": {"input": 4, "cached": 0, "output": 1}}
+    )
+    merged = merge(old, new)
+    assert set(merged.cases) == {"a", "b"}
+    assert (merged.calls, merged.cost_usd) == (4, 0.012)
+    assert merged.tokens == {"input": 14, "cached": 0, "output": 3}
+    with pytest.raises(RecordingError, match="different models"):
+        merge(old, new.model_copy(update={"model": "other-model"}))

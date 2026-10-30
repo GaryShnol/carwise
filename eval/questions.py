@@ -66,6 +66,7 @@ class Question(BaseModel):
     turns: list[str] = Field(min_length=1)  # user messages; the last answer is graded
     expect: Expect
     why: str  # what this question is designed to catch
+    holdout: bool = False  # written after CW-303 froze the settings; reported separately
 
     @model_validator(mode="after")
     def _shape_matches_behavior(self) -> Question:

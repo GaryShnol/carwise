@@ -25,7 +25,7 @@ from collections import deque
 from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Protocol
+from typing import Protocol, TypeVar
 
 from pydantic import BaseModel, ConfigDict
 
@@ -55,6 +55,9 @@ class Case(Protocol):
 
     @property
     def turns(self) -> list[str]: ...
+
+
+C = TypeVar("C", bound=Case)
 
 
 def sha256(text: str) -> str:
@@ -105,6 +108,38 @@ def stale_reasons(
         elif [turn.message_sha256 for turn in turns] != [sha256(t) for t in case.turns]:
             reasons.append(f"{case.id}: the turns changed")
     return reasons
+
+
+def missing(recording: Recording, cases: Sequence[C]) -> list[C]:
+    """Cases the recording lacks, or whose turns changed since they were recorded."""
+    return [
+        case
+        for case in cases
+        if [turn.message_sha256 for turn in recording.cases.get(case.id, [])]
+        != [sha256(t) for t in case.turns]
+    ]
+
+
+def merge(old: Recording, new: Recording) -> Recording:
+    """The old recording plus newly recorded cases, with the spend of both.
+
+    Only valid when both come from the same model and understand prompt: a
+    recording mixing two would grade some plans against another system.
+    """
+    if (old.model, old.understand_prompt, old.understand_system_sha256) != (
+        new.model,
+        new.understand_prompt,
+        new.understand_system_sha256,
+    ):
+        raise RecordingError("cannot merge recordings of different models or prompts")
+    return new.model_copy(
+        update={
+            "calls": old.calls + new.calls,
+            "tokens": {k: old.tokens.get(k, 0) + v for k, v in new.tokens.items()},
+            "cost_usd": round(old.cost_usd + new.cost_usd, 6),
+            "cases": {**old.cases, **new.cases},
+        }
+    )
 
 
 def load_recording(path: Path = RECORDING_PATH) -> Recording | None:
