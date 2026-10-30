@@ -23,6 +23,7 @@ import re
 from dataclasses import dataclass, field
 
 from carwise.config import ChunkingConfig
+from carwise.guardrails import section_label
 from carwise.ingest.clean import Block, BlockKind, Document
 from carwise.registry import Car
 from carwise.schemas import Chunk
@@ -168,6 +169,9 @@ def chunk_document(doc: Document, registry_car: Car, limits: ChunkingConfig) -> 
     for index, piece in enumerate(_merge_short(pieces, limits.min_chars, limits.max_chars)):
         section = SECTION_SEPARATOR.join(piece.names)
         text = LINE_SEPARATOR.join(piece.lines)
+        # The full section stays in the metadata for citations; the embedded header uses the
+        # short label, so a long merged heading does not push the text out of the window.
+        header = section_label(section, limits.embed_section_chars)
         chunks.append(
             Chunk(
                 chunk_id=f"{registry_car.id}:{index:03d}",
@@ -177,7 +181,7 @@ def chunk_document(doc: Document, registry_car: Car, limits: ChunkingConfig) -> 
                 source_url=doc.source_url,
                 published=doc.published.date() if doc.published else None,
                 text=text,
-                embed_text=f"{registry_car.display_name}{EMBED_SEPARATOR}{section}\n{text}",
+                embed_text=f"{registry_car.display_name}{EMBED_SEPARATOR}{header}\n{text}",
             )
         )
     return chunks

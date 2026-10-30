@@ -57,6 +57,7 @@ class EmbeddingsConfig(_Strict):
 class ChunkingConfig(_Strict):
     min_chars: int
     max_chars: int
+    embed_section_chars: int  # section label length in the embedded header (CW-303)
 
 
 class LexicalConfig(_Strict):

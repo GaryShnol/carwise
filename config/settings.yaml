@@ -46,7 +46,10 @@ embeddings:
 
 chunking:              # provisional, tuned in CW-303
   min_chars: 300
-  max_chars: 1500
+  max_chars: 1400     # CW-303: largest value with no chunk over e5's 512 tokens (was 1500)
+  # CW-303: the embedded header carries the section as the same short label users see
+  # (merged headings ran to 150+ characters and pushed 5 chunks past e5's 512 tokens).
+  embed_section_chars: 60
 
 retrieval:             # provisional, tuned in CW-303
   top_k: 5               # single-car questions

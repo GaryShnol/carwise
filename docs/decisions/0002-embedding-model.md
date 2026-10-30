@@ -176,6 +176,24 @@ Why not the others:
   first things to revisit: a hosted embedding endpoint (for example Bedrock) behind the same
   `Embedder` protocol, or e5-base with the spec-box fix, measured on this same eval.
 
+## Re-check after the CW-303 window fix
+
+CW-303 step 1 shortened the section part of the embedded header to the 60-character label and
+lowered `chunking.max_chars` from 1500 to 1400, the largest value at which no chunk exceeds
+e5's 512-token window with the real tokenizer (78 chunks, longest exactly 512 tokens, against 5
+over the window before). Both e5 models were re-run on the same recording
+(`eval/reports/cw303/step1/`):
+
+| Candidate | Passed | Sources hit | MRR |
+|---|---|---|---|
+| e5-large, before (above) | 21/23 | 24/26 | 0.574 |
+| e5-large, after | 20/23 | 23/26 | 0.624 |
+| e5-base, after | 17/23 | 20/26 | 0.554 |
+
+e5-large still leads, so the decision stands. Its one lost question
+(`compare-faster-genesis-link`: the Link & Co 01 spec box moved from third to fifth within its
+car, against a cap of 3) is a spec-box miss, handled in CW-303 step 2.
+
 ## README note (for CW-501)
 
 > **Embedding model.** Four retrieval set-ups were compared on the same recorded plans

@@ -22,7 +22,7 @@ from carwise.retrieval.store import (
 from carwise.schemas import Chunk
 
 # Synthetic chunks only; the repository is public.
-LIMITS = ChunkingConfig(min_chars=10, max_chars=500)
+LIMITS = ChunkingConfig(min_chars=10, max_chars=500, embed_section_chars=60)
 LEXICAL_OFF = LexicalConfig(enabled=False, rrf_k=60, bm25_k1=1.5, bm25_b=0.75)
 CONFIG = RetrievalConfig(
     top_k=3,
@@ -155,7 +155,7 @@ def test_build_reruns_when_the_fingerprint_changes(tmp_path: Path, change: str) 
     embedder, chunks, limits = FakeEmbedder(), _corpus(), LIMITS
     build_index(chunks, embedder, limits, tmp_path)
     if change == "limits":
-        limits = ChunkingConfig(min_chars=20, max_chars=500)
+        limits = ChunkingConfig(min_chars=20, max_chars=500, embed_section_chars=60)
     elif change == "text":
         chunks = [chunks[0].model_copy(update={"embed_text": "שונה"}), *chunks[1:]]
     elif change == "ids":

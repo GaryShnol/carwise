@@ -85,7 +85,12 @@ def test_fusion_ties_fall_back_to_cosine_then_chunk_id() -> None:
 def test_open_retriever_builds_the_lexical_index_only_when_enabled(tmp_path: Path) -> None:
     settings = load_settings()
     fake = settings.embeddings.model_copy(update={"provider": "fake"})
-    build_index(CHUNKS, FakeEmbedder(), ChunkingConfig(min_chars=1, max_chars=500), tmp_path)
+    build_index(
+        CHUNKS,
+        FakeEmbedder(),
+        ChunkingConfig(min_chars=1, max_chars=500, embed_section_chars=60),
+        tmp_path,
+    )
 
     def opened(enabled: bool) -> Retriever:
         retrieval = settings.retrieval.model_copy(
