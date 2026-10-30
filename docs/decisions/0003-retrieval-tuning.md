@@ -100,3 +100,40 @@ is missing. It is the first lever if generation cost matters (README cost sectio
 
 The recommendation miss belongs to the plan, not retrieval: when the understand step names cars
 taken from earlier answers, a recommendation is searched only among them. Logged in the Backlog.
+
+## Step 4: relevance threshold
+
+Best cosine score per case after steps 1 to 3 (`eval/reports/cw303/step4/`):
+
+| Best score (e5-large) | n | min | Q1 | median | Q3 | max |
+|---|---|---|---|---|---|---|
+| answerable questions | 20 | 0.846 | 0.867 | 0.877 | 0.886 | 0.911 |
+| threshold probes (one of the eight cars, a topic its article lacks) | 8 | 0.847 | 0.855 | 0.871 | 0.881 | 0.896 |
+| off-topic texts, scored directly across all cars (scratch measurement) | 7 | 0.760 | | 0.814 | | 0.823 |
+
+The overlap is complete: the lowest probe (0.847) scores above the lowest answerable question
+(`trap-missing-detail`, 0.846), and 4 of 8 probes score above the answerable Q1. A question about
+a car's warranty or insurance looks, to an embedding, like the real questions about that car. No
+threshold can separate them without refusing answerable questions.
+
+The off-topic row is the six behavior probes plus "תכתוב לי שיר על הים" (write me a poem about
+the sea), embedded as typed and scored against all chunks. In the pipeline they never reach
+retrieval (the understand step sends them to the out-of-scope reply), so this row only shows
+where a threshold could matter: if the intent check ever let one through.
+
+**Decision: `relevance_threshold` 0.80.** It refuses none of the 20 answerable questions and none
+of the probes (the eval is unchanged: 22/23, no new refusal), sits 0.046 below the lowest
+answerable score (more than twice the answerable interquartile range, as margin for questions not
+yet seen), and would catch 3 of the 7 off-topic texts as a backstop.
+
+**What does the refusing.** Not the threshold. Three mechanisms, in order:
+
+1. The registry gate: a car outside the eight is refused in code, before generation, with
+   suggestions from the corpus. This is the primary mechanism.
+2. The intent check: chitchat and off-topic requests get the fixed out-of-scope reply, with no
+   retrieval.
+3. The generation rule "not mentioned in the articles": a known car with a detail its article
+   lacks (all eight threshold probes) reaches generation, which must say the detail is missing
+   and offer the closest facts the retrieved chunks contain. The post-check then verifies cars
+   and numbers. Whether the model follows the rule is measured by the answer eval (CW-302), not
+   here.

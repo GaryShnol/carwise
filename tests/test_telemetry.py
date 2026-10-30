@@ -45,7 +45,11 @@ GENERATED = json.dumps(
 def _settings(max_cost_usd: float) -> Settings:
     settings = load_settings()
     llm = settings.llm.model_copy(update={"max_cost_usd": max_cost_usd})
-    return settings.model_copy(update={"llm": llm, "default_profile": "dev"})
+    # The hashing test embedder scores on another scale than e5: no threshold here.
+    retrieval = settings.retrieval.model_copy(update={"relevance_threshold": 0.0})
+    return settings.model_copy(
+        update={"llm": llm, "default_profile": "dev", "retrieval": retrieval}
+    )
 
 
 def real_client_pipeline(

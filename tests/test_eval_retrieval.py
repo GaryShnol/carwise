@@ -50,7 +50,11 @@ from eval.retrieval import (
     score_spreads,
 )
 
-SETTINGS = load_settings()
+# The hashing test embedder scores on another scale than e5, so the threshold is off here.
+_LOADED = load_settings()
+SETTINGS = _LOADED.model_copy(
+    update={"retrieval": _LOADED.retrieval.model_copy(update={"relevance_threshold": 0.0})}
+)
 REGISTRY = load_registry()
 SYSTEM = understand_system(REGISTRY)
 MODEL = "gpt-5.4-nano"
