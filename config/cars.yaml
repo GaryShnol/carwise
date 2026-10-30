@@ -1,0 +1,103 @@
+# Car registry: the single source of car names for ingestion, the understand
+# prompt, the relevance gate and the post-check (CLAUDE.md section 6).
+#
+# Rules for every field:
+# - aliases are spellings the article itself uses for the tested car. A spelling
+#   that contains Hebrew letters goes in aliases_he, a pure Latin one in
+#   aliases_latin. Brand-only names and very generic model codes ("HT", "N",
+#   "01") are left out, because they would match unrelated text.
+# - body_type and powertrain come from the article text only, never from outside
+#   knowledge. The *_quote field holds the few words of the article that support
+#   the value. If the article does not say it, the value and the quote are null.
+#
+# body_type values:  supermini | hatchback | sedan | suv | suv_coupe
+# powertrain values: petrol | mild_hybrid | plug_in_hybrid | electric
+
+cars:
+  - id: citroen_c3
+    display_name: סיטרואן C3
+    aliases_he: [סיטרואן C3]
+    aliases_latin: [C3]
+    body_type: supermini
+    body_type_quote: סופרמיני מוגבהת
+    powertrain: mild_hybrid
+    powertrain_quote: טורבו-בנזין 1.2 ליטר … מערך היברידי מתון
+    url: https://www.auto.co.il/articles/test-drives/road-tests/citroen-c3-2026/
+    slug: citroen-c3-2026
+
+  - id: audi_rs3
+    display_name: אודי RS3
+    aliases_he: [אודי RS3]
+    aliases_latin: [RS3]
+    body_type: sedan  # offered as hatchback and sedan; the sedan is the tested car
+    body_type_quote: ובסדאן … והיא זו שנבחנת כאן
+    powertrain: petrol
+    powertrain_quote: מנוע הטורבו-בנזין הייחודי, 2.5 ליטר
+    url: https://www.auto.co.il/articles/test-drives/road-tests/audi-rs3-fl/
+    slug: audi-rs3-fl
+
+  - id: kia_ev9
+    display_name: קיה EV9
+    aliases_he: [קיה EV9]
+    aliases_latin: [EV9]
+    body_type: suv
+    body_type_quote: רכב פנאי גדול וחשמלי
+    powertrain: electric
+    powertrain_quote: רכב פנאי גדול וחשמלי
+    url: https://www.auto.co.il/articles/test-drives/road-tests/long-term-report-kia-ev9-4/
+    slug: long-term-report-kia-ev9-4
+
+  - id: mg_s6
+    display_name: MG S6
+    aliases_he: []
+    aliases_latin: [MG S6, S6]
+    body_type: suv
+    body_type_quote: רכב פנאי בגודל בינוני (D-SUV)
+    powertrain: electric
+    powertrain_quote: החשמלי החדש של MG
+    url: https://www.auto.co.il/articles/test-drives/road-tests/mg-s6/
+    slug: mg-s6
+
+  - id: hyundai_elantra_n
+    display_name: יונדאי אלנטרה N
+    aliases_he: [יונדאי אלנטרה N, אלנטרה N, אלנטרה]
+    aliases_latin: []
+    body_type: null  # the article names the body type of its rivals, not of the Elantra
+    body_type_quote: null
+    powertrain: petrol
+    powertrain_quote: מנוע טורבו-בנזין 2.0 ליטר
+    url: https://www.auto.co.il/articles/test-drives/road-tests/hyundai-elantra-n-manual/
+    slug: hyundai-elantra-n-manual
+
+  - id: aion_ht
+    display_name: GAC איון HT
+    aliases_he: [GAC איון HT, איון HT]
+    aliases_latin: [Aion]  # the article writes the Latin name once, as "איון (Aion)"
+    body_type: suv_coupe
+    body_type_quote: רכב פנאי-קופה בגודל בינוני (D-SUV)
+    powertrain: electric
+    powertrain_quote: בהנעה חשמלית
+    url: https://www.auto.co.il/articles/test-drives/road-tests/aion-ht/
+    slug: aion-ht
+
+  - id: link_and_co_01
+    display_name: לינק אנד קו 01
+    aliases_he: [לינק אנד קו 01, לינק & קו 01]
+    aliases_latin: []
+    body_type: suv
+    body_type_quote: דגם הפנאי הקומפקטי הזה (C-SUV)
+    powertrain: plug_in_hybrid
+    powertrain_quote: הנעה היברידית-נטענת
+    url: https://www.auto.co.il/articles/test-drives/road-tests/link-and-co-01-2026/
+    slug: link-and-co-01-2026
+
+  - id: genesis_gv80
+    display_name: ג'נסיס GV80
+    aliases_he: [ג'נסיס GV80]
+    aliases_latin: [GV80]
+    body_type: suv
+    body_type_quote: דגם פנאי גדול (E-SUV)
+    powertrain: petrol
+    powertrain_quote: בנזין 3.5 ליטר V6
+    url: https://www.auto.co.il/articles/test-drives/road-tests/genesis-gv80-2026/
+    slug: genesis-gv80-2026

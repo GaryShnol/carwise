@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict
@@ -27,8 +27,9 @@ class ProfileConfig(_Strict):
 
 
 class LLMConfig(_Strict):
-    temperature: float
-    seed: int
+    temperature: float | None
+    reasoning_effort: Literal["none", "minimal", "low", "medium", "high"] | None
+    seed: int | None
     timeout_s: int
     retries: int
     history_window: int
@@ -42,8 +43,13 @@ class Price(_Strict):
 
 
 class EmbeddingsConfig(_Strict):
+    provider: Literal["sentence_transformers", "fake"]
     model: str
     revision: str | None
+    query_prefix: str
+    passage_prefix: str
+    device: str
+    batch_size: int
 
 
 class ChunkingConfig(_Strict):
@@ -54,11 +60,24 @@ class ChunkingConfig(_Strict):
 class RetrievalConfig(_Strict):
     top_k: int
     per_car_cap: int
+    cross_car_top_k: int
+    cross_car_per_car_cap: int
     relevance_threshold: float
+
+
+class GuardrailsConfig(_Strict):
+    outside_brands: list[str]
 
 
 class InputConfig(_Strict):
     max_message_chars: int
+
+
+class FetchConfig(_Strict):
+    user_agent: str
+    delay_s: float
+    timeout_s: int
+    retries: int
 
 
 class PathsConfig(_Strict):
@@ -76,6 +95,8 @@ class Settings(_Strict):
     chunking: ChunkingConfig
     retrieval: RetrievalConfig
     input: InputConfig
+    guardrails: GuardrailsConfig
+    fetch: FetchConfig
     paths: PathsConfig
 
     def profile(self, name: str | None = None) -> ProfileConfig:

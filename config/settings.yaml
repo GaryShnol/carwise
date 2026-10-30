@@ -15,34 +15,120 @@ profiles:
     generate_model: gpt-5.4-mini
 
 llm:
-  temperature: 0.0     # some reasoning models reject it; see the CW-104 spike
+  # Sampling controls; null means "do not send". Measured in the CW-104 spike
+  # (docs/decisions/0001-llm-sampling-controls.md): both gpt-5.4 models accept
+  # all three. "none" is sent explicitly so a provider default cannot add
+  # reasoning tokens (cost and latency); "minimal" is rejected by these models.
+  temperature: 0.0
+  reasoning_effort: none   # none | low | medium | high
   seed: 7
   timeout_s: 30
   retries: 1
   history_window: 6    # last N messages sent to the understanding call
   max_cost_usd: 2.0    # abort a run (eval or chat session) above this
 
-# USD per 1M tokens. Unverified third-party figures; confirm on the official
-# OpenAI pricing page in CW-104.
+# USD per 1M tokens, Standard tier. Verified on 2026-10-30 against
+# https://developers.openai.com/api/docs/pricing (CW-104). Reasoning tokens are
+# billed as output tokens. A model missing here is refused by the client; local
+# models get explicit zeros.
 prices:
   gpt-5.4-nano: { input: 0.20, cached_input: 0.02, output: 1.25 }
   gpt-5.4-mini: { input: 0.75, cached_input: 0.075, output: 4.50 }
 
 embeddings:
+  provider: sentence_transformers        # or "fake": hash-based, no download (tests, offline CI)
   model: intfloat/multilingual-e5-base   # provisional, chosen by data in CW-305
-  revision: null                         # pinned in CW-103
+  revision: d128750597153bb5987e10b1c3493a34e5a4502a   # Hugging Face commit, pinned in CW-103
+  query_prefix: "query: "                # e5 models are trained with these prefixes;
+  passage_prefix: "passage: "            # other candidates in CW-305 may use none
+  device: cpu
+  batch_size: 16
 
 chunking:              # provisional, tuned in CW-303
   min_chars: 300
   max_chars: 1500
 
 retrieval:             # provisional, tuned in CW-303
-  top_k: 5
-  per_car_cap: 3
-  relevance_threshold: 0.0
+  top_k: 5               # single-car questions
+  per_car_cap: 3         # comparisons: chunks per named car
+  cross_car_top_k: 12    # recommendation and ranking questions across all cars...
+  cross_car_per_car_cap: 2   # ...with at most this many chunks per car, so most cars appear
+  relevance_threshold: 0.0   # cosine; 0 disables it until CW-303 tunes it on the eval
 
 input:
   max_message_chars: 500
+
+guardrails:
+  # Well-known brands with no article in the corpus (CW-105 gate, CW-202 post-check).
+  # A question naming only these is refused without a generation call. Brands that
+  # are in the corpus (Citroen, Audi, Kia, MG, Hyundai, GAC, Lynk & Co, Genesis) must
+  # never appear here; a test checks it. Hebrew "ג'יפ" is left out on purpose: it is
+  # everyday slang for any SUV.
+  outside_brands:
+    - טויוטה
+    - Toyota
+    - ב.מ.וו
+    - ב.מ.ו
+    - BMW
+    - מרצדס
+    - Mercedes
+    - טסלה
+    - Tesla
+    - מאזדה
+    - Mazda
+    - הונדה
+    - Honda
+    - סקודה
+    - Skoda
+    - פולקסווגן
+    - Volkswagen
+    - VW
+    - סובארו
+    - Subaru
+    - ניסאן
+    - Nissan
+    - פורד
+    - Ford
+    - פיג'ו
+    - Peugeot
+    - רנו
+    - Renault
+    - BYD
+    - וולוו
+    - Volvo
+    - שברולט
+    - Chevrolet
+    - סוזוקי
+    - Suzuki
+    - מיצובישי
+    - Mitsubishi
+    - פורשה
+    - Porsche
+    - לקסוס
+    - Lexus
+    - Jeep
+    - סיאט
+    - Seat
+    - קופרה
+    - Cupra
+    - צ'רי
+    - Chery
+    - אופל
+    - Opel
+    - פיאט
+    - Fiat
+    - דאצ'יה
+    - Dacia
+    - זיקר
+    - Zeekr
+    - אקספנג
+    - XPeng
+
+fetch:                 # polite download of the eight articles (CW-101)
+  user_agent: "carwise-takehome/0.1 (+https://github.com/GaryShnol/carwise)"
+  delay_s: 3.0         # between requests; robots.txt Crawl-delay wins if larger
+  timeout_s: 20
+  retries: 1           # network errors and 5xx only, never a 4xx
 
 paths:
   raw_dir: data/raw

@@ -56,7 +56,7 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | # | Item | Default if unanswered | Status |
 |---|---|---|---|
 | D1 | Interviewer questions (language, no-answer behavior, preference memory) | Answered by email on 2026-10-29: Hebrew only; do what is best for the user without outside information; preferences for one conversation only | DECIDED |
-| D2 | LLM provider | Decided: OpenAI only. `dev` profile: `gpt-5.4-nano` for both calls; `final` profile: `gpt-5.4-nano` for understanding and `gpt-5.4-mini` for generation (confirmed by the answer eval). Ollama stays an optional offline runtime via `base_url`. Still needed from the owner: `OPENAI_API_KEY` as an environment variable. Prices to be verified on the official pricing page in CW-104 | DECIDED, key pending |
+| D2 | LLM provider | Decided: OpenAI only. `dev` profile: `gpt-5.4-nano` for both calls; `final` profile: `gpt-5.4-nano` for understanding and `gpt-5.4-mini` for generation (confirmed by the answer eval). Ollama stays an optional offline runtime via `base_url`. `OPENAI_API_KEY` provided by the owner in a local `.env` (gitignored). Prices verified on the official pricing page in CW-104 (no difference) | DECIDED |
 | D3 | Default embedding model | Local multilingual sentence-transformers model, confirmed by CW-305 | OPEN |
 | D4 | Repository visibility | Public (decided); raw articles never committed | DECIDED |
 | D5 | Fetch fallback | Script download; private archive sent to the interviewer | DECIDED |
@@ -67,12 +67,12 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | Epic | Milestone / tag | Tickets | Done | Points | Status |
 |---|---|---|---|---|---|
 | E0 Scaffold and source check | none | 3 | 3 | 3 | DONE |
-| E1 Thin vertical slice | `v0.1` | 6 | 0 | 11 | TODO |
+| E1 Thin vertical slice | `v0.1` | 6 | 6 | 11 | IN PROGRESS |
 | E2 Reliability and guardrails | none | 6 | 0 | 9 | TODO |
 | E3 Measurement | none | 3 | 0 | 5 | TODO |
 | E4 Interface and packaging | none | 3 | 0 | 4 | TODO |
 | E5 Documentation and release | `v1.0` | 3 | 0 | 4 | TODO |
-| **Total** |  | **24** | **0** | **36** |  |
+| **Total** |  | **24** | **9** | **36** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -94,12 +94,12 @@ Branch: `epic/e1-vertical-slice` | Tag: `v0.1`
 
 | ID | Ticket | Type | Size | Pri | Status | Depends on |
 |---|---|---|---|---|---|---|
-| CW-101 | Download script, cache and clean the eight articles | `feat` | S | P1 | TODO | CW-002 |
-| CW-102 | Structure-aware chunking with metadata | `feat` | M | P1 | TODO | CW-101 |
-| CW-103 | Embeddings, Chroma index, per-car retrieval | `feat` | M | P1 | TODO | CW-102 |
-| CW-104 | `LLMClient` interface and one implementation | `feat` | S | P1 | TODO | CW-001 |
-| CW-105 | Basic pipeline (understand, generate) and CLI | `feat` | L | P1 | TODO | CW-103, CW-104 |
-| CW-106 | Eval question set (about 15, with trap questions), written before the guardrails | `feat` | M | P1 | TODO | CW-102 |
+| CW-101 | Download script, cache and clean the eight articles | `feat` | S | P1 | DONE | CW-002 |
+| CW-102 | Structure-aware chunking with metadata | `feat` | M | P1 | DONE | CW-101 |
+| CW-103 | Embeddings, Chroma index, per-car retrieval | `feat` | M | P1 | DONE | CW-102 |
+| CW-104 | `LLMClient` interface and one implementation | `feat` | S | P1 | DONE | CW-001 |
+| CW-105 | Basic pipeline (understand, generate) and CLI | `feat` | L | P1 | DONE | CW-103, CW-104 |
+| CW-106 | Eval question set (about 15, with trap questions), written before the guardrails | `feat` | M | P1 | DONE | CW-102 |
 
 ## Epic E2: Reliability and guardrails
 
@@ -177,56 +177,62 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [x] Branch protection on `main` requires a pull request and green CI once CI exists (CW-403). (Protection requires a pull request now; the green-CI requirement is added with CW-403.)
 
 ### CW-101 Download script, cache and clean the eight articles
-- [ ] `config/cars.yaml` lists the eight cars: canonical id, display name, Hebrew and Latin-script aliases, body type and powertrain (as stated in the articles), URL.
-- [ ] Script reads the URL list from the car registry and saves raw HTML under `data/raw/` (not committed).
-- [ ] Polite fetching: identifiable User-Agent, short delay, one retry, clear error message with manual-placement instructions.
-- [ ] A second run uses the cache and works offline.
-- [ ] Cleaning yields body text only and keeps headings and paragraph breaks.
-- [ ] Findings from the CW-002 probe, to be used by the cleaner: the article body is inside `<main>` and ends at the `כתבות אחרונות` heading; boilerplate headings to skip are the WhatsApp prompt, `תפריט מהיר`, `המומחה האובייקטיבי…`, `כתבות באותם נושאים`, `מותגים מתחרים` and empty headings; the publication date is in the JSON-LD `datePublished`.
-- [ ] The Kia EV9 long-term report has almost no section headings (unlike the road tests, which have about 10 question-style headings), so its chunks fall back to paragraph structure, with the report title as the section.
+- [x] `config/cars.yaml` lists the eight cars: canonical id, display name, Hebrew and Latin-script aliases, body type and powertrain (as stated in the articles), URL.
+- [x] Script reads the URL list from the car registry and saves raw HTML under `data/raw/` (not committed).
+- [x] Polite fetching: identifiable User-Agent, short delay, one retry, clear error message with manual-placement instructions.
+- [x] A second run uses the cache and works offline.
+- [x] Cleaning yields body text only and keeps headings and paragraph breaks.
+- [x] Findings from the CW-002 probe, to be used by the cleaner: the article body is inside `<main>` and ends at the `כתבות אחרונות` heading; boilerplate headings to skip are the WhatsApp prompt, `תפריט מהיר`, `המומחה האובייקטיבי…`, `כתבות באותם נושאים`, `מותגים מתחרים` and empty headings; the publication date is in the JSON-LD `datePublished`.
+- [x] The Kia EV9 long-term report has almost no section headings (unlike the road tests, which have about 10 question-style headings), so its chunks fall back to paragraph structure, with the report title as the section.
 
 ### CW-102 Structure-aware chunking with metadata
-- [ ] Splits on headings and paragraphs; merges too-short and splits too-long chunks per config.
-- [ ] Handles both article formats among the eight (road tests and the Kia EV9 long-term report); publication date is stored as metadata when the page shows it.
-- [ ] Every chunk has `car` (a canonical id from the registry), `section`, `source_url`, `chunk_id`.
-- [ ] Unit tests: structure preserved, metadata present, no empty chunks.
+- [x] Splits on headings and paragraphs; merges too-short and splits too-long chunks per config.
+- [x] Handles both article formats among the eight (road tests and the Kia EV9 long-term report); publication date is stored as metadata when the page shows it.
+- [x] Every chunk has `car` (a canonical id from the registry), `section`, `source_url`, `chunk_id`.
+- [x] Unit tests: structure preserved, metadata present, no empty chunks.
+- [x] Size rule as built: no chunk exceeds `max_chars`; a chunk is below `min_chars` only when merging it with either neighbor would exceed `max_chars` (none today: 75 chunks, 317 to 1464 characters). Oversize sections split evenly at block boundaries so no tiny remainder is left.
+- [x] Heading lines stay in the chunk text, so merged sections (pros and cons, several FAQ questions) keep their boundaries; `embed_text` adds the car name and section in front.
 
 ### CW-103 Embeddings, Chroma index, per-car retrieval
-- [ ] Multilingual embedding model with Hebrew support; version pinned in config.
-- [ ] `make ingest` builds the index; retrieval is deterministic for the same query.
-- [ ] Retrieval can filter by car and returns similarity scores.
-- [ ] Unit tests: per-car filter returns only that car.
+- [x] Multilingual embedding model with Hebrew support; version pinned in config.
+- [x] `make ingest` builds the index; retrieval is deterministic for the same query.
+- [x] Retrieval can filter by car and returns similarity scores.
+- [x] Unit tests: per-car filter returns only that car.
+- [x] As built: `embeddings.provider` selects the embedder (`sentence_transformers`, or `fake` for offline tests); `intfloat/multilingual-e5-base` pinned to commit `d1287505`, loaded from the local cache when present. The index fingerprint (embedder, chunk limits, chunk ids, chunk text) skips unchanged rebuilds. Retrieval ranks every candidate exactly and breaks ties by chunk id; `search`, `search_per_car` and `search_all` (cap per car). `python -m app search` prints metadata only.
+- [x] Finding for CW-303: 5 of 75 chunks exceed the model's 512-token window (max 647 tokens), so their tails are not embedded; tune `max_chars` (or measure in tokens). Similarity scores are compressed (about 0.79 to 0.86, an off-corpus car scores like a real match), which confirms the registry check must be the primary gate.
 
 ### CW-104 `LLMClient` interface and one implementation
-- [ ] Interface with `complete()` (supports structured output) and `embed()` if needed.
-- [ ] One implementation over the official OpenAI SDK with a configurable `base_url`; it serves OpenAI by default, and any OpenAI-compatible server (for example Ollama at `http://localhost:11434/v1`) as an option.
-- [ ] Config profiles `dev` (local) and `final` (OpenAI), selected by an environment variable or flag; keys from environment only.
-- [ ] Structured output is always validated with Pydantic, because local models are less reliable at following a schema.
-- [ ] Profiles: `dev` = `gpt-5.4-nano` for both calls; `final` = `gpt-5.4-nano` for understanding and `gpt-5.4-mini` for generation. Names and prices live in config.
-- [ ] Spike, documented in the commit message: does the chosen model accept a custom temperature? If not, use a low `reasoning_effort` plus a seed and note it in the README (determinism section). Check that reasoning tokens do not inflate cost, and verify prices on the official OpenAI pricing page.
-- [ ] Three-prompt Hebrew sanity check (a fact, a comparison, a refusal) with the chosen models.
-- [ ] Timeouts and one retry; a fake client exists for tests.
+- [x] Interface with `complete()` (supports structured output) and `embed()` if needed. As built: one method, `complete_json(system, messages, schema, *, model) -> LLMResult` (parsed object, usage, cost, latency, model); no `embed()`, embeddings stay local.
+- [x] One implementation over the official OpenAI SDK with a configurable `base_url`; it serves OpenAI by default, and any OpenAI-compatible server (for example Ollama at `http://localhost:11434/v1`) as an option. Uses Chat Completions, the API those servers implement.
+- [x] Config profiles selected by an environment variable or flag; keys from environment only. (Both profiles use OpenAI per decision D2, not a local `dev` model as first drafted.)
+- [x] Structured output is always validated with Pydantic, because local models are less reliable at following a schema. Strict JSON schema plus Pydantic; one corrective retry with the validation error, then `LLMOutputError`.
+- [x] Profiles: `dev` = `gpt-5.4-nano` for both calls; `final` = `gpt-5.4-nano` for understanding and `gpt-5.4-mini` for generation. Names and prices live in config.
+- [x] Spike: both models accept `temperature=0` and a seed; `reasoning_effort` accepts `none` and `low` (not `minimal`); defaults spend no reasoning tokens, `low` adds 17 to 32 billed as output. Config sends temperature 0, seed 7, effort `none`. Prices match the official page. Wording still varies between runs on open questions. See `docs/decisions/0001-llm-sampling-controls.md`.
+- [x] Three-prompt Hebrew sanity check (a fact, a comparison, a refusal) with the chosen models: 12 of 12 valid Hebrew JSON replies with correct facts and refusals (in `scripts/llm_spike.py`).
+- [x] Timeouts and one retry; a fake client exists for tests. Also: cost per call from config prices, a running total that refuses calls past `llm.max_cost_usd`, and a `live` test (deselected by default).
 
 ### CW-105 Basic pipeline and CLI
-- [ ] `pipeline.answer(message, session) -> Response` is the single entry point.
-- [ ] Prompts live in versioned text files, not in code.
-- [ ] Understand call returns intent, cars (canonical ids), standalone query, preference updates (validated by Pydantic); invalid output gets one retry, then falls back to using the raw message as the query.
-- [ ] The understand schema includes `unrecognized_cars` (raw names of cars that match no registry entry), and generation returns JSON with `answer` and `used_chunk_ids`; ids not retrieved this turn are rejected in code.
-- [ ] History window size comes from config.
-- [ ] Chitchat and out-of-scope intents skip retrieval and reply briefly with what the bot can do.
-- [ ] All replies are in Hebrew; the first message states that knowledge is limited to the eight reviewed cars; tone is friendly and concise.
-- [ ] Comparison questions retrieve separately per car.
-- [ ] The understand schema already contains the preference-update field; merging and using preferences is implemented in CW-203.
-- [ ] Generated answers cite car and section; CLI chat works end to end.
-- [ ] Unit tests with the fake `LLMClient`: intent handling, fallback on invalid output, chitchat skipping retrieval.
+- [x] `pipeline.answer(message, session) -> Response` is the single entry point. As built: `Pipeline(settings, registry, retriever, llm).ask(message, history) -> Answer` (owner's spec of 2026-10-30); CLI, UI and eval call only this.
+- [x] Prompts live in versioned text files, not in code: `src/carwise/llm/prompts/*.v1.txt`, exposed as named constants by `src/carwise/prompts.py`; telemetry records the prompt version.
+- [x] Understand call returns intent, cars (canonical ids), standalone query, preference updates (validated by Pydantic); invalid output gets one retry, then falls back to using the raw message as the query (cars then come from deterministic name matching).
+- [x] The understand schema includes `unrecognized_cars` (raw names of cars that match no registry entry), and generation returns JSON with `answer` and `used_chunk_ids`; ids not retrieved this turn are rejected in code (dropped and flagged).
+- [x] History window size comes from config.
+- [x] Chitchat and out-of-scope intents skip retrieval and reply briefly with what the bot can do.
+- [x] All replies are in Hebrew; the first message states that knowledge is limited to the eight reviewed cars; tone is friendly and concise. The answer validator rejects non-Hebrew text, JSON field names and chunk ids inside the answer (one corrective retry).
+- [x] Comparison questions retrieve separately per car.
+- [x] The understand schema already contains the preference-update field; merging and using preferences is implemented in CW-203.
+- [x] Generated answers cite car and section; CLI chat works end to end (`python -m app chat [--profile final] [--show-cost]`).
+- [x] Unit tests with the fake `LLMClient`: intent handling, fallback on invalid output, chitchat skipping retrieval; also unknown-car and low-similarity refusals, history follow-up, invalid cited ids, telemetry without text.
+- [x] Pulled forward at the minimum, refined later: the registry gate (unknown car only, or an outside brand from `guardrails.outside_brands`; known plus unknown cars are answered with a note) and the similarity gate (threshold 0 until CW-303) for CW-201; one JSON line per turn in `logs/turns.jsonl` for CW-204. The chat loads the embedding model at start, so the first question is not a one-minute wait.
+- [x] Known issue for CW-202 and CW-302: in the real run the comparison answer called two sections of the MG S6 article "another article". Facts were right; the wording was not.
 
 ### CW-106 Eval question set
-- [ ] About 15 questions in `eval/questions.yaml`, written after reading the articles and before building the guardrails and tuning, so the eval guides the work.
-- [ ] Categories: single-car facts, two-car comparisons, preference-driven recommendations, ranking questions across all cars, history-dependent follow-ups.
-- [ ] At least one scripted multi-turn scenario in which preferences accumulate and the final recommendation reflects them.
-- [ ] At least 4 trap questions: car not in the corpus, detail never mentioned, a mixing trap, and one more of the author's choice.
-- [ ] Each question states what must hold (cars, required fact or keyword, or expected refusal), not a full reference answer.
-- [ ] Each answerable question also records the expected car and section for the retrieval eval.
+- [x] About 15 questions in `eval/questions.yaml`, written after reading the articles and before building the guardrails and tuning, so the eval guides the work.
+- [x] Categories: single-car facts, two-car comparisons, preference-driven recommendations, ranking questions across all cars, history-dependent follow-ups.
+- [x] At least one scripted multi-turn scenario in which preferences accumulate and the final recommendation reflects them.
+- [x] At least 4 trap questions: car not in the corpus, detail never mentioned, a mixing trap, and one more of the author's choice.
+- [x] Each question states what must hold (cars, required fact or keyword, or expected refusal), not a full reference answer.
+- [x] Each answerable question also records the expected car and section for the retrieval eval.
 
 ### CW-201 Relevance gate and fixed refusal
 - [ ] Below-threshold score, or a car that is not in the car registry, returns a fixed refusal without the generation call.
@@ -356,3 +362,5 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 | 2026-10-29 | CW-002 done: all eight URLs return 200 with real article bodies, `robots.txt` was read and allows them. Decision: automatic download (identifiable User-Agent, 3 s delay, cache in `data/raw/`); manual placement stays as the documented fallback. |
 
 | 2026-10-29 | CW-003 done: six milestones (E0 to E5), PR template, pre-publish scan of the history found no secrets or data files, `.gitattributes` added to keep LF line endings (the Makefile needs them). Epic E0 closed. |
+
+| 2026-10-29 | CW-101 done: `config/cars.yaml` plus `registry.py`, `fetch.py` (the CW-002 probe folded in and deleted), `clean.py` on beautifulsoup4 with `html.parser`, and `python -m app ingest` printing a per-article report. Each registry body type and powertrain carries the article words behind it; the Elantra article never states the Elantra's body type, so that value is null. Cleaner findings: the spec table uses `role=row` markup inside `<li>` and is kept as one line per row; "סיכום AI" is a script-loaded widget and is skipped; the Elantra sections are numbered `<h3>` questions; the Kia report has no subheadings and ends with four label/value stats. |

@@ -14,8 +14,12 @@ requires-python = ">=3.11"
 #   pydantic: typed schemas, config and validated structured LLM output.
 #   pyyaml:   reads config/settings.yaml and config/cars.yaml.
 dependencies = [
+  "beautifulsoup4==4.13.4",
+  "chromadb==1.5.9",
+  "openai==3.41.0",
   "pydantic==2.13.5",
   "pyyaml==6.0.3",
+  "sentence-transformers==6.2.0",
 ]
 
 [dependency-groups]
@@ -32,6 +36,14 @@ packages = ["src/carwise"]
 testpaths = ["tests"]
 # app/ and eval/ live at the repository root and depend on src/carwise, never the reverse.
 pythonpath = ["."]
+# Opt-in markers, deselected by default; a later -m on the command line overrides
+# this one: `uv run pytest -m slow` (real embedding model, 1.1 GB download on first
+# run) or `uv run --env-file .env pytest -m live` (real OpenAI call, costs money).
+addopts = "-m 'not slow and not live'"
+markers = [
+  "slow: loads the real embedding model; opt-in with -m slow",
+  "live: calls the real LLM API (needs OPENAI_API_KEY, costs a fraction of a cent)",
+]
 
 [tool.ruff]
 line-length = 100
@@ -49,3 +61,11 @@ mypy_path = "src"
 [[tool.mypy.overrides]]
 module = ["yaml"]
 ignore_missing_imports = true
+
+# numpy (pulled in by sentence-transformers and chromadb) ships 3.12-only stub
+# syntax on Python 3.12+, while mypy checks against the 3.11 floor. carwise never
+# imports numpy itself, so its types are not followed.
+[[tool.mypy.overrides]]
+module = ["numpy", "numpy.*"]
+follow_imports = "skip"
+follow_imports_for_stubs = true  # numpy ships .pyi stubs, which "skip" alone still reads
