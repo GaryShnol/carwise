@@ -290,6 +290,14 @@ def test_grade_flags_a_wrong_behavior() -> None:
     assert result.reciprocal_rank is None
 
 
+def test_a_gate_refusal_contributes_no_retrieve_latency() -> None:
+    q = question("r", ["מה דעתך על טויוטה קורולה?"], Behavior.REFUSAL)
+    plan = understanding("טויוטה קורולה", [], unrecognized=["טויוטה קורולה"])
+    result = grade(q, [_graded(q, plan), _graded(q, plan)], RETRIEVER)
+    assert result.behavior == "refusal"
+    assert result.retrieve_ms == []  # not two zeros
+
+
 def test_summary_counts_a_sources_any_group_once() -> None:
     q = question(
         "any",

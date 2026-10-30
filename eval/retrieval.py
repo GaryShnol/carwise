@@ -64,7 +64,7 @@ class QuestionResult(_Model):
     retrieved: list[Hit]
     passed: bool
     failures: list[str]
-    retrieve_ms: list[float]  # one per run
+    retrieve_ms: list[float]  # one per run that reached retrieval
     stable: bool  # the same chunks and scores in every run
 
 
@@ -207,7 +207,11 @@ def grade(
         retrieved=signature[0],
         passed=not failures,
         failures=failures,
-        retrieve_ms=[run.answer.latency_ms.get("retrieve", 0.0) for run in runs],
+        # Only runs that reached retrieval: a gate refusal has no retrieve stage, and a
+        # zero would pull the percentiles down.
+        retrieve_ms=[
+            run.answer.latency_ms["retrieve"] for run in runs if "retrieve" in run.answer.latency_ms
+        ],
         stable=all(item == signature[0] for item in signature),
     )
 

@@ -149,10 +149,15 @@ def peak_memory_mb() -> int | None:
 
         counters = Counters()
         counters.cb = ctypes.sizeof(Counters)
-        process = ctypes.windll.kernel32.GetCurrentProcess()
-        if not ctypes.windll.psapi.GetProcessMemoryInfo(
-            process, ctypes.byref(counters), counters.cb
-        ):
+        kernel32 = ctypes.windll.kernel32
+        kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+        kernel32.K32GetProcessMemoryInfo.argtypes = [
+            wintypes.HANDLE,
+            ctypes.POINTER(Counters),
+            wintypes.DWORD,
+        ]
+        process = kernel32.GetCurrentProcess()
+        if not kernel32.K32GetProcessMemoryInfo(process, ctypes.byref(counters), counters.cb):
             return None
         peak_bytes: int = counters.PeakWorkingSetSize
         return round(peak_bytes / MB)

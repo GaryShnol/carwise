@@ -34,7 +34,7 @@ def test_apply_changes_only_the_embedder_lexical_flag_and_index_dir() -> None:
 
 def test_peak_memory_is_measured() -> None:
     peak = peak_memory_mb()
-    assert peak is None or peak > 0
+    assert peak is not None and peak > 0  # Windows, Linux and macOS all report it
 
 
 def _report(name: str, median: float) -> RetrievalReport:
