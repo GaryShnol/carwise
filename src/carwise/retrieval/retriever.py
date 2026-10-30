@@ -9,18 +9,47 @@ from __future__ import annotations
 
 from collections import Counter
 from pathlib import Path
+from typing import Protocol
 
 from carwise.config import RetrievalConfig, Settings
-from carwise.retrieval.embedder import Embedder, make_embedder
+from carwise.retrieval.embedder import Embedder, Vector, make_embedder
 from carwise.retrieval.store import ChunkStore
-from carwise.schemas import RetrievedChunk
+from carwise.schemas import Chunk, RetrievedChunk
+
+
+class CandidateSource(Protocol):
+    """What the retriever needs from a store: every candidate with its cosine score."""
+
+    def candidates(
+        self, vector: Vector, car_ids: list[str] | None
+    ) -> list[tuple[Chunk, float]]: ...
+
+
+class ChunkRetriever(Protocol):
+    """What the pipeline needs; the Retriever below is the only production implementation."""
+
+    def search(
+        self, query: str, car_ids: list[str] | None = None, top_k: int | None = None
+    ) -> list[RetrievedChunk]: ...
+
+    def search_per_car(
+        self, query: str, car_ids: list[str], top_k_per_car: int | None = None
+    ) -> list[RetrievedChunk]: ...
+
+    def search_all(
+        self, query: str, top_k: int | None = None, per_car_cap: int | None = None
+    ) -> list[RetrievedChunk]: ...
 
 
 class Retriever:
-    def __init__(self, store: ChunkStore, embedder: Embedder, config: RetrievalConfig) -> None:
+    def __init__(self, store: CandidateSource, embedder: Embedder, config: RetrievalConfig) -> None:
         self._store = store
         self._embedder = embedder
         self._config = config
+
+    def warm_up(self) -> None:
+        """Load the embedding model now (about a minute on a cold CPU start, not mid-chat)."""
+        self._embedder.warm_up()
 
     def _ranked(self, query: str, car_ids: list[str] | None) -> list[RetrievedChunk]:
         if car_ids is not None and not car_ids:

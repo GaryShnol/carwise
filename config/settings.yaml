@@ -49,12 +49,80 @@ chunking:              # provisional, tuned in CW-303
   max_chars: 1500
 
 retrieval:             # provisional, tuned in CW-303
-  top_k: 5
-  per_car_cap: 3
-  relevance_threshold: 0.0
+  top_k: 5               # single-car questions
+  per_car_cap: 3         # comparisons: chunks per named car
+  cross_car_top_k: 12    # recommendation and ranking questions across all cars...
+  cross_car_per_car_cap: 2   # ...with at most this many chunks per car, so most cars appear
+  relevance_threshold: 0.0   # cosine; 0 disables it until CW-303 tunes it on the eval
 
 input:
   max_message_chars: 500
+
+guardrails:
+  # Well-known brands with no article in the corpus (CW-105 gate, CW-202 post-check).
+  # A question naming only these is refused without a generation call. Brands that
+  # are in the corpus (Citroen, Audi, Kia, MG, Hyundai, GAC, Lynk & Co, Genesis) must
+  # never appear here; a test checks it. Hebrew "ג'יפ" is left out on purpose: it is
+  # everyday slang for any SUV.
+  outside_brands:
+    - טויוטה
+    - Toyota
+    - ב.מ.וו
+    - ב.מ.ו
+    - BMW
+    - מרצדס
+    - Mercedes
+    - טסלה
+    - Tesla
+    - מאזדה
+    - Mazda
+    - הונדה
+    - Honda
+    - סקודה
+    - Skoda
+    - פולקסווגן
+    - Volkswagen
+    - VW
+    - סובארו
+    - Subaru
+    - ניסאן
+    - Nissan
+    - פורד
+    - Ford
+    - פיג'ו
+    - Peugeot
+    - רנו
+    - Renault
+    - BYD
+    - וולוו
+    - Volvo
+    - שברולט
+    - Chevrolet
+    - סוזוקי
+    - Suzuki
+    - מיצובישי
+    - Mitsubishi
+    - פורשה
+    - Porsche
+    - לקסוס
+    - Lexus
+    - Jeep
+    - סיאט
+    - Seat
+    - קופרה
+    - Cupra
+    - צ'רי
+    - Chery
+    - אופל
+    - Opel
+    - פיאט
+    - Fiat
+    - דאצ'יה
+    - Dacia
+    - זיקר
+    - Zeekr
+    - אקספנג
+    - XPeng
 
 fetch:                 # polite download of the eight articles (CW-101)
   user_agent: "carwise-takehome/0.1 (+https://github.com/GaryShnol/carwise)"

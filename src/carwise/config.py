@@ -60,7 +60,13 @@ class ChunkingConfig(_Strict):
 class RetrievalConfig(_Strict):
     top_k: int
     per_car_cap: int
+    cross_car_top_k: int
+    cross_car_per_car_cap: int
     relevance_threshold: float
+
+
+class GuardrailsConfig(_Strict):
+    outside_brands: list[str]
 
 
 class InputConfig(_Strict):
@@ -89,6 +95,7 @@ class Settings(_Strict):
     chunking: ChunkingConfig
     retrieval: RetrievalConfig
     input: InputConfig
+    guardrails: GuardrailsConfig
     fetch: FetchConfig
     paths: PathsConfig
 

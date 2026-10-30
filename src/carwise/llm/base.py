@@ -22,26 +22,6 @@ Message = dict[str, str]  # {"role": "user" | "assistant", "content": "..."}
 TOKENS_PER_PRICE_UNIT = 1_000_000  # config prices are USD per 1M tokens
 
 
-class LLMError(RuntimeError):
-    """Base for every LLM failure the pipeline may want to catch in one place."""
-
-
-class LLMConfigError(LLMError):
-    """Missing API key, or a model without a price in config."""
-
-
-class LLMUnavailableError(LLMError):
-    """Network, timeout or provider error that survived the configured retries."""
-
-
-class LLMOutputError(LLMError):
-    """The reply did not match the schema, even after the one corrective retry."""
-
-
-class BudgetExceededError(LLMError):
-    """The running cost passed llm.max_cost_usd; the run must stop."""
-
-
 @dataclass(frozen=True)
 class Usage:
     """Token counts, summed over every attempt of one call.
@@ -63,6 +43,38 @@ class Usage:
             self.output_tokens + other.output_tokens,
             self.reasoning_tokens + other.reasoning_tokens,
         )
+
+
+class LLMError(RuntimeError):
+    """Base for every LLM failure the pipeline may want to catch in one place.
+
+    It carries what the failed call already spent, so a caller that recovers
+    (the pipeline's fallbacks) still reports honest per-turn tokens and cost.
+    """
+
+    def __init__(
+        self, message: str, *, usage: Usage | None = None, cost_usd: float = 0.0, attempts: int = 0
+    ) -> None:
+        super().__init__(message)
+        self.usage = usage or Usage()
+        self.cost_usd = cost_usd
+        self.attempts = attempts
+
+
+class LLMConfigError(LLMError):
+    """Missing API key, or a model without a price in config."""
+
+
+class LLMUnavailableError(LLMError):
+    """Network, timeout or provider error that survived the configured retries."""
+
+
+class LLMOutputError(LLMError):
+    """The reply did not match the schema, even after the one corrective retry."""
+
+
+class BudgetExceededError(LLMError):
+    """The running cost passed llm.max_cost_usd; the run must stop."""
 
 
 def cost_usd(usage: Usage, price: Price) -> float:

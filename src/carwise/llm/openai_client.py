@@ -169,19 +169,26 @@ class OpenAIClient:
         for attempt in (1, 2):
             try:
                 content, call_usage = self._call(conversation, schema, model)
-            except LLMUnavailableError:
+            except LLMUnavailableError as error:
                 # A failed retry must not hide what the first attempt already cost.
-                self.total_cost_usd += cost_usd(usage, price)
-                raise
+                spent = cost_usd(usage, price)
+                self.total_cost_usd += spent
+                raise LLMUnavailableError(
+                    str(error), usage=usage, cost_usd=spent, attempts=attempt - 1
+                ) from error.__cause__
             usage += call_usage
             try:
                 parsed = schema.model_validate_json(content)
             except ValidationError as error:
                 if attempt == 2:
-                    self.total_cost_usd += cost_usd(usage, price)
+                    spent = cost_usd(usage, price)
+                    self.total_cost_usd += spent
                     raise LLMOutputError(
                         f"{model} returned invalid {schema.__name__} twice: "
-                        f"{error.error_count()} validation error(s)"
+                        f"{error.error_count()} validation error(s)",
+                        usage=usage,
+                        cost_usd=spent,
+                        attempts=attempt,
                     ) from error
                 retry = RETRY_INSTRUCTION.format(error=str(error)[:RETRY_ERROR_CHARS])
                 conversation = [

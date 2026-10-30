@@ -33,6 +33,10 @@ class Embedder(Protocol):
 
     def embed_query(self, text: str) -> Vector: ...
 
+    def warm_up(self) -> None:
+        """Load whatever is slow to load, so the first user question does not pay for it."""
+        ...
+
 
 class SentenceTransformerEmbedder:
     """A local sentence-transformers model on CPU: no API key, no per-call cost.
@@ -76,6 +80,9 @@ class SentenceTransformerEmbedder:
             except OSError:  # first run: download once into the Hugging Face cache
                 self._model = load(local_only=False)
         return self._model
+
+    def warm_up(self) -> None:
+        self._load()
 
     def _encode(self, texts: list[str]) -> list[Vector]:
         vectors = self._load().encode(
@@ -124,6 +131,9 @@ class FakeEmbedder:
 
     def embed_query(self, text: str) -> Vector:
         return self._vector(text)
+
+    def warm_up(self) -> None:
+        """Nothing to load."""
 
 
 def make_embedder(config: EmbeddingsConfig) -> Embedder:

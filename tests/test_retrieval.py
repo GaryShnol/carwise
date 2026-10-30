@@ -17,7 +17,9 @@ from carwise.schemas import Chunk
 
 # Synthetic chunks only; the repository is public.
 LIMITS = ChunkingConfig(min_chars=10, max_chars=500)
-CONFIG = RetrievalConfig(top_k=3, per_car_cap=2, relevance_threshold=0.0)
+CONFIG = RetrievalConfig(
+    top_k=3, per_car_cap=2, cross_car_top_k=6, cross_car_per_car_cap=2, relevance_threshold=0.0
+)
 TOPICS = ["מנוע טורבו כוח סוס", "טווח סוללה טעינה", "מחיר אבזור גרסה", "נוחות מושבים שקט"]
 
 
