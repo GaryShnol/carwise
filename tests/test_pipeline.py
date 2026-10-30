@@ -197,12 +197,58 @@ def test_known_and_unknown_car_together_is_answered_with_a_note() -> None:
     assert "Cars the articles do not cover: BMW X5" in llm.calls[1].messages[0]["content"]
 
 
+def test_unknown_car_refusal_suggests_cars_from_the_users_own_words() -> None:
+    message = "כמה טווח יש לטסלה מודל Y החשמלית?"
+    plan = understanding(unrecognized=["טסלה מודל Y"], question=message)
+    pipeline, llm, retriever = make([plan])
+    answer = pipeline.ask(message, [])
+    assert answer.refusal is RefusalReason.UNKNOWN_CAR
+    assert answer.suggested_cars == ["kia_ev9", "mg_s6", "aion_ht"]  # the three electric cars
+    assert "MG S6 (רכב פנאי, חשמלי)" in answer.text and "ג'נסיס GV80" not in answer.text
+    assert len(llm.calls) == 1 and retriever.calls == []
+
+
+def test_hint_words_come_only_from_the_users_own_words() -> None:
+    # The rewrite adds "חשמלי" from model knowledge; the user never said it.
+    plan = understanding(unrecognized=["טסלה"], question="כמה טווח יש לרכב החשמלי טסלה?")
+    pipeline, _, _ = make([plan])
+    answer = pipeline.ask("כמה טווח יש לטסלה?", [])
+    assert answer.refusal is RefusalReason.UNKNOWN_CAR and answer.suggested_cars == []
+
+
+def test_hint_words_in_earlier_user_messages_count() -> None:
+    history = [
+        {"role": "user", "content": "אני מחפש רכב פנאי חשמלי"},
+        {"role": "assistant", "content": "יש כמה רכבים חשמליים בכתבות."},
+    ]
+    plan = understanding(unrecognized=["טסלה"], question="כמה טווח יש לטסלה?")
+    pipeline, _, _ = make([plan])
+    answer = pipeline.ask("ומה עם טסלה?", history)
+    assert answer.suggested_cars == ["kia_ev9", "mg_s6", "aion_ht"]
+
+
+def test_assistant_turns_do_not_supply_hint_words() -> None:
+    history = [{"role": "assistant", "content": "הנה הרכבים החשמליים שנבחנו."}]
+    pipeline, _, _ = make([understanding(unrecognized=["טסלה"], question="ומה עם טסלה?")])
+    assert pipeline.ask("ומה עם טסלה?", history).suggested_cars == []
+
+
 # --- similarity gate ---------------------------------------------------------------------
 def test_low_similarity_is_refused_without_a_generation_call() -> None:
     pipeline, llm, _ = make([understanding(cars=["mg_s6"])], threshold=0.99)
     answer = pipeline.ask("כמה טווח יש ל-MG S6?", [])
     assert answer.refusal is RefusalReason.LOW_RELEVANCE
     assert len(llm.calls) == 1 and answer.retrieved  # retrieval ran, generation did not
+    assert answer.suggested_cars == ["mg_s6"]  # closest by chunk score, inside the corpus
+    assert answer.text.startswith("לא מצאתי בכתבות") and "MG S6" in answer.text
+
+
+def test_threshold_comes_from_config_and_passes_scores_at_or_above_it() -> None:
+    probe, _, _ = make([understanding(cars=["mg_s6"])], threshold=0.99)
+    best = max(hit.score for hit in probe.ask("כמה טווח יש ל-MG S6?", []).retrieved)
+    pipeline, llm, _ = make([understanding(cars=["mg_s6"]), generation()], threshold=best)
+    answer = pipeline.ask("כמה טווח יש ל-MG S6?", [])
+    assert answer.refusal is None and len(llm.calls) == 2 and answer.suggested_cars == []
 
 
 # --- history -------------------------------------------------------------------------------
@@ -212,7 +258,8 @@ def test_follow_up_uses_history_and_the_rewritten_question() -> None:
         {"role": "assistant", "content": "המחיר הוא 180 אלף שקל (MG S6, פרק 1)."},
     ]
     plan = understanding(cars=["aion_ht"], question="מה המחיר של איון HT?")
-    pipeline, llm, retriever = make([plan, generation(ids=["aion_ht:001"])])
+    reply = generation("המחיר הוא 170 אלף שקל (GAC איון HT, פרק 1).", ["aion_ht:001"])
+    pipeline, llm, retriever = make([plan, reply])
     answer = pipeline.ask("ומה לגבי איון?", history)
     assert llm.calls[0].messages == [*history, {"role": "user", "content": "ומה לגבי איון?"}]
     assert retriever.calls == [("search", ["aion_ht"])]

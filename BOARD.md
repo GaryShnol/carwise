@@ -2,7 +2,7 @@
 
 Living task board for the project, kept in the repository like a lightweight Jira. It is the single source of truth for scope and progress. Rules for updating it are in `CLAUDE.md`, section 19.
 
-**Last updated:** 2026-10-29
+**Last updated:** 2026-10-30
 **Release target:** `v1.0`
 **Effort budget:** the assignment suggests 3 to 5 hours, and the owner accepts more time in exchange for a solid result. Target: all P1 and P2 tickets (36 points, about 6 to 7 hours with Claude Code assistance); P3 only if time allows. Points: S = 1, M = 2, L = 3.
 
@@ -67,12 +67,12 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | Epic | Milestone / tag | Tickets | Done | Points | Status |
 |---|---|---|---|---|---|
 | E0 Scaffold and source check | none | 3 | 3 | 3 | DONE |
-| E1 Thin vertical slice | `v0.1` | 6 | 6 | 11 | IN PROGRESS |
-| E2 Reliability and guardrails | none | 6 | 0 | 9 | TODO |
+| E1 Thin vertical slice | `v0.1` | 6 | 6 | 11 | DONE |
+| E2 Reliability and guardrails | none | 6 | 6 | 9 | DONE |
 | E3 Measurement | none | 3 | 0 | 5 | TODO |
 | E4 Interface and packaging | none | 3 | 0 | 4 | TODO |
 | E5 Documentation and release | `v1.0` | 3 | 0 | 4 | TODO |
-| **Total** |  | **24** | **9** | **36** |  |
+| **Total** |  | **24** | **15** | **36** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -109,12 +109,12 @@ Branch: `epic/e2-reliability` | Tag: none
 
 | ID | Ticket | Type | Size | Pri | Status | Depends on |
 |---|---|---|---|---|---|---|
-| CW-201 | Relevance gate and fixed refusal | `feat` | M | P1 | TODO | CW-105 |
-| CW-202 | Post-check for cars not retrieved this turn | `feat` | M | P1 | TODO | CW-105 |
-| CW-203 | Preference model and `/prefs` command | `feat` | M | P1 | TODO | CW-105 |
-| CW-204 | Turn telemetry and cost estimate | `feat` | S | P2 | TODO | CW-105 |
-| CW-205 | Injection hygiene and input limits | `feat` | S | P2 | TODO | CW-105 |
-| CW-206 | Numeric claim check in post-check | `feat` | S | P2 | TODO | CW-202 |
+| CW-201 | Relevance gate and fixed refusal | `feat` | M | P1 | DONE | CW-105 |
+| CW-202 | Post-check for cars not retrieved this turn | `feat` | M | P1 | DONE | CW-105 |
+| CW-203 | Preference model and `/prefs` command | `feat` | M | P1 | DONE | CW-105 |
+| CW-204 | Turn telemetry and cost estimate | `feat` | S | P2 | DONE | CW-105 |
+| CW-205 | Injection hygiene and input limits | `feat` | S | P2 | DONE | CW-105 |
+| CW-206 | Numeric claim check in post-check | `feat` | S | P2 | DONE | CW-202 |
 
 ## Epic E3: Measurement
 
@@ -235,39 +235,51 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [x] Each answerable question also records the expected car and section for the retrieval eval.
 
 ### CW-201 Relevance gate and fixed refusal
-- [ ] Below-threshold score, or a car that is not in the car registry, returns a fixed refusal without the generation call.
-- [ ] The registry check, including `unrecognized_cars`, is the primary gate; the threshold is tuned on the eval, which includes near-miss questions (a known car, a detail the articles never mention).
-- [ ] The reply is templated and filled in by code: it says plainly what the articles do not cover, then suggests the closest cars among the eight (by body type and powertrain from the registry, or by the best-scoring chunks) and invites a follow-up question.
-- [ ] No outside knowledge is ever added; for a known car with a missing detail the generation step says "not mentioned in the articles" and offers the closest related facts from the chunks.
-- [ ] Unit tests: refuses below threshold; refuses unknown car.
+- [x] Below-threshold score, or a car that is not in the car registry, returns a fixed refusal without the generation call.
+- [x] The registry check, including `unrecognized_cars`, is the primary gate; the threshold is tuned on the eval, which includes near-miss questions (a known car, a detail the articles never mention). (The threshold stays configurable at 0 until CW-303 tunes it.)
+- [x] The reply is templated and filled in by code: it says plainly what the articles do not cover, then suggests the closest cars among the eight (by body type and powertrain from the registry, or by the best-scoring chunks) and invites a follow-up question.
+- [x] No outside knowledge is ever added; for a known car with a missing detail the generation step says "not mentioned in the articles" and offers the closest related facts from the chunks. (Generate prompt rule 2.)
+- [x] Unit tests: refuses below threshold; refuses unknown car.
+- [x] As built: the unknown car is never classified (that would be outside knowledge); suggestions come from the user's own words (the current message and the user turns in the history window, never the model's rewritten question, which can add "electric" from model knowledge of the unknown car), via hint words in `guardrails.body_type_words` and `powertrain_words` mapped to the registry values (a car scores one point per matching dimension; within a dimension the kind with the most hint words wins, so "היברידי נטען" is plug-in only). Without a hint, the low-relevance refusal suggests the cars of the best-scoring chunks; with neither, every refusal lists the eight cars grouped by powertrain with their body type. `Answer.suggested_cars` and the telemetry line record what was offered; at most `guardrails.max_suggestions` cars.
 
 ### CW-202 Post-check
-- [ ] A car named in the answer is acceptable only if it was retrieved this turn or appears in the text of the retrieved chunks (articles may mention rival cars legitimately); otherwise the answer is suspect.
-- [ ] Name matching normalizes Hebrew prefixes, and a small configurable list of well-known brands outside the corpus is also checked.
-- [ ] Suspect answers are regenerated once with a stricter instruction, or replaced with a safe fallback.
-- [ ] Unit tests cover the flagged case, the clean case, and a rival car mentioned in a retrieved chunk.
+- [x] A car named in the answer is acceptable only if it was retrieved this turn or appears in the text of the retrieved chunks (articles may mention rival cars legitimately); otherwise the answer is suspect.
+- [x] Name matching normalizes Hebrew prefixes, and a small configurable list of well-known brands outside the corpus is also checked.
+- [x] Suspect answers are regenerated once with a stricter instruction, or replaced with a safe fallback.
+- [x] Unit tests cover the flagged case, the clean case, and a rival car mentioned in a retrieved chunk.
+- [x] As built: `guardrails.unsupported_cars` also accepts an outside brand the user asked about (`not_covered`), since the answer must say the articles do not cover it. A suspect answer gets exactly one retry (the rejected answer as an assistant turn, then `regenerate.v1.txt` with the reasons); if the retry is still suspect or the call fails, `guardrails.unverified_reply` (no model text; only where in the articles the closest information is) is shown with refusal `unverified`. `Answer.post_check` (outcome `clean` / `regenerated` / `fallback`, findings per attempt), the flags `postcheck_suspect`, `postcheck_regenerated`, `postcheck_fallback`, and the telemetry line record it. Prompts are versioned per prompt (`PROMPT_VERSIONS`); `generate.v2.txt` says the excerpts are one set of articles, forbids "בכתבה אחרת"-style phrasing and names outside the excerpts; v1 is kept. Known limits: a model name with no registry alias and no listed brand is not caught; a brand written in the other script than the chunk (BMW vs ב.מ.וו) is flagged even when the chunk names it.
+- [x] Live check of the CW-105 "another article" issue: not reproduced in 9 runs with generate v1 (3 comparison questions on `dev` and `final`, one of them 3 times) nor in 3 runs with v2. The v2 rule stays as prevention; CW-302 should count this phrasing in the answer eval.
 
 ### CW-203 Preference model and `/prefs`
-- [ ] Typed preference object updated every turn; each field records its source message.
-- [ ] `/prefs` prints the current profile; preferences last for one conversation only.
-- [ ] Preferences may shape recommendation queries but never override grounding.
-- [ ] Unit tests: updates merge across turns, a later statement overrides an earlier one, and each field keeps its source message.
+- [x] Typed preference object updated every turn; each field records its source message.
+- [x] `/prefs` prints the current profile; preferences last for one conversation only.
+- [x] Preferences may shape recommendation queries but never override grounding.
+- [x] Unit tests: updates merge across turns, a later statement overrides an earlier one, and each field keeps its source message.
+- [x] As built: `schemas.Preferences` (one `Preference(value, source)` per field) and `carwise/preferences.py` (merge, validation, Hebrew `/prefs` text, in-memory `Session`). The pipeline stays stateless: `Pipeline.ask(message, history, preferences)` returns the merged profile in `Answer.preferences`, and `Pipeline.answer(message, session)` keeps it in the session; refusals and an understand fallback keep the profile. Validation in code: unknown field names are dropped and flagged (the strict schema still lists the allowed names; a plain string without the enum let the model invent names in the first live run), values are capped at `preferences.max_value_chars`, and a value is kept only if at least half of its content words occur in the user's current message, so a value lifted from an assistant turn or article text is dropped (`preference_not_from_user`). The generate call gets a "User preferences" block for recommend intents only (generate prompt v3 says to name the preference behind a choice). Retrieval queries are not changed: the understand rewrite already carries stated constraints. Chat adds `/prefs` and `/reset`; telemetry logs field names only.
+- [x] Live 4-turn run (dev): the budget change replaced the earlier budget and kept the powertrain; on follow-up turns the model re-sends earlier preferences, which the grounding check drops (flagged, harmless). Notes for CW-302: one answer called Aion HT (187,000) "cheaper" than MG S6 (178,888), a comparison error the planned numeric check cannot catch; very long merged section names make citations noisy (chunking, CW-303).
 
 ### CW-204 Turn telemetry and cost estimate
-- [ ] One JSON line per turn: chunk ids, scores, intent, tokens in and out, estimated cost, latency, post-check result.
-- [ ] Prices come from config (zero for local models); secrets are never logged.
-- [ ] Unit test for the cost calculation (tokens times configured price).
-- [ ] Each line records the profile and model name; a `max_cost_usd` cap in config aborts a run (eval or chat session) when exceeded.
+- [x] One JSON line per turn: chunk ids, scores, intent, tokens in and out, estimated cost, latency per stage, post-check result (cars and numbers per attempt), flags, prompt versions.
+- [x] Per-call detail (`llm_calls_detail`: stage, model, ok, attempts, client latency, tokens, cost) and cold-start signals (`process_turn`, `history_messages`), so a slow first call can be told apart from a slow stage.
+- [x] Prices come from config (zero for local models); secrets are never logged (tested with a planted API key).
+- [x] Unit test for the cost calculation (tokens times configured price), at client level and per turn through the pipeline.
+- [x] Each line records the profile and model name; the `max_cost_usd` cap ends a chat session with a fixed Hebrew message (refusal `budget_exceeded`); tested through the pipeline with the real client over a stub SDK. The eval runner (CW-302) must stop on the same refusal.
+- [x] Latency finding: of 15 first turns in `logs/` (before this ticket), 5 exceeded 10 s in total, 2 in the understand stage alone (58.9 s and 12.7 s). The 58.9 s is longer than `llm.timeout_s` (30), so it was most likely a timeout plus a silent SDK retry, not a connection warm-up: other first turns on fresh clients in the same minute took 1.3 s. See the Backlog item on SDK retries.
 
 ### CW-205 Injection hygiene and input limits
-- [ ] System prompt states that article text is data, never instructions.
-- [ ] Message length limit and a polite refusal for out-of-domain requests.
-- [ ] Unit tests: over-long input is rejected politely; an instruction planted in a chunk is not followed.
+- [x] System prompt states that article text is data, never instructions (generate rule 5; the understand prompt treats user messages as data).
+- [x] Message length limit and a polite refusal for out-of-domain requests.
+- [x] Every value from outside the code is escaped before a prompt: chunk text, car and section attributes, the question, not-covered names, preference values and the history. "<" and ">" become "&lt;" and "&gt;" (reversible; no article contains either), single-line fields cannot start a fake header, an ASCII quote in an attribute becomes gershayim, and line-start role labels ("System:") lose their colon. "&" is kept, so "לינק & קו" reads normally.
+- [x] Turn input bounded: user messages in the history window obey `max_message_chars` too (truncated, flagged), and message plus window obey `max_turn_input_chars` (oldest dropped first, flagged). A long history never refuses a turn.
+- [x] Unit tests: closing tags, a fake excerpt with another car's id, "ignore previous instructions", a fake system message and very long input; the generate input stays structurally valid and the answer is still produced. Whether the model obeys planted text is measured by the eval (CW-302), not by unit tests.
 
 ### CW-206 Numeric claim check
-- [ ] Every number in an answer (horsepower, price, consumption, dimensions) must appear in the retrieved chunks.
-- [ ] A missing number marks the answer as suspect and feeds the same regenerate-or-fallback path as CW-202.
-- [ ] Unit tests: matching numbers pass; an invented number is flagged; formatting differences (commas, units) are handled.
+- [x] Every number in an answer (horsepower, price, consumption, dimensions) must appear in the retrieved chunks (or in the user's own words: the message, the rewritten question, preference values).
+- [x] A missing number marks the answer as suspect and feeds the same regenerate-or-fallback path as CW-202 (`CheckFindings.numbers`, flag `postcheck_numbers`, regenerate prompt v2).
+- [x] Unit tests: matching numbers pass; an invented number is flagged; formatting differences (commas, units) are handled. Also: decimal comma, thousands and "אלף"/"מיליון", ranges, percent, numbers inside car names, years, list markers, rounding (never added precision), derived sums and differences only with both operands in the answer.
+- [x] False-positive suite over the real chunks (229 quoted sentences, 279 reformatted numbers: 0 flagged) and a recall check (every integer nudged by one is caught).
+- [x] Live (`final`): a forced unsupported price was flagged and regenerated away ($0.0039, 3 calls). 10 real answers (46 numbers): 1 flagged, "545,000" where the Audi RS3 article itself prints "545,00" (a publisher typo). Limit: numbers written as words are not checked.
+- [x] Known source case (decided, not a bug): `audi_rs3:002` prints the sedan price as "545,00". It is parsed as the decimal 545.00 like any decimal comma; no special rule. An answer that corrects it to 545,000 is flagged, the one regeneration drops that number, and the answer stays correct (it states only what the articles support).
 
 ### CW-302 Eval runner and per-category report
 - [ ] Retrieval eval (no LLM, deterministic, free): expected car and section among retrieved chunks.
@@ -339,6 +351,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 | Second LLM provider (for example Bedrock) | One provider is enough | Provider switching becomes a requirement |
 | Cross-session memory | Out of scope for a proof of concept | Persistent users are required |
 | Agent loop with tools | Flow is linear | Live prices or external tools are needed |
+| Make SDK-level retries visible (`retries_taken`) and revisit `llm.timeout_s` | The SDK retries a timed-out request silently, so a 30 s timeout can cost about 60 s while `attempts` stays 1 (seen once in CW-206) | More than an occasional turn exceeds 10 s in the eval or the demo |
 
 ## Change log
 
@@ -358,9 +371,10 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 | 2026-10-29 | Provider decision revised: OpenAI only. `dev` = `gpt-5.4-nano`; `final` = nano for understanding and mini for generation. Ollama is optional. Entry point is `python -m app`, the Makefile is a thin wrapper. Tags reduced to `v0.1` and `v1.0`. |
 | 2026-10-29 | CW-001 done. Entry point is `python -m app <ingest|chat|eval|ui>` (not `python -m carwise`), so the core package never imports from `app/` or `eval/`. `LICENSE` (MIT), `.gitignore` and a short `README.md` came from the repository's initial commit and were kept. |
 | 2026-10-29 | Branching tightened: after the first scaffold commit (CW-001) nothing goes to `main` directly. Rest of E0 uses `epic/e0-source-check`; every epic gets a pull request. |
-
 | 2026-10-29 | CW-002 done: all eight URLs return 200 with real article bodies, `robots.txt` was read and allows them. Decision: automatic download (identifiable User-Agent, 3 s delay, cache in `data/raw/`); manual placement stays as the documented fallback. |
-
 | 2026-10-29 | CW-003 done: six milestones (E0 to E5), PR template, pre-publish scan of the history found no secrets or data files, `.gitattributes` added to keep LF line endings (the Makefile needs them). Epic E0 closed. |
-
+| 2026-10-30 | CW-203 done: typed preference memory with source messages, validated in code, used for recommendations; `/prefs` and `/reset` in chat; in-memory `Session`; generate prompt v3. |
+| 2026-10-30 | CW-202 done: car-name post-check with one stricter regeneration, then a code-built fallback; per-prompt versions, generate v2. CW-201 fix: hint words come only from the user's own messages. |
+| 2026-10-30 | CW-201 done: refusals suggest the closest of the eight cars (hint words from the user's message, else best-scoring chunks, else all eight grouped by powertrain and body type) and invite a follow-up; similarity threshold stays configurable at 0 until CW-303. |
 | 2026-10-29 | CW-101 done: `config/cars.yaml` plus `registry.py`, `fetch.py` (the CW-002 probe folded in and deleted), `clean.py` on beautifulsoup4 with `html.parser`, and `python -m app ingest` printing a per-article report. Each registry body type and powertrain carries the article words behind it; the Elantra article never states the Elantra's body type, so that value is null. Cleaner findings: the spec table uses `role=row` markup inside `<li>` and is kept as one line per row; "סיכום AI" is a script-loaded widget and is skipped; the Elantra sections are numbered `<h3>` questions; the Kia report has no subheadings and ends with four label/value stats. |
+| 2026-10-30 | E2 done (CW-201 to CW-206). CW-206 decision: "545,00" in the Audi RS3 article stays a decimal (known source case). CW-205 bounds the whole turn input with `input.max_turn_input_chars`; user messages in the history obey `max_message_chars`. Backlog: SDK-level retries. |

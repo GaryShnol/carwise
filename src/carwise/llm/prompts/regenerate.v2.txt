@@ -1,0 +1,3 @@
+An automatic check rejected your previous answer: $problems
+
+Write the answer again, as the same JSON, following every rule above. Use only facts from the excerpts, keep each fact with its own car, and name only the cars the excerpts are about, cars the excerpts themselves mention, and cars listed as not covered. Write every number exactly as an excerpt or the question states it, never from your own knowledge, and never convert units. If you give a difference or a sum, also state the two excerpt numbers it comes from. If the excerpts do not support a part of the answer, leave that part out or say it is not mentioned in the articles.

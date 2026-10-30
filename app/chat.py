@@ -12,17 +12,39 @@ import argparse
 from pathlib import Path
 
 from carwise.config import load_settings
-from carwise.llm.base import BudgetExceededError, LLMConfigError, Message
+from carwise.guardrails import section_label
+from carwise.llm.base import LLMConfigError
 from carwise.llm.openai_client import OpenAIClient
 from carwise.pipeline import Pipeline
+from carwise.preferences import RESET_REPLY, Session
+from carwise.preferences import describe as describe_preferences
 from carwise.registry import load_registry
 from carwise.retrieval.retriever import open_retriever
 from carwise.retrieval.store import IndexNotReadyError
-from carwise.schemas import Answer
+from carwise.schemas import Answer, RefusalReason
 from carwise.telemetry import TurnLogger
 
 EXIT_COMMANDS = {"/exit", "/quit", "יציאה"}
+PREFS_COMMAND = "/prefs"
+RESET_COMMAND = "/reset"
+HELP_LINE = "(העדפות: /prefs | שיחה חדשה: /reset | יציאה: /exit)"
 PROMPT = "\nשאלה> "
+
+
+def run_command(line: str, session: Session) -> str | None:
+    """Output of a chat command, or None when the line is a question for the bot."""
+    command = line.strip()
+    if command == PREFS_COMMAND:
+        return describe_preferences(session.preferences)
+    if command == RESET_COMMAND:
+        session.reset()
+        return RESET_REPLY
+    return None
+
+
+def ends_session(answer: Answer) -> bool:
+    """The cost cap ends the chat: every later call would be refused (CW-204)."""
+    return answer.refusal is RefusalReason.BUDGET_EXCEEDED
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
@@ -33,7 +55,7 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def format_answer(answer: Answer, *, show_cost: bool) -> str:
+def format_answer(answer: Answer, *, show_cost: bool, max_section_chars: int) -> str:
     lines = [answer.text]
     if answer.sources:
         lines.append("\nמקורות:")
@@ -42,7 +64,8 @@ def format_answer(answer: Answer, *, show_cost: bool) -> str:
             if (source.car, source.section) in seen:
                 continue
             seen.add((source.car, source.section))
-            lines.append(f"  - {source.car_name} | {source.section} | {source.source_url}")
+            section = section_label(source.section, max_section_chars)
+            lines.append(f"  - {source.car_name} | {section} | {source.source_url}")
     if show_cost:
         usage = answer.usage
         stages = ", ".join(f"{stage} {ms:.0f}" for stage, ms in answer.latency_ms.items())
@@ -78,8 +101,8 @@ def run(args: argparse.Namespace) -> int:
     print("טוען את מודל החיפוש...", flush=True)
     retriever.warm_up()  # otherwise the first question pays the model load (~1 min cold)
     print(pipeline.greeting())
-    print("(ליציאה: /exit)")
-    history: list[Message] = []
+    print(HELP_LINE)
+    session = Session(history_window=settings.llm.history_window)
     while True:
         try:
             message = input(PROMPT)
@@ -90,14 +113,17 @@ def run(args: argparse.Namespace) -> int:
             return 0
         if not message.strip():
             continue
-        try:
-            answer = pipeline.ask(message, history)
-        except BudgetExceededError as error:
-            print(error)
+        output = run_command(message, session)
+        if output is not None:
+            print(output)
+            continue
+        answer = pipeline.answer(message, session)
+        print(
+            format_answer(
+                answer,
+                show_cost=args.show_cost,
+                max_section_chars=settings.display.max_section_chars,
+            )
+        )
+        if ends_session(answer):
             return 1
-        print(format_answer(answer, show_cost=args.show_cost))
-        history += [
-            {"role": "user", "content": message},
-            {"role": "assistant", "content": answer.text},
-        ]
-        history = history[-settings.llm.history_window :]

@@ -64,12 +64,53 @@ class PreferenceField(StrEnum):
 
 
 class PreferenceUpdate(BaseModel):
-    """A preference stated in the latest message; merged into a profile in CW-203."""
+    """A preference stated in the latest message, as the model reported it.
+
+    `field` parses as a plain string so code can validate it (carwise.preferences):
+    one unknown field name drops that update instead of failing the whole call.
+    The JSON schema still lists the allowed names, so strict mode keeps OpenAI
+    models on them; the code check covers providers without strict mode. (A
+    plain string with no enum let the model invent names: seen in the CW-203 run.)
+    """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    field: PreferenceField
+    field: str = Field(json_schema_extra={"enum": [item.value for item in PreferenceField]})
     value: str
+
+
+class Preference(BaseModel):
+    """One remembered preference and the user message it came from (for /prefs)."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    value: str
+    source: str
+
+
+class Preferences(BaseModel):
+    """The user's preferences in this conversation only; never stored on disk.
+
+    One value per field: a later statement on the same field replaces the earlier
+    one, which is how a user changes their mind ("actually, up to 250 thousand").
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    budget: Preference | None = None
+    powertrain: Preference | None = None
+    primary_use: Preference | None = None
+    passengers: Preference | None = None
+    priorities: Preference | None = None
+    dislikes: Preference | None = None
+
+    def items(self) -> list[tuple[PreferenceField, Preference]]:
+        """The fields that are set, in a fixed order."""
+        values = ((field, getattr(self, field.value)) for field in PreferenceField)
+        return [(field, value) for field, value in values if value is not None]
+
+    def field_names(self) -> list[str]:
+        return [field.value for field, _ in self.items()]
 
 
 class Understanding(BaseModel):
@@ -115,6 +156,52 @@ class RefusalReason(StrEnum):
     LOW_RELEVANCE = "low_relevance"  # similarity gate: best score below the threshold
     OUT_OF_SCOPE = "out_of_scope"  # chitchat or off-topic: no retrieval at all
     LLM_ERROR = "llm_error"  # provider unavailable or unusable output
+    UNVERIFIED = "unverified"  # post-check failed on the answer and on its one regeneration
+    BUDGET_EXCEEDED = "budget_exceeded"  # llm.max_cost_usd reached: the session must stop
+
+
+class CheckFindings(BaseModel):
+    """What the post-check found wrong with one generated answer; empty means clean."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    cars: list[str]  # car names the retrieved chunks and the question cannot back
+    numbers: list[str]  # numbers as written that neither the chunks nor the user stated (CW-206)
+
+    @property
+    def suspect(self) -> bool:
+        return bool(self.cars or self.numbers)
+
+    def problems(self) -> list[str]:
+        """English sentences for the regenerate instruction."""
+        problems = []
+        if self.cars:
+            problems.append(
+                f"it names cars that the excerpts do not support: {', '.join(self.cars)}"
+            )
+        if self.numbers:
+            problems.append(
+                f"it states numbers that the excerpts do not contain: {', '.join(self.numbers)}"
+            )
+        return problems
+
+    def kinds(self) -> list[str]:
+        """Turn flags naming what was found, so telemetry can count each kind."""
+        found = {"postcheck_cars": self.cars, "postcheck_numbers": self.numbers}
+        return [flag for flag, items in found.items() if items]
+
+
+class PostCheckOutcome(StrEnum):
+    CLEAN = "clean"  # the first answer passed
+    REGENERATED = "regenerated"  # the first failed, the one stricter retry passed
+    FALLBACK = "fallback"  # both failed (or the retry errored): a code-built reply was shown
+
+
+class PostCheck(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    outcome: PostCheckOutcome
+    attempts: list[CheckFindings]  # one per generated answer, in order
 
 
 class Citation(BaseModel):
@@ -125,6 +212,27 @@ class Citation(BaseModel):
     car_name: str
     section: str
     source_url: str
+
+
+class LLMCall(BaseModel):
+    """One LLM call of a turn, for telemetry (CW-204).
+
+    Why per call and not only per turn: the stage latency includes our own code,
+    while `latency_ms` here is the client's own measure of the request, so a slow
+    first call (a cold connection) shows up as such, and each stage's cost is visible.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    stage: str  # understand | generate | regenerate
+    model: str | None  # None when the call failed before the provider named it
+    ok: bool
+    attempts: int
+    latency_ms: float | None  # None for a failed call (the stage latency still has it)
+    input_tokens: int
+    cached_tokens: int
+    output_tokens: int
+    cost_usd: float
 
 
 class Answer(BaseModel):
@@ -138,11 +246,16 @@ class Answer(BaseModel):
     intent: Intent | None
     cars: list[str]
     not_covered: list[str]  # car names the user asked about that the articles do not cover
+    suggested_cars: list[str]  # registry ids a refusal offered instead (CW-201)
     standalone_question: str
     retrieved: list[RetrievedChunk]
     dropped_chunk_ids: list[str]  # cited by the model but not retrieved this turn
+    post_check: PostCheck | None  # None when no answer was generated
+    preferences: Preferences  # the profile after this turn; the caller keeps it (Session)
+    updated_preferences: list[str]  # field names this turn set or changed
     flags: list[str]
     llm_calls: int
+    calls: list[LLMCall]  # one record per LLM call, in order
     usage: Usage
     cost_usd: float
     latency_ms: dict[str, float]  # per stage, plus "total"

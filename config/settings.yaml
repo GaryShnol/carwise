@@ -56,7 +56,14 @@ retrieval:             # provisional, tuned in CW-303
   relevance_threshold: 0.0   # cosine; 0 disables it until CW-303 tunes it on the eval
 
 input:
-  max_message_chars: 500
+  max_message_chars: 500       # the current message; longer is refused politely
+  # Message plus history window sent to the understand call (CW-205). User messages
+  # in the window are also held to max_message_chars; the oldest messages are
+  # dropped first. Answers run to about 1,000 characters, so 6 messages fit.
+  max_turn_input_chars: 6000
+
+preferences:           # CW-203: one conversation only, never written to disk
+  max_value_chars: 80  # a preference longer than this is cut (and flagged)
 
 guardrails:
   # Well-known brands with no article in the corpus (CW-105 gate, CW-202 post-check).
@@ -123,6 +130,30 @@ guardrails:
     - Zeekr
     - אקספנג
     - XPeng
+  # Refusals (CW-201) suggest the closest of the eight cars. Without outside knowledge
+  # the only grounded signal is the user's own words: these hint words map to the
+  # registry's body_type and powertrain values. A car scores one point per matching
+  # dimension; the best-scoring cars are suggested. With no hint, the cars of the
+  # best-scoring retrieved chunks are suggested instead, and with neither, the reply
+  # lists all eight grouped by powertrain.
+  max_suggestions: 3
+  body_type_words:
+    supermini: [סופרמיני, עירוני, עירונית]
+    hatchback: [האצ'בק, Hatchback]
+    sedan: [סדאן, סדן, Sedan]
+    suv: [פנאי, SUV, ג'יפ, ג'יפון, קרוסאובר, Crossover]
+    suv_coupe: [פנאי, פנאי-קופה, קופה, Coupe]   # an SUV coupe is an SUV too
+  powertrain_words:
+    petrol: [בנזין, בנזינים]
+    mild_hybrid: [היברידי, היברידית, היברידיים, Hybrid]
+    plug_in_hybrid: [היברידי, היברידית, היברידיים, נטען, נטענת, פלאג-אין, PHEV, Hybrid]
+    electric: [חשמלי, חשמלית, חשמליים, חשמליות]
+  # Numeric post-check (CW-206): numbers that never need a source. 0 is the start
+  # of "0-100", which answers write even when the article says only "ל-100".
+  numbers_always_allowed: [0]
+
+display:              # what the user sees; telemetry and Citation keep the full value
+  max_section_chars: 60   # merged headings can run to 150+ chars; cut at a word boundary
 
 fetch:                 # polite download of the eight articles (CW-101)
   user_agent: "carwise-takehome/0.1 (+https://github.com/GaryShnol/carwise)"

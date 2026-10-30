@@ -13,6 +13,8 @@ from typing import Any, Literal
 import yaml
 from pydantic import BaseModel, ConfigDict
 
+from carwise.registry import BodyType, Powertrain
+
 DEFAULT_CONFIG_PATH = Path(__file__).resolve().parents[2] / "config" / "settings.yaml"
 
 
@@ -67,10 +69,23 @@ class RetrievalConfig(_Strict):
 
 class GuardrailsConfig(_Strict):
     outside_brands: list[str]
+    max_suggestions: int
+    body_type_words: dict[BodyType, list[str]]
+    powertrain_words: dict[Powertrain, list[str]]
+    numbers_always_allowed: list[float]
 
 
 class InputConfig(_Strict):
     max_message_chars: int
+    max_turn_input_chars: int
+
+
+class PreferencesConfig(_Strict):
+    max_value_chars: int
+
+
+class DisplayConfig(_Strict):
+    max_section_chars: int
 
 
 class FetchConfig(_Strict):
@@ -95,7 +110,9 @@ class Settings(_Strict):
     chunking: ChunkingConfig
     retrieval: RetrievalConfig
     input: InputConfig
+    preferences: PreferencesConfig
     guardrails: GuardrailsConfig
+    display: DisplayConfig
     fetch: FetchConfig
     paths: PathsConfig
 
