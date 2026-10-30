@@ -60,6 +60,41 @@ def answer_text_problem(text: str) -> str | None:
     return None
 
 
+# --- prompt hygiene (CW-205) -----------------------------------------------------------
+# Line-start role labels a model may read as a turn boundary ("System: ...").
+_ROLE_MARKER = re.compile(
+    r"^([ \t]*(?:system|assistant|user|developer|tool|מערכת|עוזר|משתמש))[ \t]*:",
+    re.IGNORECASE | re.MULTILINE,
+)
+
+
+def escape_text(text: str) -> str:
+    """Text from outside the code (chunks, the user, the history) as inert prompt data.
+
+    "<" and ">" become "&lt;" and "&gt;", so no text can close or open an
+    <excerpts> or <excerpt> tag, or write a special token such as "<|im_start|>".
+    The change is reversible (html.unescape) and leaves Hebrew untouched: the
+    articles contain neither character. "&" is kept as is, because escaping it
+    would show the model "לינק &amp; קו" and invite it to copy that. A role label
+    at the start of a line loses its colon ("System:" -> "System -"), so it no
+    longer looks like a turn boundary; the words stay readable.
+    """
+    text = text.replace("<", "&lt;").replace(">", "&gt;")
+    return _ROLE_MARKER.sub(r"\1 -", text)
+
+
+def one_line(text: str) -> str:
+    """A field that must stay on its own prompt line: newlines cannot start a fake
+    header such as "User preferences" or "Cars the articles do not cover"."""
+    return " ".join(escape_text(text).split())
+
+
+def escape_attribute(text: str) -> str:
+    """A value inside an excerpt attribute (car="...", section="..."). An ASCII quote
+    would end the attribute, so it becomes gershayim, which reads the same in Hebrew."""
+    return one_line(text).replace('"', "״")
+
+
 # --- name matching -------------------------------------------------------------------
 def normalize(text: str) -> str:
     """Case-folded, NFC, one apostrophe and quote form, single spaces."""

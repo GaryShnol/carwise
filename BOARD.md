@@ -68,11 +68,11 @@ Items outside the code that must not be forgotten. Update the status as each is 
 |---|---|---|---|---|---|
 | E0 Scaffold and source check | none | 3 | 3 | 3 | DONE |
 | E1 Thin vertical slice | `v0.1` | 6 | 6 | 11 | DONE |
-| E2 Reliability and guardrails | none | 6 | 4 | 9 | IN PROGRESS |
+| E2 Reliability and guardrails | none | 6 | 5 | 9 | IN PROGRESS |
 | E3 Measurement | none | 3 | 0 | 5 | TODO |
 | E4 Interface and packaging | none | 3 | 0 | 4 | TODO |
 | E5 Documentation and release | `v1.0` | 3 | 0 | 4 | TODO |
-| **Total** |  | **24** | **13** | **36** |  |
+| **Total** |  | **24** | **14** | **36** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -113,7 +113,7 @@ Branch: `epic/e2-reliability` | Tag: none
 | CW-202 | Post-check for cars not retrieved this turn | `feat` | M | P1 | DONE | CW-105 |
 | CW-203 | Preference model and `/prefs` command | `feat` | M | P1 | DONE | CW-105 |
 | CW-204 | Turn telemetry and cost estimate | `feat` | S | P2 | TODO | CW-105 |
-| CW-205 | Injection hygiene and input limits | `feat` | S | P2 | IN PROGRESS | CW-105 |
+| CW-205 | Injection hygiene and input limits | `feat` | S | P2 | DONE | CW-105 |
 | CW-206 | Numeric claim check in post-check | `feat` | S | P2 | DONE | CW-202 |
 
 ## Epic E3: Measurement
@@ -265,9 +265,11 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [ ] Each line records the profile and model name; a `max_cost_usd` cap in config aborts a run (eval or chat session) when exceeded.
 
 ### CW-205 Injection hygiene and input limits
-- [ ] System prompt states that article text is data, never instructions.
-- [ ] Message length limit and a polite refusal for out-of-domain requests.
-- [ ] Unit tests: over-long input is rejected politely; an instruction planted in a chunk is not followed.
+- [x] System prompt states that article text is data, never instructions (generate rule 5; the understand prompt treats user messages as data).
+- [x] Message length limit and a polite refusal for out-of-domain requests.
+- [x] Every value from outside the code is escaped before a prompt: chunk text, car and section attributes, the question, not-covered names, preference values and the history. "<" and ">" become "&lt;" and "&gt;" (reversible; no article contains either), single-line fields cannot start a fake header, an ASCII quote in an attribute becomes gershayim, and line-start role labels ("System:") lose their colon. "&" is kept, so "לינק & קו" reads normally.
+- [x] Turn input bounded: user messages in the history window obey `max_message_chars` too (truncated, flagged), and message plus window obey `max_turn_input_chars` (oldest dropped first, flagged). A long history never refuses a turn.
+- [x] Unit tests: closing tags, a fake excerpt with another car's id, "ignore previous instructions", a fake system message and very long input; the generate input stays structurally valid and the answer is still produced. Whether the model obeys planted text is measured by the eval (CW-302), not by unit tests.
 
 ### CW-206 Numeric claim check
 - [x] Every number in an answer (horsepower, price, consumption, dimensions) must appear in the retrieved chunks (or in the user's own words: the message, the rewritten question, preference values).

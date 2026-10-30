@@ -77,6 +77,7 @@ class GuardrailsConfig(_Strict):
 
 class InputConfig(_Strict):
     max_message_chars: int
+    max_turn_input_chars: int
 
 
 class PreferencesConfig(_Strict):

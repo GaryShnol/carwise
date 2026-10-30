@@ -16,7 +16,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-from carwise.guardrails import HEBREW_PREFIXES, normalize
+from carwise.guardrails import HEBREW_PREFIXES, normalize, one_line
 from carwise.llm.base import Message
 from carwise.schemas import (
     Answer,
@@ -127,8 +127,12 @@ def describe(preferences: Preferences) -> str:
 
 
 def prompt_block(preferences: Preferences) -> str:
-    """Preferences for the generate call, labelled so the model can name them."""
-    return "\n".join(f"- {name.value}: {pref.value}" for name, pref in preferences.items())
+    """Preferences for the generate call, labelled so the model can name them.
+
+    Each value is the user's words, so it is kept to one escaped line (CW-205)."""
+    return "\n".join(
+        f"- {name.value}: {one_line(pref.value)}" for name, pref in preferences.items()
+    )
 
 
 # --- session ---------------------------------------------------------------------------

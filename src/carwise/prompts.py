@@ -11,6 +11,7 @@ from __future__ import annotations
 from pathlib import Path
 from string import Template
 
+from carwise.guardrails import escape_attribute, escape_text, one_line
 from carwise.registry import Registry
 from carwise.schemas import RetrievedChunk
 
@@ -50,15 +51,22 @@ def generation_input(
     not_covered: list[str],
     preferences: str = "",
 ) -> str:
-    """The user message of the generate call: the question, then the excerpts as data."""
-    parts = [f"Question: {question}"]
+    """The user message of the generate call: the question, then the excerpts as data.
+
+    Every value from outside the code is escaped (CW-205): the question, the
+    not-covered names and the preference values stay on their own line, and no
+    text can close an excerpt or fake one with another car's id. `preferences`
+    arrives as lines built by `preferences.prompt_block`, which escapes each value.
+    """
+    parts = [f"Question: {one_line(question)}"]
     if not_covered:
-        parts.append(f"Cars the articles do not cover: {', '.join(not_covered)}")
+        parts.append(f"Cars the articles do not cover: {', '.join(map(one_line, not_covered))}")
     if preferences:
         parts.append(f"User preferences (stated by the user in this conversation):\n{preferences}")
     excerpts = [
-        f'<excerpt id="{hit.chunk.chunk_id}" car="{hit.chunk.car_name}" '
-        f'section="{hit.chunk.section}">\n{hit.chunk.text}\n</excerpt>'
+        f'<excerpt id="{hit.chunk.chunk_id}" car="{escape_attribute(hit.chunk.car_name)}" '
+        f'section="{escape_attribute(hit.chunk.section)}">\n'
+        f"{escape_text(hit.chunk.text)}\n</excerpt>"
         for hit in chunks
     ]
     parts.append("<excerpts>\n" + "\n".join(excerpts) + "\n</excerpts>")

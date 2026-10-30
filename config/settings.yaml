@@ -56,7 +56,11 @@ retrieval:             # provisional, tuned in CW-303
   relevance_threshold: 0.0   # cosine; 0 disables it until CW-303 tunes it on the eval
 
 input:
-  max_message_chars: 500
+  max_message_chars: 500       # the current message; longer is refused politely
+  # Message plus history window sent to the understand call (CW-205). User messages
+  # in the window are also held to max_message_chars; the oldest messages are
+  # dropped first. Answers run to about 1,000 characters, so 6 messages fit.
+  max_turn_input_chars: 6000
 
 preferences:           # CW-203: one conversation only, never written to disk
   max_value_chars: 80  # a preference longer than this is cut (and flagged)

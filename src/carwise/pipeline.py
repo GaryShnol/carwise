@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 
 from carwise import guardrails
 from carwise.config import Settings
+from carwise.guardrails import escape_text
 from carwise.llm.base import (
     LLMClient,
     LLMError,
@@ -143,6 +144,7 @@ class Pipeline:
         if len(message) > limit:
             return self._reply(turn, guardrails.too_long_reply(limit), RefusalReason.TOO_LONG)
 
+        history = self._window(message, history, turn)
         try:
             plan = self._understand(message, history, turn)
         except LLMUnavailableError as error:
@@ -234,9 +236,37 @@ class Pipeline:
         )
         return CheckFindings(cars=cars, numbers=numbers)
 
-    def _understand(self, message: str, history: list[Message], turn: _Turn) -> _Plan:
+    def _window(self, message: str, history: list[Message], turn: _Turn) -> list[Message]:
+        """The history the turn may use, bounded like the message itself (CW-205).
+
+        `ask` is stateless, so a caller may pass any history: each user message in
+        the window is held to max_message_chars, like the current one, and the
+        whole turn input (message plus window) to max_turn_input_chars, dropping the
+        oldest messages first. A long history never refuses the turn; it is trimmed.
+        """
+        limits = self._settings.input
         window = history[-self._settings.llm.history_window :] if history else []
-        messages: list[Message] = [*window, {"role": "user", "content": message}]
+        bounded: list[Message] = []
+        for item in window:
+            content = item["content"]
+            if item["role"] == "user" and len(content) > limits.max_message_chars:
+                content = content[: limits.max_message_chars]
+                turn.flags.append("history_message_truncated")
+            bounded.append({"role": item["role"], "content": content})
+        budget = limits.max_turn_input_chars - len(message)
+        while bounded and sum(len(item["content"]) for item in bounded) > budget:
+            bounded.pop(0)
+            if "history_trimmed" not in turn.flags:
+                turn.flags.append("history_trimmed")
+        return bounded
+
+    def _understand(self, message: str, history: list[Message], turn: _Turn) -> _Plan:
+        # History and message are escaped like excerpts: a message cannot fake a turn
+        # boundary or a special token (CW-205). Roles are set by code, never by text.
+        messages: list[Message] = [
+            *({"role": item["role"], "content": escape_text(item["content"])} for item in history),
+            {"role": "user", "content": escape_text(message)},
+        ]
         started = time.perf_counter()
         try:
             result = self._llm.complete_json(
@@ -306,8 +336,7 @@ class Pipeline:
         "electric" or "SUV" there from its own knowledge of the unknown car.
         """
         config = self._settings.guardrails
-        window = history[-self._settings.llm.history_window :] if history else []
-        user_text = [turn["content"] for turn in window if turn["role"] == "user"]
+        user_text = [turn["content"] for turn in history if turn["role"] == "user"]
         hinted = guardrails.hinted_cars(
             "\n".join([*user_text, message]),
             self._registry,
