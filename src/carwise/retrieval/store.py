@@ -52,6 +52,7 @@ def fingerprint(chunks: list[Chunk], embedder: Embedder, limits: ChunkingConfig)
         "embedder": embedder.identity,
         "chunking": limits.model_dump(),
         "chunk_ids": [c.chunk_id for c in chunks],
+        "table_labels": [c.table_labels for c in chunks],
         "text_sha256": text_hash.hexdigest(),
     }
     return hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()
@@ -73,6 +74,7 @@ def _metadata(chunk: Chunk) -> dict[str, str]:
         "section": chunk.section,
         "source_url": chunk.source_url,
         "embed_text": chunk.embed_text,
+        "table_labels": json.dumps(chunk.table_labels, ensure_ascii=False),  # no lists in Chroma
     }
     if chunk.published:
         meta["published"] = chunk.published.isoformat()
@@ -90,6 +92,7 @@ def _chunk(text: str, meta: dict[str, Any]) -> Chunk:
         published=date.fromisoformat(str(published)) if published else None,
         text=text,
         embed_text=str(meta["embed_text"]),
+        table_labels=json.loads(str(meta.get("table_labels", "[]"))),
     )
 
 

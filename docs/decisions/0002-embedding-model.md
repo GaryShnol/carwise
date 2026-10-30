@@ -61,8 +61,9 @@ bge-m3 introduces one (`trap-mixing-specs`). The lexical fusion fixes one questi
 none, but lowers MRR overall.
 
 The recommendation scenario misses for every candidate although an acceptable chunk ranks first
-or second within its car: it is a cross-car question (cap 2 per car, 12 in total), so it is a
-parameter question for CW-303, not an embedding one.
+or second within its car. Correction (CW-303): this is not a cap problem. For its last turn the
+recorded understand output names Kia EV9, Link & Co 01 and Genesis GV80, so retrieval searches
+only those cars and never sees the MG S6 or Aion HT chunks; see ADR 0003.
 
 ### Score separation: answerable questions (20) vs threshold probes (8)
 

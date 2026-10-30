@@ -40,6 +40,8 @@ class Candidate(BaseModel):
 
     embeddings: dict[str, str]
     lexical: bool = False
+    spec_header: bool = False  # CW-303 option A
+    force_spec_box: bool = False  # CW-303 option B
 
 
 def load_candidates(path: Path = CANDIDATES_PATH) -> dict[str, Candidate]:
@@ -50,10 +52,12 @@ def load_candidates(path: Path = CANDIDATES_PATH) -> dict[str, Candidate]:
 def apply(settings: Settings, name: str, candidate: Candidate) -> Settings:
     """The settings with this candidate's embedder, lexical flag and own index directory."""
     lexical = settings.retrieval.lexical.model_copy(update={"enabled": candidate.lexical})
+    retrieval = {"lexical": lexical, "force_spec_box": candidate.force_spec_box}
     return settings.model_copy(
         update={
             "embeddings": settings.embeddings.model_copy(update=candidate.embeddings),
-            "retrieval": settings.retrieval.model_copy(update={"lexical": lexical}),
+            "chunking": settings.chunking.model_copy(update={"spec_header": candidate.spec_header}),
+            "retrieval": settings.retrieval.model_copy(update=retrieval),
             "paths": settings.paths.model_copy(
                 update={"index_dir": str(CANDIDATES_DIR / name / "index")}
             ),

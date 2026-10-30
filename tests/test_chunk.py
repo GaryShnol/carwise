@@ -24,7 +24,7 @@ CAR = Car(
     url="https://example.test/articles/xr5/",
     slug="xr5",
 )
-LIMITS = ChunkingConfig(min_chars=60, max_chars=200, embed_section_chars=60)
+LIMITS = ChunkingConfig(min_chars=60, max_chars=200, embed_section_chars=60, spec_header=False)
 TITLE = "כותרת המבחן"
 
 
@@ -119,7 +119,7 @@ def test_short_first_section_merges_into_next() -> None:
 def test_short_section_stays_alone_when_no_neighbor_has_room() -> None:
     chunks = chunk(
         doc(p(para("א", 180)), h("קצר"), p("שורה"), h("ג"), p(para("ג", 190))),
-        ChunkingConfig(min_chars=60, max_chars=200, embed_section_chars=60),
+        ChunkingConfig(min_chars=60, max_chars=200, embed_section_chars=60, spec_header=False),
     )
     assert [c.section for c in chunks] == [TITLE, "קצר", "ג"]
 
@@ -217,7 +217,10 @@ def _random_document(rng: random.Random) -> Document:
 def test_property_nothing_lost_duplicated_or_oversize(seed: int) -> None:
     rng = random.Random(seed)
     limits = ChunkingConfig(
-        min_chars=rng.randint(20, 120), max_chars=rng.randint(120, 400), embed_section_chars=60
+        min_chars=rng.randint(20, 120),
+        max_chars=rng.randint(120, 400),
+        embed_section_chars=60,
+        spec_header=rng.random() < 0.5,  # the header never changes what the text covers
     )
     document = _random_document(rng)
     chunks = chunk(document, limits)

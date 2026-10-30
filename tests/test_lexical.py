@@ -88,7 +88,7 @@ def test_open_retriever_builds_the_lexical_index_only_when_enabled(tmp_path: Pat
     build_index(
         CHUNKS,
         FakeEmbedder(),
-        ChunkingConfig(min_chars=1, max_chars=500, embed_section_chars=60),
+        ChunkingConfig(min_chars=1, max_chars=500, embed_section_chars=60, spec_header=False),
         tmp_path,
     )
 

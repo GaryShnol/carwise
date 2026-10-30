@@ -30,6 +30,7 @@ from carwise.schemas import Chunk
 
 SECTION_SEPARATOR = " / "
 EMBED_SEPARATOR = " — "
+SPEC_HEADER = "נתונים: "  # "data:"; followed by the table's own labels (CW-303 option A)
 LINE_SEPARATOR = "\n"
 # Sentence ends: punctuation, optionally followed by a closing quote, then whitespace.
 _SENTENCE_END = re.compile(r"(?<=[.!?…])\s+|(?<=[.!?…][\"”״'])\s+")
@@ -49,6 +50,7 @@ class _Section:
 class _Piece:
     names: list[str]
     lines: list[str]
+    table_rows: list[str] = field(default_factory=list)  # the lines that are table rows
 
     @property
     def size(self) -> int:
@@ -56,7 +58,7 @@ class _Piece:
 
     def merged(self, other: _Piece) -> _Piece:
         names = self.names + [name for name in other.names if name not in self.names]
-        return _Piece(names, self.lines + other.lines)
+        return _Piece(names, self.lines + other.lines, self.table_rows + other.table_rows)
 
 
 def build_sections(doc: Document) -> list[_Section]:
@@ -134,8 +136,22 @@ def split_block(text: str, max_chars: int) -> list[str]:
 
 def _split_section(section: _Section, max_chars: int) -> list[_Piece]:
     lines = [line for block in section.blocks for line in split_block(block.text, max_chars)]
+    rows = {block.text for block in section.blocks if block.kind is BlockKind.TABLE_ROW}
     groups = _pack_evenly(lines, LINE_SEPARATOR, max_chars)
-    return [_Piece(list(section.names), group) for group in groups]
+    return [
+        _Piece(list(section.names), group, [line for line in group if line in rows])
+        for group in groups
+    ]
+
+
+def table_labels(rows: list[str]) -> list[str]:
+    """The label part of "label: value" rows, in order, without repeats."""
+    labels: list[str] = []
+    for row in rows:
+        label = row.split(":", 1)[0].strip() if ":" in row else ""
+        if label and label not in labels:
+            labels.append(label)
+    return labels
 
 
 def _merge_short(pieces: list[_Piece], min_chars: int, max_chars: int) -> list[_Piece]:
@@ -172,6 +188,11 @@ def chunk_document(doc: Document, registry_car: Car, limits: ChunkingConfig) -> 
         # The full section stays in the metadata for citations; the embedded header uses the
         # short label, so a long merged heading does not push the text out of the window.
         header = section_label(section, limits.embed_section_chars)
+        labels = table_labels(piece.table_rows)
+        if limits.spec_header and labels:
+            # Option A: the table's own labels, once more, in the header the embedding
+            # weighs most; nothing the article does not say.
+            header += "\n" + SPEC_HEADER + ", ".join(labels)
         chunks.append(
             Chunk(
                 chunk_id=f"{registry_car.id}:{index:03d}",
@@ -182,6 +203,7 @@ def chunk_document(doc: Document, registry_car: Car, limits: ChunkingConfig) -> 
                 published=doc.published.date() if doc.published else None,
                 text=text,
                 embed_text=f"{registry_car.display_name}{EMBED_SEPARATOR}{header}\n{text}",
+                table_labels=labels,
             )
         )
     return chunks

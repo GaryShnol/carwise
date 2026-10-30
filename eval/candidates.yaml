@@ -37,3 +37,20 @@ candidates:
       query_prefix: "query: "
       passage_prefix: "passage: "
     lexical: true
+
+  # CW-303 step 2: the two spec-box options, measured separately on the chosen model.
+  e5-large-spec-header:  # option A: the table's own labels in the spec box's embedded header
+    embeddings:
+      model: intfloat/multilingual-e5-large
+      revision: 3d7cfbdacd47fdda877c5cd8a79fbcc4f2a574f3
+      query_prefix: "query: "
+      passage_prefix: "passage: "
+    spec_header: true
+
+  e5-large-spec-box:  # option B: compare/recommend always get each named car's spec box
+    embeddings:
+      model: intfloat/multilingual-e5-large
+      revision: 3d7cfbdacd47fdda877c5cd8a79fbcc4f2a574f3
+      query_prefix: "query: "
+      passage_prefix: "passage: "
+    force_spec_box: true

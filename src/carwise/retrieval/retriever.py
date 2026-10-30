@@ -41,6 +41,8 @@ class ChunkRetriever(Protocol):
         self, query: str, top_k: int | None = None, per_car_cap: int | None = None
     ) -> list[RetrievedChunk]: ...
 
+    def spec_boxes(self, query: str, car_ids: list[str]) -> list[RetrievedChunk]: ...
+
 
 class Retriever:
     """Dense ranking, optionally fused with BM25 (`retrieval.lexical.enabled`)."""
@@ -94,6 +96,23 @@ class Retriever:
         """Across all cars with a cap per car, for ranking and recommendation questions."""
         cap = _default(per_car_cap, self._config.per_car_cap)
         return _capped(self._ranked(query, None), cap, _default(top_k, self._config.top_k))
+
+    def spec_boxes(self, query: str, car_ids: list[str]) -> list[RetrievedChunk]:
+        """Each car's spec box (its chunk with the most table rows), scored for the query.
+
+        A car without a table has none. Ties go to the earlier chunk id.
+        """
+        best: dict[str, RetrievedChunk] = {}
+        for hit in self._ranked(query, car_ids):
+            rows = len(hit.chunk.table_labels)
+            current = best.get(hit.chunk.car)
+            if rows and (
+                current is None
+                or (rows, current.chunk.chunk_id)
+                > (len(current.chunk.table_labels), hit.chunk.chunk_id)
+            ):
+                best[hit.chunk.car] = hit
+        return [best[car] for car in car_ids if car in best]
 
 
 def open_retriever(settings: Settings, embedder: Embedder | None = None) -> Retriever:

@@ -55,6 +55,8 @@ from carwise.schemas import (
 from carwise.telemetry import TurnLogger
 
 NO_RETRIEVAL_INTENTS = (Intent.CHITCHAT, Intent.OUT_OF_SCOPE)
+# Questions that need each named car's figures side by side (rankings arrive as RECOMMEND).
+SPEC_BOX_INTENTS = (Intent.COMPARE, Intent.RECOMMEND)
 
 
 @dataclass
@@ -364,12 +366,20 @@ class Pipeline:
         """One car: filter on it. Several: each car separately. None: all cars, capped."""
         config = self._settings.retrieval
         if len(plan.cars) > 1:
-            return self._retriever.search_per_car(plan.question, plan.cars, config.per_car_cap)
-        if plan.cars:
-            return self._retriever.search(plan.question, plan.cars, config.top_k)
-        return self._retriever.search_all(
-            plan.question, config.cross_car_top_k, config.cross_car_per_car_cap
-        )
+            hits = self._retriever.search_per_car(plan.question, plan.cars, config.per_car_cap)
+        elif plan.cars:
+            hits = self._retriever.search(plan.question, plan.cars, config.top_k)
+        else:
+            return self._retriever.search_all(
+                plan.question, config.cross_car_top_k, config.cross_car_per_car_cap
+            )
+        if config.force_spec_box and plan.intent in SPEC_BOX_INTENTS:
+            # Option B: comparisons and rankings need each car's price and figures, which
+            # sit in its spec box, whatever its similarity to the wording of the question.
+            have = {hit.chunk.chunk_id for hit in hits}
+            extra = self._retriever.spec_boxes(plan.question, plan.cars)
+            hits += [hit for hit in extra if hit.chunk.chunk_id not in have]
+        return hits
 
     def _suggest(
         self, message: str, history: list[Message], hits: list[RetrievedChunk]

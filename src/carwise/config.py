@@ -58,6 +58,7 @@ class ChunkingConfig(_Strict):
     min_chars: int
     max_chars: int
     embed_section_chars: int  # section label length in the embedded header (CW-303)
+    spec_header: bool  # CW-303 option A: list a chunk's table labels in its embedded header
 
 
 class LexicalConfig(_Strict):
@@ -74,6 +75,7 @@ class RetrievalConfig(_Strict):
     cross_car_per_car_cap: int
     relevance_threshold: float
     lexical: LexicalConfig
+    force_spec_box: bool  # CW-303 option B: compare/recommend always get each named car's spec box
 
 
 class GuardrailsConfig(_Strict):

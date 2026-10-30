@@ -1,6 +1,6 @@
 {
  "level": "retrieval",
- "created": "2026-10-30T20:31:28+00:00",
+ "created": "2026-10-30T21:00:57+00:00",
  "embedder": {
   "provider": "sentence_transformers",
   "model": "intfloat/multilingual-e5-large",
@@ -17,11 +17,14 @@
    "rrf_k": 60,
    "bm25_k1": 1.5,
    "bm25_b": 0.75
-  }
+  },
+  "force_spec_box": true
  },
  "chunking": {
   "min_chars": 300,
-  "max_chars": 1500
+  "max_chars": 1400,
+  "embed_section_chars": 60,
+  "spec_header": 0
  },
  "recording": {
   "model": "gpt-5.4-nano",
@@ -30,10 +33,10 @@
   "cost_usd": 0.018312
  },
  "runs": 3,
- "warm_up_s": 20.22,
+ "warm_up_s": 11.05,
  "latency_ms": {
-  "p50": 166.33909987285733,
-  "p95": 336.93859982304275
+  "p50": 168.0068001151085,
+  "p95": 445.77820017002523
  },
  "summary": [
   {
@@ -47,10 +50,10 @@
   {
    "category": "comparison",
    "questions": 6,
-   "passed": 5,
+   "passed": 6,
    "sources": 12,
-   "sources_hit": 11,
-   "mrr": 0.3736111111111111
+   "sources_hit": 12,
+   "mrr": 0.4085317460317461
   },
   {
    "category": "recommendation",
@@ -58,7 +61,7 @@
    "passed": 1,
    "sources": 2,
    "sources_hit": 1,
-   "mrr": 0.25
+   "mrr": 0.5
   },
   {
    "category": "ranking",
@@ -66,7 +69,7 @@
    "passed": 2,
    "sources": 2,
    "sources_hit": 2,
-   "mrr": 0.35
+   "mrr": 0.17142857142857143
   },
   {
    "category": "follow_up",
@@ -82,32 +85,32 @@
    "passed": 7,
    "sources": 4,
    "sources_hit": 4,
-   "mrr": 0.6333333333333333
+   "mrr": 0.8333333333333334
   },
   {
    "category": "total",
    "questions": 23,
-   "passed": 21,
+   "passed": 22,
    "sources": 26,
-   "sources_hit": 24,
-   "mrr": 0.57375
+   "sources_hit": 25,
+   "mrr": 0.6313690476190476
   }
  ],
  "scores": {
   "answerable": {
    "n": 20,
    "min": 0.8459,
-   "q1": 0.8662,
-   "median": 0.8758,
+   "q1": 0.8673,
+   "median": 0.8772,
    "q3": 0.8863,
-   "max": 0.9144
+   "max": 0.9106
   },
   "threshold_probes": {
    "n": 8,
    "min": 0.8466,
    "q1": 0.8552,
-   "median": 0.8611,
-   "q3": 0.8709,
+   "median": 0.8709,
+   "q3": 0.881,
    "max": 0.8956
   }
  },
@@ -134,11 +137,11 @@
    ],
    "sources_any": [],
    "reciprocal_rank": 1.0,
-   "best_score": 0.914433,
+   "best_score": 0.910572,
    "retrieved": [
     {
      "chunk_id": "mg_s6:011",
-     "score": 0.914433
+     "score": 0.910572
     },
     {
      "chunk_id": "mg_s6:001",
@@ -154,15 +157,15 @@
     },
     {
      "chunk_id": "mg_s6:004",
-     "score": 0.884963
+     "score": 0.883737
     }
    ],
    "passed": true,
    "failures": [],
    "retrieve_ms": [
-    304.5140001922846,
-    179.132399847731,
-    189.23430005088449
+    158.47470005974174,
+    74.83919989317656,
+    74.12919984199107
    ],
    "stable": true
   },
@@ -188,35 +191,35 @@
    ],
    "sources_any": [],
    "reciprocal_rank": 1.0,
-   "best_score": 0.874505,
+   "best_score": 0.876332,
    "retrieved": [
     {
+     "chunk_id": "audi_rs3:002",
+     "score": 0.876332
+    },
+    {
      "chunk_id": "audi_rs3:001",
-     "score": 0.874505
+     "score": 0.86818
     },
     {
      "chunk_id": "audi_rs3:000",
-     "score": 0.860079
+     "score": 0.858787
     },
     {
-     "chunk_id": "audi_rs3:007",
+     "chunk_id": "audi_rs3:008",
      "score": 0.855484
     },
     {
-     "chunk_id": "audi_rs3:006",
+     "chunk_id": "audi_rs3:007",
      "score": 0.854071
-    },
-    {
-     "chunk_id": "audi_rs3:002",
-     "score": 0.851871
     }
    ],
    "passed": true,
    "failures": [],
    "retrieve_ms": [
-    207.03529985621572,
-    169.48870010674,
-    182.5468000024557
+    96.43570007756352,
+    92.96239982359111,
+    91.24630014412105
    ],
    "stable": true
   },
@@ -260,9 +263,9 @@
    "passed": true,
    "failures": [],
    "retrieve_ms": [
-    166.33909987285733,
-    148.60219997353852,
-    141.20729989372194
+    90.18460009247065,
+    85.18469985574484,
+    91.78710007108748
    ],
    "stable": true
   },
@@ -296,7 +299,7 @@
     },
     {
      "chunk_id": "genesis_gv80:001",
-     "score": 0.899584
+     "score": 0.899129
     },
     {
      "chunk_id": "genesis_gv80:009",
@@ -314,9 +317,9 @@
    "passed": true,
    "failures": [],
    "retrieve_ms": [
-    140.36799990572035,
-    142.62470020912588,
-    178.43139986507595
+    97.66230010427535,
+    99.14180007763207,
+    106.68080020695925
    ],
    "stable": true
   },
@@ -350,23 +353,23 @@
    ],
    "sources_any": [],
    "reciprocal_rank": 0.6,
-   "best_score": 0.87393,
+   "best_score": 0.875637,
    "retrieved": [
     {
      "chunk_id": "mg_s6:011",
-     "score": 0.87393
+     "score": 0.875637
     },
     {
      "chunk_id": "mg_s6:008",
      "score": 0.870306
     },
     {
-     "chunk_id": "mg_s6:010",
-     "score": 0.863659
+     "chunk_id": "mg_s6:000",
+     "score": 0.86351
     },
     {
      "chunk_id": "aion_ht:001",
-     "score": 0.854465
+     "score": 0.854867
     },
     {
      "chunk_id": "aion_ht:008",
@@ -375,14 +378,18 @@
     {
      "chunk_id": "aion_ht:002",
      "score": 0.846775
+    },
+    {
+     "chunk_id": "mg_s6:001",
+     "score": 0.853529
     }
    ],
    "passed": true,
    "failures": [],
    "retrieve_ms": [
-    175.2890998031944,
-    236.7390999570489,
-    149.47599987499416
+    176.79030005820096,
+    187.95629986561835,
+    174.12399989552796
    ],
    "stable": true
   },
@@ -403,8 +410,8 @@
      "car": "hyundai_elantra_n",
      "section": "הרכב הנבחן",
      "hit": true,
-     "rank": 2,
-     "car_rank": 2
+     "rank": 1,
+     "car_rank": 1
     },
     {
      "car": "audi_rs3",
@@ -415,40 +422,44 @@
     }
    ],
    "sources_any": [],
-   "reciprocal_rank": 0.375,
-   "best_score": 0.875777,
+   "reciprocal_rank": 0.625,
+   "best_score": 0.882601,
    "retrieved": [
+    {
+     "chunk_id": "hyundai_elantra_n:006",
+     "score": 0.882601
+    },
+    {
+     "chunk_id": "hyundai_elantra_n:007",
+     "score": 0.878085
+    },
     {
      "chunk_id": "hyundai_elantra_n:001",
      "score": 0.875777
     },
     {
-     "chunk_id": "hyundai_elantra_n:006",
-     "score": 0.875266
-    },
-    {
-     "chunk_id": "hyundai_elantra_n:007",
-     "score": 0.874643
-    },
-    {
      "chunk_id": "audi_rs3:001",
-     "score": 0.864617
+     "score": 0.854058
     },
     {
-     "chunk_id": "audi_rs3:006",
+     "chunk_id": "audi_rs3:007",
      "score": 0.853857
     },
     {
-     "chunk_id": "audi_rs3:000",
-     "score": 0.850464
+     "chunk_id": "audi_rs3:002",
+     "score": 0.85383
+    },
+    {
+     "chunk_id": "hyundai_elantra_n:002",
+     "score": 0.860308
     }
    ],
    "passed": true,
    "failures": [],
    "retrieve_ms": [
-    230.11690005660057,
-    196.54119992628694,
-    216.79590013809502
+    233.178700087592,
+    226.09669994562864,
+    258.02520010620356
    ],
    "stable": true
   },
@@ -468,8 +479,8 @@
     {
      "car": "mg_s6",
      "section": "הרכב הנבחן",
-     "hit": false,
-     "rank": null,
+     "hit": true,
+     "rank": 7,
      "car_rank": 7
     },
     {
@@ -481,24 +492,24 @@
     }
    ],
    "sources_any": [],
-   "reciprocal_rank": 0.125,
-   "best_score": 0.885215,
+   "reciprocal_rank": 0.19642857142857142,
+   "best_score": 0.880644,
    "retrieved": [
     {
+     "chunk_id": "mg_s6:011",
+     "score": 0.880644
+    },
+    {
      "chunk_id": "mg_s6:010",
-     "score": 0.885215
+     "score": 0.873587
     },
     {
      "chunk_id": "mg_s6:002",
      "score": 0.871998
     },
     {
-     "chunk_id": "mg_s6:011",
-     "score": 0.87182
-    },
-    {
      "chunk_id": "aion_ht:001",
-     "score": 0.859474
+     "score": 0.859859
     },
     {
      "chunk_id": "aion_ht:010",
@@ -507,16 +518,18 @@
     {
      "chunk_id": "aion_ht:002",
      "score": 0.842518
+    },
+    {
+     "chunk_id": "mg_s6:001",
+     "score": 0.862606
     }
    ],
-   "passed": false,
-   "failures": [
-    "missed mg_s6 / הרכב הנבחן (car rank 7)"
-   ],
+   "passed": true,
+   "failures": [],
    "retrieve_ms": [
-    163.58730010688305,
-    151.22510003857315,
-    170.2896999195218
+    168.38179994374514,
+    168.0068001151085,
+    169.72380015067756
    ],
    "stable": true
   },
@@ -544,21 +557,21 @@
      "car": "link_and_co_01",
      "section": "הרכב הנבחן",
      "hit": true,
-     "rank": 5,
+     "rank": 6,
      "car_rank": 3
     }
    ],
    "sources_any": [],
-   "reciprocal_rank": 0.26666666666666666,
-   "best_score": 0.881237,
+   "reciprocal_rank": 0.25,
+   "best_score": 0.882425,
    "retrieved": [
     {
      "chunk_id": "link_and_co_01:009",
-     "score": 0.881237
+     "score": 0.882425
     },
     {
      "chunk_id": "link_and_co_01:010",
-     "score": 0.874303
+     "score": 0.87483
     },
     {
      "chunk_id": "hyundai_elantra_n:002",
@@ -566,23 +579,23 @@
     },
     {
      "chunk_id": "hyundai_elantra_n:007",
-     "score": 0.864551
-    },
-    {
-     "chunk_id": "link_and_co_01:001",
-     "score": 0.864389
+     "score": 0.867633
     },
     {
      "chunk_id": "hyundai_elantra_n:006",
-     "score": 0.863453
+     "score": 0.865476
+    },
+    {
+     "chunk_id": "link_and_co_01:001",
+     "score": 0.86366
     }
    ],
    "passed": true,
    "failures": [],
    "retrieve_ms": [
-    160.73390003293753,
-    151.0778998490423,
-    151.5118998941034
+    184.1551000252366,
+    237.76920000091195,
+    256.91330013796687
    ],
    "stable": true
   },
@@ -610,25 +623,25 @@
      "car": "link_and_co_01",
      "section": "הרכב הנבחן",
      "hit": true,
-     "rank": 3,
-     "car_rank": 3
+     "rank": 7,
+     "car_rank": 5
     }
    ],
    "sources_any": [],
-   "reciprocal_rank": 0.25,
-   "best_score": 0.8525,
+   "reciprocal_rank": 0.15476190476190477,
+   "best_score": 0.85402,
    "retrieved": [
     {
      "chunk_id": "link_and_co_01:010",
-     "score": 0.8525
+     "score": 0.85402
     },
     {
      "chunk_id": "link_and_co_01:000",
      "score": 0.844919
     },
     {
-     "chunk_id": "link_and_co_01:001",
-     "score": 0.843064
+     "chunk_id": "link_and_co_01:009",
+     "score": 0.844021
     },
     {
      "chunk_id": "genesis_gv80:000",
@@ -640,15 +653,19 @@
     },
     {
      "chunk_id": "genesis_gv80:001",
-     "score": 0.83701
+     "score": 0.836774
+    },
+    {
+     "chunk_id": "link_and_co_01:001",
+     "score": 0.842909
     }
    ],
    "passed": true,
    "failures": [],
    "retrieve_ms": [
-    167.54149994812906,
-    175.00880011357367,
-    161.02869994938374
+    250.9228999260813,
+    250.74299983680248,
+    193.35600011982024
    ],
    "stable": true
   },
@@ -706,7 +723,7 @@
     },
     {
      "chunk_id": "aion_ht:001",
-     "score": 0.865249
+     "score": 0.865533
     },
     {
      "chunk_id": "aion_ht:010",
@@ -720,9 +737,9 @@
    "passed": true,
    "failures": [],
    "retrieve_ms": [
-    184.72889997065067,
-    181.49999994784594,
-    167.35969996079803
+    215.0942999869585,
+    210.92700003646314,
+    257.80040002427995
    ],
    "stable": true
   },
@@ -749,44 +766,44 @@
      "car": "hyundai_elantra_n",
      "section": "תיבה ידנית",
      "hit": true,
-     "rank": 2,
-     "car_rank": 2
+     "rank": 1,
+     "car_rank": 1
     }
    ],
    "sources_any": [],
-   "reciprocal_rank": 0.5,
-   "best_score": 0.866204,
+   "reciprocal_rank": 1.0,
+   "best_score": 0.867313,
    "retrieved": [
+    {
+     "chunk_id": "hyundai_elantra_n:006",
+     "score": 0.867313
+    },
     {
      "chunk_id": "hyundai_elantra_n:000",
      "score": 0.866204
-    },
-    {
-     "chunk_id": "hyundai_elantra_n:006",
-     "score": 0.865066
     },
     {
      "chunk_id": "genesis_gv80:009",
      "score": 0.864397
     },
     {
-     "chunk_id": "genesis_gv80:001",
-     "score": 0.860272
-    },
-    {
      "chunk_id": "citroen_c3:000",
      "score": 0.859831
     },
     {
-     "chunk_id": "hyundai_elantra_n:007",
-     "score": 0.85924
+     "chunk_id": "genesis_gv80:001",
+     "score": 0.859579
     },
     {
      "chunk_id": "citroen_c3:009",
      "score": 0.859066
     },
     {
-     "chunk_id": "audi_rs3:006",
+     "chunk_id": "hyundai_elantra_n:007",
+     "score": 0.8552
+    },
+    {
+     "chunk_id": "audi_rs3:007",
      "score": 0.853755
     },
     {
@@ -794,20 +811,20 @@
      "score": 0.850607
     },
     {
-     "chunk_id": "mg_s6:009",
-     "score": 0.850484
+     "chunk_id": "audi_rs3:006",
+     "score": 0.850299
     },
     {
-     "chunk_id": "audi_rs3:009",
+     "chunk_id": "audi_rs3:010",
      "score": 0.849695
-    },
-    {
-     "chunk_id": "audi_rs3:005",
-     "score": 0.848805
     },
     {
      "chunk_id": "kia_ev9:000",
      "score": 0.84849
+    },
+    {
+     "chunk_id": "mg_s6:010",
+     "score": 0.847915
     },
     {
      "chunk_id": "genesis_gv80:002",
@@ -818,48 +835,60 @@
      "score": 0.846565
     },
     {
-     "chunk_id": "link_and_co_01:010",
-     "score": 0.845085
-    },
-    {
      "chunk_id": "mg_s6:004",
-     "score": 0.844068
+     "score": 0.846405
     },
     {
-     "chunk_id": "mg_s6:010",
-     "score": 0.842856
+     "chunk_id": "mg_s6:009",
+     "score": 0.842684
     },
     {
      "chunk_id": "kia_ev9:002",
      "score": 0.841443
     },
     {
+     "chunk_id": "link_and_co_01:010",
+     "score": 0.839569
+    },
+    {
      "chunk_id": "aion_ht:010",
      "score": 0.839474
     },
     {
-     "chunk_id": "aion_ht:001",
-     "score": 0.838466
+     "chunk_id": "link_and_co_01:009",
+     "score": 0.838305
     },
     {
-     "chunk_id": "link_and_co_01:009",
-     "score": 0.83794
+     "chunk_id": "aion_ht:001",
+     "score": 0.838106
     },
     {
      "chunk_id": "link_and_co_01:001",
-     "score": 0.836701
+     "score": 0.836725
     },
     {
      "chunk_id": "aion_ht:004",
      "score": 0.830446
+    },
+    {
+     "chunk_id": "audi_rs3:001",
+     "score": 0.847678
+    },
+    {
+     "chunk_id": "mg_s6:001",
+     "score": 0.833198
+    },
+    {
+     "chunk_id": "hyundai_elantra_n:002",
+     "score": 0.84422
     }
    ],
    "passed": true,
    "failures": [],
    "retrieve_ms": [
-    336.1922998446971,
-    351.76039999350905,
-    347.79699984937906
+    430.3268000949174,
+    459.4113000202924,
+    452.46879989281297
    ],
    "stable": true
   },
@@ -883,7 +912,7 @@
      "section": "הרכב הנבחן",
      "hit": false,
      "rank": null,
-     "car_rank": 6
+     "car_rank": 5
     },
     {
      "car": "aion_ht",
@@ -897,7 +926,7 @@
      "section": "הכי מתאים",
      "hit": false,
      "rank": null,
-     "car_rank": 7
+     "car_rank": 11
     },
     {
      "car": "aion_ht",
@@ -915,20 +944,20 @@
      "score": 0.868651
     },
     {
-     "chunk_id": "genesis_gv80:001",
-     "score": 0.862322
+     "chunk_id": "link_and_co_01:009",
+     "score": 0.865866
     },
     {
-     "chunk_id": "link_and_co_01:009",
-     "score": 0.861606
+     "chunk_id": "link_and_co_01:001",
+     "score": 0.861994
+    },
+    {
+     "chunk_id": "genesis_gv80:001",
+     "score": 0.861922
     },
     {
      "chunk_id": "kia_ev9:000",
      "score": 0.861229
-    },
-    {
-     "chunk_id": "link_and_co_01:001",
-     "score": 0.861218
     },
     {
      "chunk_id": "kia_ev9:002",
@@ -940,7 +969,7 @@
     },
     {
      "chunk_id": "kia_ev9:001",
-     "score": 0.857107
+     "score": 0.857108
     },
     {
      "chunk_id": "genesis_gv80:002",
@@ -949,12 +978,12 @@
    ],
    "passed": false,
    "failures": [
-    "missed every sources_any alternative (car ranks: mg_s6 / הרכב הנבחן 6, aion_ht / הרכב הנבחן 1, mg_s6 / הכי מתאים 7, aion_ht / מה קורה מאחור 9)"
+    "missed every sources_any alternative (car ranks: mg_s6 / הרכב הנבחן 5, aion_ht / הרכב הנבחן 1, mg_s6 / הכי מתאים 11, aion_ht / מה קורה מאחור 9)"
    ],
    "retrieve_ms": [
-    266.223699785769,
-    286.4642001222819,
-    254.16070013307035
+    343.03559991531074,
+    360.28819996863604,
+    308.304299833253
    ],
    "stable": true
   },
@@ -981,12 +1010,12 @@
      "car": "audi_rs3",
      "section": "הרכב הנבחן",
      "hit": true,
-     "rank": 2,
-     "car_rank": 1
+     "rank": 7,
+     "car_rank": 2
     }
    ],
    "sources_any": [],
-   "reciprocal_rank": 0.5,
+   "reciprocal_rank": 0.14285714285714285,
    "best_score": 0.849742,
    "retrieved": [
     {
@@ -994,12 +1023,8 @@
      "score": 0.849742
     },
     {
-     "chunk_id": "audi_rs3:001",
-     "score": 0.846718
-    },
-    {
      "chunk_id": "genesis_gv80:001",
-     "score": 0.845883
+     "score": 0.845926
     },
     {
      "chunk_id": "citroen_c3:000",
@@ -1007,11 +1032,19 @@
     },
     {
      "chunk_id": "genesis_gv80:009",
-     "score": 0.842264
+     "score": 0.842265
+    },
+    {
+     "chunk_id": "audi_rs3:002",
+     "score": 0.83935
     },
     {
      "chunk_id": "link_and_co_01:010",
-     "score": 0.837586
+     "score": 0.837931
+    },
+    {
+     "chunk_id": "audi_rs3:001",
+     "score": 0.836684
     },
     {
      "chunk_id": "kia_ev9:000",
@@ -1027,47 +1060,43 @@
     },
     {
      "chunk_id": "link_and_co_01:001",
-     "score": 0.835165
+     "score": 0.83523
     },
     {
      "chunk_id": "citroen_c3:009",
      "score": 0.834893
     },
     {
-     "chunk_id": "audi_rs3:000",
-     "score": 0.834513
-    },
-    {
      "chunk_id": "aion_ht:001",
-     "score": 0.834321
+     "score": 0.834218
     },
     {
      "chunk_id": "hyundai_elantra_n:002",
      "score": 0.830729
     },
     {
-     "chunk_id": "link_and_co_01:009",
-     "score": 0.829288
+     "chunk_id": "hyundai_elantra_n:006",
+     "score": 0.83006
     },
     {
-     "chunk_id": "audi_rs3:009",
+     "chunk_id": "audi_rs3:010",
      "score": 0.829236
+    },
+    {
+     "chunk_id": "hyundai_elantra_n:007",
+     "score": 0.828068
     },
     {
      "chunk_id": "aion_ht:000",
      "score": 0.826901
     },
     {
-     "chunk_id": "hyundai_elantra_n:004",
-     "score": 0.826638
-    },
-    {
-     "chunk_id": "hyundai_elantra_n:007",
-     "score": 0.826241
+     "chunk_id": "link_and_co_01:000",
+     "score": 0.825883
     },
     {
      "chunk_id": "mg_s6:004",
-     "score": 0.819633
+     "score": 0.82342
     },
     {
      "chunk_id": "kia_ev9:002",
@@ -1089,9 +1118,9 @@
    "passed": true,
    "failures": [],
    "retrieve_ms": [
-    375.0837999396026,
-    328.5527001135051,
-    306.4190000295639
+    467.42559992708266,
+    445.77820017002523,
+    408.2712000235915
    ],
    "stable": true
   },
@@ -1140,14 +1169,14 @@
     },
     {
      "chunk_id": "genesis_gv80:001",
-     "score": 0.85648
+     "score": 0.856165
     },
     {
      "chunk_id": "citroen_c3:002",
      "score": 0.855109
     },
     {
-     "chunk_id": "audi_rs3:009",
+     "chunk_id": "audi_rs3:010",
      "score": 0.850024
     },
     {
@@ -1155,40 +1184,40 @@
      "score": 0.849831
     },
     {
+     "chunk_id": "hyundai_elantra_n:006",
+     "score": 0.846524
+    },
+    {
+     "chunk_id": "audi_rs3:001",
+     "score": 0.845681
+    },
+    {
      "chunk_id": "genesis_gv80:002",
      "score": 0.844585
     },
     {
-     "chunk_id": "link_and_co_01:010",
-     "score": 0.844483
-    },
-    {
      "chunk_id": "link_and_co_01:009",
-     "score": 0.842755
-    },
-    {
-     "chunk_id": "audi_rs3:001",
-     "score": 0.840822
-    },
-    {
-     "chunk_id": "hyundai_elantra_n:006",
-     "score": 0.840345
+     "score": 0.839733
     },
     {
      "chunk_id": "kia_ev9:000",
      "score": 0.839683
     },
     {
+     "chunk_id": "mg_s6:004",
+     "score": 0.839611
+    },
+    {
      "chunk_id": "link_and_co_01:001",
-     "score": 0.839562
+     "score": 0.839482
+    },
+    {
+     "chunk_id": "link_and_co_01:010",
+     "score": 0.839365
     },
     {
      "chunk_id": "hyundai_elantra_n:007",
-     "score": 0.839038
-    },
-    {
-     "chunk_id": "mg_s6:004",
-     "score": 0.836358
+     "score": 0.839107
     },
     {
      "chunk_id": "kia_ev9:001",
@@ -1196,15 +1225,7 @@
     },
     {
      "chunk_id": "aion_ht:001",
-     "score": 0.832135
-    },
-    {
-     "chunk_id": "mg_s6:010",
-     "score": 0.831502
-    },
-    {
-     "chunk_id": "audi_rs3:000",
-     "score": 0.830664
+     "score": 0.832102
     },
     {
      "chunk_id": "aion_ht:010",
@@ -1215,8 +1236,16 @@
      "score": 0.829721
     },
     {
+     "chunk_id": "mg_s6:010",
+     "score": 0.829711
+    },
+    {
      "chunk_id": "mg_s6:001",
      "score": 0.829245
+    },
+    {
+     "chunk_id": "audi_rs3:003",
+     "score": 0.826002
     },
     {
      "chunk_id": "aion_ht:000",
@@ -1226,9 +1255,9 @@
    "passed": true,
    "failures": [],
    "retrieve_ms": [
-    296.13030003383756,
-    291.6134998667985,
-    336.93859982304275
+    407.6626000460237,
+    394.2140000872314,
+    344.0600000321865
    ],
    "stable": true
   },
@@ -1254,11 +1283,11 @@
    ],
    "sources_any": [],
    "reciprocal_rank": 0.5,
-   "best_score": 0.904563,
+   "best_score": 0.904681,
    "retrieved": [
     {
      "chunk_id": "genesis_gv80:001",
-     "score": 0.904563
+     "score": 0.904681
     },
     {
      "chunk_id": "genesis_gv80:006",
@@ -1280,9 +1309,9 @@
    "passed": true,
    "failures": [],
    "retrieve_ms": [
-    151.8923998810351,
-    154.7197001054883,
-    157.0348001550883
+    87.04919996671379,
+    85.37780004553497,
+    80.65100014209747
    ],
    "stable": true
   },
@@ -1308,11 +1337,11 @@
    ],
    "sources_any": [],
    "reciprocal_rank": 1.0,
-   "best_score": 0.899332,
+   "best_score": 0.89873,
    "retrieved": [
     {
      "chunk_id": "aion_ht:001",
-     "score": 0.899332
+     "score": 0.89873
     },
     {
      "chunk_id": "aion_ht:010",
@@ -1334,9 +1363,9 @@
    "passed": true,
    "failures": [],
    "retrieve_ms": [
-    128.64839984104037,
-    141.95670001208782,
-    131.5166000276804
+    74.46220004931092,
+    78.13400006853044,
+    80.47769987024367
    ],
    "stable": true
   },
@@ -1393,7 +1422,7 @@
     },
     {
      "chunk_id": "genesis_gv80:001",
-     "score": 0.866173
+     "score": 0.866083
     },
     {
      "chunk_id": "genesis_gv80:002",
@@ -1411,9 +1440,9 @@
    "passed": true,
    "failures": [],
    "retrieve_ms": [
-    132.85660021938384,
-    133.09310004115105,
-    135.43789996765554
+    192.3454999923706,
+    148.62400013953447,
+    149.0207000169903
    ],
    "stable": true
   },
@@ -1457,9 +1486,9 @@
    "passed": true,
    "failures": [],
    "retrieve_ms": [
-    135.59839990921319,
-    126.83369987644255,
-    115.3647000901401
+    84.36360000632703,
+    68.47249995917082,
+    64.46620007045567
    ],
    "stable": true
   },
@@ -1479,17 +1508,17 @@
      "car": "mg_s6",
      "section": "מה המחיר של MG S6",
      "hit": true,
-     "rank": 5,
-     "car_rank": 5
+     "rank": 1,
+     "car_rank": 1
     }
    ],
    "sources_any": [],
-   "reciprocal_rank": 0.2,
-   "best_score": 0.901704,
+   "reciprocal_rank": 1.0,
+   "best_score": 0.903281,
    "retrieved": [
     {
      "chunk_id": "mg_s6:011",
-     "score": 0.901704
+     "score": 0.903281
     },
     {
      "chunk_id": "mg_s6:003",
@@ -1504,16 +1533,16 @@
      "score": 0.888588
     },
     {
-     "chunk_id": "mg_s6:010",
-     "score": 0.883074
+     "chunk_id": "mg_s6:000",
+     "score": 0.877073
     }
    ],
    "passed": true,
    "failures": [],
    "retrieve_ms": [
-    161.53220017440617,
-    141.40240009874105,
-    145.58469993062317
+    77.75890012271702,
+    88.00690015777946,
+    99.68780004419386
    ],
    "stable": true
   },
@@ -1547,15 +1576,15 @@
     },
     {
      "chunk_id": "link_and_co_01:010",
-     "score": 0.881317
-    },
-    {
-     "chunk_id": "link_and_co_01:009",
-     "score": 0.853781
+     "score": 0.882126
     },
     {
      "chunk_id": "link_and_co_01:001",
-     "score": 0.853768
+     "score": 0.852492
+    },
+    {
+     "chunk_id": "link_and_co_01:009",
+     "score": 0.851771
     },
     {
      "chunk_id": "link_and_co_01:005",
@@ -1565,9 +1594,9 @@
    "passed": true,
    "failures": [],
    "retrieve_ms": [
-    154.42669996991754,
-    161.50439996272326,
-    159.41160009242594
+    94.86780012957752,
+    91.3013000972569,
+    128.9214000571519
    ],
    "stable": true
   },
@@ -1692,7 +1721,7 @@
     },
     {
      "chunk_id": "genesis_gv80:001",
-     "score": 0.88828
+     "score": 0.887096
     },
     {
      "chunk_id": "genesis_gv80:006",
@@ -1718,12 +1747,12 @@
      "score": 0.870856
     },
     {
-     "chunk_id": "hyundai_elantra_n:006",
-     "score": 0.866278
+     "chunk_id": "hyundai_elantra_n:007",
+     "score": 0.869696
     },
     {
-     "chunk_id": "hyundai_elantra_n:007",
-     "score": 0.861254
+     "chunk_id": "hyundai_elantra_n:006",
+     "score": 0.867938
     },
     {
      "chunk_id": "hyundai_elantra_n:000",
@@ -1742,23 +1771,23 @@
    "passed": null,
    "intent": "fact",
    "refusal": "llm_error",
-   "best_score": 0.861119,
+   "best_score": 0.871348,
    "retrieved": [
     {
      "chunk_id": "link_and_co_01:009",
-     "score": 0.861119
+     "score": 0.871348
     },
     {
      "chunk_id": "link_and_co_01:010",
-     "score": 0.860751
-    },
-    {
-     "chunk_id": "link_and_co_01:001",
-     "score": 0.858779
+     "score": 0.862161
     },
     {
      "chunk_id": "link_and_co_01:000",
      "score": 0.858292
+    },
+    {
+     "chunk_id": "link_and_co_01:001",
+     "score": 0.856339
     },
     {
      "chunk_id": "link_and_co_01:003",
@@ -1773,26 +1802,26 @@
    "passed": null,
    "intent": "fact",
    "refusal": "llm_error",
-   "best_score": 0.870656,
+   "best_score": 0.881004,
    "retrieved": [
     {
-     "chunk_id": "audi_rs3:009",
+     "chunk_id": "audi_rs3:001",
+     "score": 0.881004
+    },
+    {
+     "chunk_id": "audi_rs3:010",
      "score": 0.870656
     },
     {
-     "chunk_id": "audi_rs3:001",
-     "score": 0.870267
-    },
-    {
-     "chunk_id": "audi_rs3:000",
-     "score": 0.864704
-    },
-    {
-     "chunk_id": "audi_rs3:002",
+     "chunk_id": "audi_rs3:003",
      "score": 0.858424
     },
     {
-     "chunk_id": "audi_rs3:007",
+     "chunk_id": "audi_rs3:002",
+     "score": 0.857999
+    },
+    {
+     "chunk_id": "audi_rs3:008",
      "score": 0.854016
     }
    ]
@@ -1812,7 +1841,7 @@
     },
     {
      "chunk_id": "kia_ev9:001",
-     "score": 0.853841
+     "score": 0.853842
     },
     {
      "chunk_id": "kia_ev9:000",
@@ -1827,11 +1856,11 @@
    "passed": null,
    "intent": "fact",
    "refusal": "llm_error",
-   "best_score": 0.884592,
+   "best_score": 0.887029,
    "retrieved": [
     {
      "chunk_id": "mg_s6:011",
-     "score": 0.884592
+     "score": 0.887029
     },
     {
      "chunk_id": "mg_s6:002",
@@ -1839,15 +1868,15 @@
     },
     {
      "chunk_id": "mg_s6:004",
-     "score": 0.872794
-    },
-    {
-     "chunk_id": "mg_s6:010",
-     "score": 0.870353
+     "score": 0.872264
     },
     {
      "chunk_id": "mg_s6:003",
      "score": 0.865564
+    },
+    {
+     "chunk_id": "mg_s6:001",
+     "score": 0.865367
     }
    ]
   },
@@ -1900,12 +1929,12 @@
      "score": 0.852379
     },
     {
-     "chunk_id": "aion_ht:001",
-     "score": 0.85005
-    },
-    {
      "chunk_id": "aion_ht:005",
      "score": 0.849045
+    },
+    {
+     "chunk_id": "aion_ht:001",
+     "score": 0.849013
     },
     {
      "chunk_id": "aion_ht:010",

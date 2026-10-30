@@ -50,6 +50,7 @@ chunking:              # provisional, tuned in CW-303
   # CW-303: the embedded header carries the section as the same short label users see
   # (merged headings ran to 150+ characters and pushed 5 chunks past e5's 512 tokens).
   embed_section_chars: 60
+  spec_header: false   # CW-303 option A (measured, not chosen): table labels in the embedded header
 
 retrieval:             # provisional, tuned in CW-303
   top_k: 5               # single-car questions
@@ -62,6 +63,7 @@ retrieval:             # provisional, tuned in CW-303
     rrf_k: 60                # the usual RRF constant (Cormack et al. 2009), not tuned
     bm25_k1: 1.5             # the usual Okapi BM25 defaults, not tuned
     bm25_b: 0.75
+  force_spec_box: true       # CW-303 option B (chosen): each named car's spec box for compare/recommend
 
 input:
   max_message_chars: 500       # the current message; longer is refused politely
