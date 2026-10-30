@@ -95,6 +95,11 @@ class FetchConfig(_Strict):
     retries: int
 
 
+class EvalConfig(_Strict):
+    # Each eval run gets its own client, so its cap replaces llm.max_cost_usd for that run.
+    record_max_cost_usd: float
+
+
 class PathsConfig(_Strict):
     raw_dir: str
     index_dir: str
@@ -114,6 +119,7 @@ class Settings(_Strict):
     guardrails: GuardrailsConfig
     display: DisplayConfig
     fetch: FetchConfig
+    eval: EvalConfig
     paths: PathsConfig
 
     def profile(self, name: str | None = None) -> ProfileConfig:
