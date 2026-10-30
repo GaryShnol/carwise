@@ -109,6 +109,9 @@ class FetchConfig(_Strict):
 class EvalConfig(_Strict):
     # Each eval run gets its own client, so its cap replaces llm.max_cost_usd for that run.
     record_max_cost_usd: float
+    answer_max_cost_usd: float
+    judge_max_cost_usd: float
+    judge_model: str
 
 
 class PathsConfig(_Strict):

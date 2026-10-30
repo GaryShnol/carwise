@@ -144,3 +144,13 @@ def test_generate_prompt_forbids_another_article_since_v2_and_keeps_old_versions
     assert PROMPT_VERSIONS["generate"] >= "v2"
     assert "בכתבה אחרת" in GENERATE_SYSTEM and "one set of eight" in GENERATE_SYSTEM
     assert (PROMPT_DIR / "generate.v1.txt").exists() and (PROMPT_DIR / "generate.v2.txt").exists()
+
+
+def test_car_mentions_give_positions_and_prefer_the_longer_name() -> None:
+    from carwise.guardrails import car_mentions, normalize
+    from carwise.registry import load_registry
+
+    text = normalize("GAC איון HT זולה יותר מ-MG S6, ולאיון HT יש תא מטען גדול")
+    found = car_mentions(text, load_registry())
+    assert [car for _, _, car in found] == ["aion_ht", "mg_s6", "aion_ht"]
+    assert text[found[0][0] : found[0][1]] == normalize("GAC איון HT")

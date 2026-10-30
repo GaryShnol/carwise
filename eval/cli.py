@@ -18,10 +18,13 @@ from carwise.llm.base import LLMClient, LLMConfigError
 from carwise.llm.openai_client import OpenAIClient
 from carwise.pipeline import Pipeline
 from carwise.prompts import understand_system
-from carwise.registry import load_registry
-from carwise.retrieval.retriever import ChunkRetriever, open_retriever
+from carwise.registry import Registry, load_registry
+from carwise.retrieval.retriever import ChunkRetriever, Retriever, open_retriever
 from carwise.retrieval.store import IndexNotReadyError
 from eval import candidates
+from eval.answer_report import RUNS_DIR, run_answer_eval
+from eval.answer_report import markdown as answer_markdown
+from eval.answer_report import write as write_answer_report
 from eval.questions import Negative, Question, load_negatives, load_questions
 from eval.recording import (
     Recording,
@@ -124,9 +127,11 @@ def run(args: argparse.Namespace) -> int:
     if args.record or args.record_missing:
         cases: list[Question | Negative] = [*every_question, *probes]
         return _record(settings, profile_name, cases, make_pipeline, system, args.record_missing)
-    if args.level == "answer":
-        print("The answer level is not implemented yet (second half of CW-302).")
+    if args.runs < 1:
+        print("--runs must be at least 1")
         return 2
+    if args.level == "answer":
+        return _answer(args, settings, registry, retriever, profile_name, questions)
     if args.runs < 1:
         print("--runs must be at least 1")
         return 2
@@ -310,3 +315,63 @@ def _compare(out_dir: Path) -> int:
     path.write_text(comparison_markdown(reports), encoding="utf-8", newline="\n")
     print(f"compared {', '.join(reports)}: {path}")
     return 0
+
+
+def _answer(
+    args: argparse.Namespace,
+    settings: Settings,
+    registry: Registry,
+    retriever: Retriever,
+    profile_name: str | None,
+    questions: Sequence[Question],
+) -> int:
+    """The answer level: real calls on the chosen profile, each with its own cost cap."""
+    answer_cap = settings.eval.answer_max_cost_usd
+    judge_cap = settings.eval.judge_max_cost_usd
+    answer_settings = with_cost_cap(settings, answer_cap)
+    profile = answer_settings.profile(profile_name)
+    name = profile_name or settings.default_profile
+    try:
+        answer_client = OpenAIClient(answer_settings, profile)
+        judge_client = OpenAIClient(with_cost_cap(settings, judge_cap), profile)
+    except LLMConfigError as error:
+        print(error)
+        return 1
+    models = {
+        "understand": profile.understand_model,
+        "generate": profile.generate_model,
+        "judge": settings.eval.judge_model,
+    }
+
+    def make_pipeline() -> Pipeline:
+        # One client for the whole run, so the cap bounds the run, not a question.
+        return Pipeline(answer_settings, registry, retriever, answer_client, profile=profile_name)
+
+    question_set = "holdout" if args.holdout else "tuning"
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    runs_dir = RUNS_DIR / f"answer-{question_set}-{name}-{stamp}"
+    print(
+        f"answer eval: {len(questions)} questions x {args.runs} on {name} "
+        f"({models['generate']}), caps ${answer_cap:.2f} answers / ${judge_cap:.2f} judge",
+        flush=True,
+    )
+    retriever.warm_up()
+    report = run_answer_eval(
+        questions,
+        make_pipeline,
+        judge_client,
+        answer_settings,
+        registry,
+        profile=name,
+        models=models,
+        runs=args.runs,
+        question_set=question_set,
+        runs_dir=runs_dir,
+    )
+    paths = write_answer_report(report, args.out)
+    print(answer_markdown(report).split("## Questions")[0].rstrip())
+    spent = answer_client.total_cost_usd, judge_client.total_cost_usd
+    print(f"spent: answers ${spent[0]:.4f}, judge ${spent[1]:.4f}")
+    print("report: " + ", ".join(str(path) for path in paths))
+    print(f"answers (gitignored): {runs_dir}")
+    return 0 if report.complete else 1

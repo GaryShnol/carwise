@@ -114,6 +114,22 @@ def mentioned(text: str, names: Iterable[str]) -> list[str]:
     return [name for name in names if _name_pattern(name).search(haystack)]
 
 
+def car_mentions(text: str, registry: Registry) -> list[tuple[int, int, str]]:
+    """Every car name in an already normalized text: (start, end, car id), in text order.
+
+    Where two names overlap ("GAC איון HT" and "איון HT"), the longer one wins.
+    """
+    found: list[tuple[int, int, str]] = []
+    for car in registry.cars:
+        for name in (car.display_name, *car.aliases):
+            found += [(m.start(), m.end(), car.id) for m in _name_pattern(name).finditer(text)]
+    kept: list[tuple[int, int, str]] = []
+    for start, end, car_id in sorted(found, key=lambda item: (item[0], -item[1])):
+        if not kept or start >= kept[-1][1]:
+            kept.append((start, end, car_id))
+    return kept
+
+
 def cars_in_text(text: str, registry: Registry) -> list[str]:
     """Registry car ids named in the text by any alias, in registry order."""
     return [car.id for car in registry.cars if mentioned(text, car.aliases)]

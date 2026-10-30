@@ -51,6 +51,7 @@ class Number:
     text: str  # as written in the text, scale word included ("178 אלף")
     token: str  # the digits alone ("178")
     readings: tuple[Reading, ...]
+    start: int = 0  # offset in the searched text (the eval's car-number attribution needs it)
 
 
 def _plain(digits: str) -> tuple[Decimal, Decimal]:
@@ -97,7 +98,7 @@ def find_numbers(text: str, *, list_markers: bool = False) -> list[Number]:
         scale = _SCALES[scale_match.group(1)] if scale_match else Decimal(1)
         written = text[match.start() : scale_match.end()] if scale_match else token
         readings = tuple(Reading(value * scale, unit * scale) for value, unit in readings_of(token))
-        found.append(Number(written.strip(), token, readings))
+        found.append(Number(written.strip(), token, readings, match.start()))
     return found
 
 

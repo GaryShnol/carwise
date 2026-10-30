@@ -34,6 +34,8 @@ llm:
 prices:
   gpt-5.4-nano: { input: 0.20, cached_input: 0.02, output: 1.25 }
   gpt-5.4-mini: { input: 0.75, cached_input: 0.075, output: 4.50 }
+  # The eval judge (CW-302); verified on the official pricing page 2026-10-30, Standard, <272K context.
+  gpt-5.4: { input: 2.50, cached_input: 0.25, output: 15.00 }
 
 embeddings:
   provider: sentence_transformers        # or "fake": hash-based, no download (tests, offline CI)
@@ -173,6 +175,9 @@ fetch:                 # polite download of the eight articles (CW-101)
 
 eval:                  # CW-302: every real-model eval run prints its cost and stops at its cap
   record_max_cost_usd: 0.10   # recording the understand outputs (about 30 nano calls)
+  answer_max_cost_usd: 0.50   # one answer-eval run (every turn of every question)
+  judge_max_cost_usd: 0.20    # the judge's calls in one answer-eval run
+  judge_model: gpt-5.4        # larger than the generators; price verified (see prices)
 
 paths:
   raw_dir: data/raw

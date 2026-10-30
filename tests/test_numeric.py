@@ -283,3 +283,13 @@ def test_regenerate_prompt_v2_covers_numbers_and_v1_is_kept() -> None:
         regenerate_instruction(["x"])
     )
     assert (PROMPT_DIR / "regenerate.v1.txt").exists()
+
+
+def test_numbers_report_their_offset() -> None:
+    from carwise.numbers import find_numbers
+
+    text = "המחיר 168,888 והטווח 430"
+    assert [(n.token, n.start) for n in find_numbers(text)] == [
+        ("168,888", text.index("168")),
+        ("430", text.index("430")),
+    ]
