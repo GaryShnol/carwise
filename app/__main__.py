@@ -13,17 +13,17 @@ import os
 import sys
 from collections.abc import Callable, Sequence
 
-from app import ingest, search
+from app import chat, ingest, search
 
 Command = Callable[[argparse.Namespace], int]
 # Command -> (handler, adds its arguments to the subparser, help line).
 COMMANDS: dict[str, tuple[Command, Callable[[argparse.ArgumentParser], None] | None, str]] = {
     "ingest": (ingest.run, None, "fetch, clean, chunk and index the articles"),
     "search": (search.run, search.add_arguments, "show retrieved chunks for a query (dev)"),
+    "chat": (chat.run, chat.add_arguments, "chat in Hebrew about the eight reviewed cars"),
 }
 # Command -> board ticket that implements it. Moved to COMMANDS as they land.
 PENDING = {
-    "chat": "CW-105",
     "eval": "CW-302",
     "ui": "CW-401",
 }
@@ -43,15 +43,15 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def use_utf8_output() -> None:
-    """Windows consoles default to a legacy code page that cannot print Hebrew."""
-    for stream in (sys.stdout, sys.stderr):
+    """Windows consoles default to a legacy code page that cannot print or read Hebrew."""
+    for stream in (sys.stdin, sys.stdout, sys.stderr):
         if isinstance(stream, io.TextIOWrapper):
             stream.reconfigure(encoding="utf-8")
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    if args.profile:
+    if getattr(args, "profile", None):
         os.environ["CARWISE_PROFILE"] = args.profile
     if args.command in COMMANDS:
         use_utf8_output()

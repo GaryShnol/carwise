@@ -67,12 +67,12 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | Epic | Milestone / tag | Tickets | Done | Points | Status |
 |---|---|---|---|---|---|
 | E0 Scaffold and source check | none | 3 | 3 | 3 | DONE |
-| E1 Thin vertical slice | `v0.1` | 6 | 5 | 11 | IN PROGRESS |
+| E1 Thin vertical slice | `v0.1` | 6 | 6 | 11 | IN PROGRESS |
 | E2 Reliability and guardrails | none | 6 | 0 | 9 | TODO |
 | E3 Measurement | none | 3 | 0 | 5 | TODO |
 | E4 Interface and packaging | none | 3 | 0 | 4 | TODO |
 | E5 Documentation and release | `v1.0` | 3 | 0 | 4 | TODO |
-| **Total** |  | **24** | **8** | **36** |  |
+| **Total** |  | **24** | **9** | **36** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -98,7 +98,7 @@ Branch: `epic/e1-vertical-slice` | Tag: `v0.1`
 | CW-102 | Structure-aware chunking with metadata | `feat` | M | P1 | DONE | CW-101 |
 | CW-103 | Embeddings, Chroma index, per-car retrieval | `feat` | M | P1 | DONE | CW-102 |
 | CW-104 | `LLMClient` interface and one implementation | `feat` | S | P1 | DONE | CW-001 |
-| CW-105 | Basic pipeline (understand, generate) and CLI | `feat` | L | P1 | TODO | CW-103, CW-104 |
+| CW-105 | Basic pipeline (understand, generate) and CLI | `feat` | L | P1 | DONE | CW-103, CW-104 |
 | CW-106 | Eval question set (about 15, with trap questions), written before the guardrails | `feat` | M | P1 | DONE | CW-102 |
 
 ## Epic E2: Reliability and guardrails
@@ -212,17 +212,19 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [x] Timeouts and one retry; a fake client exists for tests. Also: cost per call from config prices, a running total that refuses calls past `llm.max_cost_usd`, and a `live` test (deselected by default).
 
 ### CW-105 Basic pipeline and CLI
-- [ ] `pipeline.answer(message, session) -> Response` is the single entry point.
-- [ ] Prompts live in versioned text files, not in code.
-- [ ] Understand call returns intent, cars (canonical ids), standalone query, preference updates (validated by Pydantic); invalid output gets one retry, then falls back to using the raw message as the query.
-- [ ] The understand schema includes `unrecognized_cars` (raw names of cars that match no registry entry), and generation returns JSON with `answer` and `used_chunk_ids`; ids not retrieved this turn are rejected in code.
-- [ ] History window size comes from config.
-- [ ] Chitchat and out-of-scope intents skip retrieval and reply briefly with what the bot can do.
-- [ ] All replies are in Hebrew; the first message states that knowledge is limited to the eight reviewed cars; tone is friendly and concise.
-- [ ] Comparison questions retrieve separately per car.
-- [ ] The understand schema already contains the preference-update field; merging and using preferences is implemented in CW-203.
-- [ ] Generated answers cite car and section; CLI chat works end to end.
-- [ ] Unit tests with the fake `LLMClient`: intent handling, fallback on invalid output, chitchat skipping retrieval.
+- [x] `pipeline.answer(message, session) -> Response` is the single entry point. As built: `Pipeline(settings, registry, retriever, llm).ask(message, history) -> Answer` (owner's spec of 2026-10-30); CLI, UI and eval call only this.
+- [x] Prompts live in versioned text files, not in code: `src/carwise/llm/prompts/*.v1.txt`, exposed as named constants by `src/carwise/prompts.py`; telemetry records the prompt version.
+- [x] Understand call returns intent, cars (canonical ids), standalone query, preference updates (validated by Pydantic); invalid output gets one retry, then falls back to using the raw message as the query (cars then come from deterministic name matching).
+- [x] The understand schema includes `unrecognized_cars` (raw names of cars that match no registry entry), and generation returns JSON with `answer` and `used_chunk_ids`; ids not retrieved this turn are rejected in code (dropped and flagged).
+- [x] History window size comes from config.
+- [x] Chitchat and out-of-scope intents skip retrieval and reply briefly with what the bot can do.
+- [x] All replies are in Hebrew; the first message states that knowledge is limited to the eight reviewed cars; tone is friendly and concise. The answer validator rejects non-Hebrew text, JSON field names and chunk ids inside the answer (one corrective retry).
+- [x] Comparison questions retrieve separately per car.
+- [x] The understand schema already contains the preference-update field; merging and using preferences is implemented in CW-203.
+- [x] Generated answers cite car and section; CLI chat works end to end (`python -m app chat [--profile final] [--show-cost]`).
+- [x] Unit tests with the fake `LLMClient`: intent handling, fallback on invalid output, chitchat skipping retrieval; also unknown-car and low-similarity refusals, history follow-up, invalid cited ids, telemetry without text.
+- [x] Pulled forward at the minimum, refined later: the registry gate (unknown car only, or an outside brand from `guardrails.outside_brands`; known plus unknown cars are answered with a note) and the similarity gate (threshold 0 until CW-303) for CW-201; one JSON line per turn in `logs/turns.jsonl` for CW-204. The chat loads the embedding model at start, so the first question is not a one-minute wait.
+- [x] Known issue for CW-202 and CW-302: in the real run the comparison answer called two sections of the MG S6 article "another article". Facts were right; the wording was not.
 
 ### CW-106 Eval question set
 - [x] About 15 questions in `eval/questions.yaml`, written after reading the articles and before building the guardrails and tuning, so the eval guides the work.
