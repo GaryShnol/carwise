@@ -126,7 +126,7 @@ Branch: `epic/e3-measurement` | Tag: none
 |---|---|---|---|---|---|---|
 | CW-302 | Eval runner and per-category report | `feat` | M | P1 | IN PROGRESS | CW-201, CW-202, CW-106 |
 | CW-305 | Embedding model comparison on the retrieval eval | `feat` | M | P2 | DONE | CW-302 |
-| CW-303 | Tune relevance threshold, top-k and chunk size | `fix` | S | P2 | TODO | CW-302, CW-305 |
+| CW-303 | Tune relevance threshold, top-k and chunk size | `fix` | S | P2 | IN PROGRESS | CW-302, CW-305 |
 
 ## Epic E4: Interface and packaging
 
