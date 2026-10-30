@@ -29,8 +29,13 @@ prices:
   gpt-5.4-mini: { input: 0.75, cached_input: 0.075, output: 4.50 }
 
 embeddings:
+  provider: sentence_transformers        # or "fake": hash-based, no download (tests, offline CI)
   model: intfloat/multilingual-e5-base   # provisional, chosen by data in CW-305
-  revision: null                         # pinned in CW-103
+  revision: d128750597153bb5987e10b1c3493a34e5a4502a   # Hugging Face commit, pinned in CW-103
+  query_prefix: "query: "                # e5 models are trained with these prefixes;
+  passage_prefix: "passage: "            # other candidates in CW-305 may use none
+  device: cpu
+  batch_size: 16
 
 chunking:              # provisional, tuned in CW-303
   min_chars: 300

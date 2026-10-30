@@ -15,8 +15,10 @@ requires-python = ">=3.11"
 #   pyyaml:   reads config/settings.yaml and config/cars.yaml.
 dependencies = [
   "beautifulsoup4==4.13.4",
+  "chromadb==1.5.9",
   "pydantic==2.13.5",
   "pyyaml==6.0.3",
+  "sentence-transformers==6.2.0",
 ]
 
 [dependency-groups]
@@ -50,3 +52,11 @@ mypy_path = "src"
 [[tool.mypy.overrides]]
 module = ["yaml"]
 ignore_missing_imports = true
+
+# numpy (pulled in by sentence-transformers and chromadb) ships 3.12-only stub
+# syntax on Python 3.12+, while mypy checks against the 3.11 floor. carwise never
+# imports numpy itself, so its types are not followed.
+[[tool.mypy.overrides]]
+module = ["numpy", "numpy.*"]
+follow_imports = "skip"
+follow_imports_for_stubs = true  # numpy ships .pyi stubs, which "skip" alone still reads

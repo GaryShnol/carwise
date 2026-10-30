@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict
@@ -42,8 +42,13 @@ class Price(_Strict):
 
 
 class EmbeddingsConfig(_Strict):
+    provider: Literal["sentence_transformers", "fake"]
     model: str
     revision: str | None
+    query_prefix: str
+    passage_prefix: str
+    device: str
+    batch_size: int
 
 
 class ChunkingConfig(_Strict):

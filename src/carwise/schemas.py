@@ -30,3 +30,12 @@ class Chunk(BaseModel):
     published: date | None
     text: str = Field(min_length=1)
     embed_text: str = Field(min_length=1)
+
+
+class RetrievedChunk(BaseModel):
+    """A chunk with its cosine similarity to the query (1 is identical, 0 unrelated)."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    chunk: Chunk
+    score: float = Field(ge=-1.0, le=1.0)
