@@ -63,7 +63,7 @@ retrieval:             # provisional, tuned in CW-303
     rrf_k: 60                # the usual RRF constant (Cormack et al. 2009), not tuned
     bm25_k1: 1.5             # the usual Okapi BM25 defaults, not tuned
     bm25_b: 0.75
-  force_spec_box: true       # CW-303 option B (chosen): each named car's spec box for compare/recommend
+  force_spec_box: true       # CW-303 option B (chosen): each named car's spec box for comparisons
 
 input:
   max_message_chars: 500       # the current message; longer is refused politely

@@ -1,0 +1,479 @@
+{
+ "level": "retrieval",
+ "created": "2026-10-30T21:18:44+00:00",
+ "embedder": {
+  "provider": "sentence_transformers",
+  "model": "intfloat/multilingual-e5-large",
+  "revision": "3d7cfbdacd47fdda877c5cd8a79fbcc4f2a574f3"
+ },
+ "retrieval": {
+  "top_k": 5,
+  "per_car_cap": 3,
+  "cross_car_top_k": 12,
+  "cross_car_per_car_cap": 2,
+  "relevance_threshold": 0.8,
+  "lexical": {
+   "enabled": false,
+   "rrf_k": 60,
+   "bm25_k1": 1.5,
+   "bm25_b": 0.75
+  },
+  "force_spec_box": true
+ },
+ "chunking": {
+  "min_chars": 300,
+  "max_chars": 1400,
+  "embed_section_chars": 60,
+  "spec_header": 0
+ },
+ "recording": {
+  "model": "gpt-5.4-nano",
+  "understand_prompt": "v1",
+  "recorded_at": "2026-10-30T21:09:46+00:00",
+  "cost_usd": 0.019882
+ },
+ "runs": 1,
+ "warm_up_s": 30.23,
+ "latency_ms": {
+  "p50": 218.63930020481348,
+  "p95": 327.5623999070376
+ },
+ "summary": [
+  {
+   "category": "single_fact",
+   "questions": 3,
+   "passed": 3,
+   "sources": 3,
+   "sources_hit": 3,
+   "mrr": 1.0
+  },
+  {
+   "category": "comparison",
+   "questions": 2,
+   "passed": 1,
+   "sources": 4,
+   "sources_hit": 3,
+   "mrr": 0.425
+  },
+  {
+   "category": "ranking",
+   "questions": 1,
+   "passed": 1,
+   "sources": 1,
+   "sources_hit": 1,
+   "mrr": 0.16666666666666666
+  },
+  {
+   "category": "total",
+   "questions": 6,
+   "passed": 5,
+   "sources": 8,
+   "sources_hit": 7,
+   "mrr": 0.6694444444444444
+  }
+ ],
+ "scores": {
+  "answerable": {
+   "n": 6,
+   "min": 0.8478,
+   "q1": 0.8607,
+   "median": 0.8648,
+   "q3": 0.8874,
+   "max": 0.897
+  },
+  "threshold_probes": {
+   "n": 0,
+   "min": null,
+   "q1": null,
+   "median": null,
+   "q3": null,
+   "max": null
+  }
+ },
+ "questions": [
+  {
+   "id": "holdout-fact-c3-power",
+   "category": "single_fact",
+   "expected": "answer",
+   "behavior": "answer",
+   "intent": "fact",
+   "cars": [
+    "citroen_c3"
+   ],
+   "not_covered": [],
+   "refusal": "llm_error",
+   "sources": [
+    {
+     "car": "citroen_c3",
+     "section": "הרכב הנבחן",
+     "hit": true,
+     "rank": 1,
+     "car_rank": 1
+    }
+   ],
+   "sources_any": [],
+   "reciprocal_rank": 1.0,
+   "best_score": 0.882903,
+   "retrieved": [
+    {
+     "chunk_id": "citroen_c3:002",
+     "score": 0.882903
+    },
+    {
+     "chunk_id": "citroen_c3:000",
+     "score": 0.877778
+    },
+    {
+     "chunk_id": "citroen_c3:001",
+     "score": 0.864923
+    },
+    {
+     "chunk_id": "citroen_c3:006",
+     "score": 0.863146
+    },
+    {
+     "chunk_id": "citroen_c3:009",
+     "score": 0.856974
+    }
+   ],
+   "passed": true,
+   "failures": [],
+   "retrieve_ms": [
+    314.80059982277453
+   ],
+   "stable": true
+  },
+  {
+   "id": "holdout-fact-link-trunk",
+   "category": "single_fact",
+   "expected": "answer",
+   "behavior": "answer",
+   "intent": "fact",
+   "cars": [
+    "link_and_co_01"
+   ],
+   "not_covered": [],
+   "refusal": "llm_error",
+   "sources": [],
+   "sources_any": [
+    {
+     "car": "link_and_co_01",
+     "section": "מה נותר כשהיה",
+     "hit": true,
+     "rank": 5,
+     "car_rank": 5
+    },
+    {
+     "car": "link_and_co_01",
+     "section": "סביבת נהג, נוסעים",
+     "hit": true,
+     "rank": 1,
+     "car_rank": 1
+    }
+   ],
+   "reciprocal_rank": 1.0,
+   "best_score": 0.896981,
+   "retrieved": [
+    {
+     "chunk_id": "link_and_co_01:005",
+     "score": 0.896981
+    },
+    {
+     "chunk_id": "link_and_co_01:010",
+     "score": 0.881311
+    },
+    {
+     "chunk_id": "link_and_co_01:007",
+     "score": 0.873802
+    },
+    {
+     "chunk_id": "link_and_co_01:001",
+     "score": 0.872217
+    },
+    {
+     "chunk_id": "link_and_co_01:002",
+     "score": 0.865322
+    }
+   ],
+   "passed": true,
+   "failures": [],
+   "retrieve_ms": [
+    158.51649991236627
+   ],
+   "stable": true
+  },
+  {
+   "id": "holdout-fact-elantra-power",
+   "category": "single_fact",
+   "expected": "answer",
+   "behavior": "answer",
+   "intent": "fact",
+   "cars": [
+    "hyundai_elantra_n"
+   ],
+   "not_covered": [],
+   "refusal": "llm_error",
+   "sources": [],
+   "sources_any": [
+    {
+     "car": "hyundai_elantra_n",
+     "section": "מבחן דרכים",
+     "hit": true,
+     "rank": 1,
+     "car_rank": 1
+    },
+    {
+     "car": "hyundai_elantra_n",
+     "section": "איזה מנוע וביצועים",
+     "hit": true,
+     "rank": 3,
+     "car_rank": 3
+    }
+   ],
+   "reciprocal_rank": 1.0,
+   "best_score": 0.887351,
+   "retrieved": [
+    {
+     "chunk_id": "hyundai_elantra_n:001",
+     "score": 0.887351
+    },
+    {
+     "chunk_id": "hyundai_elantra_n:004",
+     "score": 0.884335
+    },
+    {
+     "chunk_id": "hyundai_elantra_n:007",
+     "score": 0.8763
+    },
+    {
+     "chunk_id": "hyundai_elantra_n:000",
+     "score": 0.86146
+    },
+    {
+     "chunk_id": "hyundai_elantra_n:006",
+     "score": 0.857399
+    }
+   ],
+   "passed": true,
+   "failures": [],
+   "retrieve_ms": [
+    179.86560007557273
+   ],
+   "stable": true
+  },
+  {
+   "id": "holdout-compare-topspeed-mg-aion",
+   "category": "comparison",
+   "expected": "answer",
+   "behavior": "answer",
+   "intent": "compare",
+   "cars": [
+    "mg_s6",
+    "aion_ht"
+   ],
+   "not_covered": [],
+   "refusal": "llm_error",
+   "sources": [
+    {
+     "car": "mg_s6",
+     "section": "מה הממדים והביצועים",
+     "hit": false,
+     "rank": null,
+     "car_rank": 4
+    },
+    {
+     "car": "aion_ht",
+     "section": "איזה נתונים עושים את HT",
+     "hit": true,
+     "rank": 5,
+     "car_rank": 2
+    }
+   ],
+   "sources_any": [],
+   "reciprocal_rank": 0.1,
+   "best_score": 0.860668,
+   "retrieved": [
+    {
+     "chunk_id": "mg_s6:011",
+     "score": 0.860668
+    },
+    {
+     "chunk_id": "mg_s6:008",
+     "score": 0.856294
+    },
+    {
+     "chunk_id": "mg_s6:002",
+     "score": 0.854332
+    },
+    {
+     "chunk_id": "aion_ht:001",
+     "score": 0.839596
+    },
+    {
+     "chunk_id": "aion_ht:002",
+     "score": 0.834416
+    },
+    {
+     "chunk_id": "aion_ht:007",
+     "score": 0.827994
+    },
+    {
+     "chunk_id": "mg_s6:001",
+     "score": 0.844187
+    }
+   ],
+   "passed": false,
+   "failures": [
+    "missed mg_s6 / מה הממדים והביצועים (car rank 4)"
+   ],
+   "retrieve_ms": [
+    327.5623999070376
+   ],
+   "stable": true
+  },
+  {
+   "id": "holdout-compare-economy-c3-elantra",
+   "category": "comparison",
+   "expected": "answer",
+   "behavior": "answer",
+   "intent": "compare",
+   "cars": [
+    "citroen_c3",
+    "hyundai_elantra_n"
+   ],
+   "not_covered": [],
+   "refusal": "llm_error",
+   "sources": [
+    {
+     "car": "citroen_c3",
+     "section": "הרכב הנבחן",
+     "hit": true,
+     "rank": 1,
+     "car_rank": 1
+    },
+    {
+     "car": "hyundai_elantra_n",
+     "section": "הרכב הנבחן",
+     "hit": true,
+     "rank": 2,
+     "car_rank": 1
+    }
+   ],
+   "sources_any": [],
+   "reciprocal_rank": 0.75,
+   "best_score": 0.864783,
+   "retrieved": [
+    {
+     "chunk_id": "citroen_c3:002",
+     "score": 0.864783
+    },
+    {
+     "chunk_id": "hyundai_elantra_n:002",
+     "score": 0.861841
+    },
+    {
+     "chunk_id": "hyundai_elantra_n:006",
+     "score": 0.857779
+    },
+    {
+     "chunk_id": "hyundai_elantra_n:007",
+     "score": 0.854264
+    },
+    {
+     "chunk_id": "citroen_c3:000",
+     "score": 0.852792
+    },
+    {
+     "chunk_id": "citroen_c3:009",
+     "score": 0.843406
+    }
+   ],
+   "passed": true,
+   "failures": [],
+   "retrieve_ms": [
+    311.60080013796687
+   ],
+   "stable": true
+  },
+  {
+   "id": "holdout-rank-most-expensive",
+   "category": "ranking",
+   "expected": "answer",
+   "behavior": "answer",
+   "intent": "recommend",
+   "cars": [],
+   "not_covered": [],
+   "refusal": "llm_error",
+   "sources": [
+    {
+     "car": "genesis_gv80",
+     "section": "הרכב הנבחן",
+     "hit": true,
+     "rank": 6,
+     "car_rank": 2
+    }
+   ],
+   "sources_any": [],
+   "reciprocal_rank": 0.16666666666666666,
+   "best_score": 0.847789,
+   "retrieved": [
+    {
+     "chunk_id": "hyundai_elantra_n:002",
+     "score": 0.847789
+    },
+    {
+     "chunk_id": "audi_rs3:010",
+     "score": 0.843703
+    },
+    {
+     "chunk_id": "mg_s6:001",
+     "score": 0.837058
+    },
+    {
+     "chunk_id": "genesis_gv80:009",
+     "score": 0.836628
+    },
+    {
+     "chunk_id": "mg_s6:000",
+     "score": 0.835701
+    },
+    {
+     "chunk_id": "genesis_gv80:001",
+     "score": 0.834588
+    },
+    {
+     "chunk_id": "citroen_c3:002",
+     "score": 0.834331
+    },
+    {
+     "chunk_id": "citroen_c3:000",
+     "score": 0.834322
+    },
+    {
+     "chunk_id": "audi_rs3:001",
+     "score": 0.83352
+    },
+    {
+     "chunk_id": "hyundai_elantra_n:006",
+     "score": 0.8286
+    },
+    {
+     "chunk_id": "kia_ev9:002",
+     "score": 0.826919
+    },
+    {
+     "chunk_id": "kia_ev9:000",
+     "score": 0.826788
+    }
+   ],
+   "passed": true,
+   "failures": [],
+   "retrieve_ms": [
+    218.63930020481348
+   ],
+   "stable": true
+  }
+ ],
+ "probes": [],
+ "resources": {}
+}

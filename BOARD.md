@@ -124,7 +124,7 @@ Branch: `epic/e3-measurement` | Tag: none
 
 | ID | Ticket | Type | Size | Pri | Status | Depends on |
 |---|---|---|---|---|---|---|
-| CW-306 | Recommend intent searches all cars; named cars are a hint | `fix` | S | P1 | IN PROGRESS | CW-303 |
+| CW-306 | Recommend intent searches all cars; named cars are a hint | `fix` | S | P1 | DONE | CW-303 |
 | CW-302 | Eval runner and per-category report | `feat` | M | P1 | IN PROGRESS | CW-201, CW-202, CW-106 |
 | CW-305 | Embedding model comparison on the retrieval eval | `feat` | M | P2 | DONE | CW-302 |
 | CW-303 | Tune relevance threshold, top-k and chunk size | `fix` | S | P2 | DONE | CW-302, CW-305 |
@@ -283,9 +283,9 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [x] Known source case (decided, not a bug): `audi_rs3:002` prints the sedan price as "545,00". It is parsed as the decimal 545.00 like any decimal comma; no special rule. An answer that corrects it to 545,000 is flagged, the one regeneration drops that number, and the answer stays correct (it states only what the articles support).
 
 ### CW-306 Recommend intent searches all cars
-- [ ] For intent `recommend`, retrieval runs across all cars with the existing cross-car caps; cars named in the plan (including those carried over from the history) are only a hint: their spec boxes are always included, but they do not restrict the search.
-- [ ] Small and deterministic; unit tests include the follow-up case where the plan names Kia EV9, Link & Co 01 and Genesis GV80 while MG S6 and Aion HT must be reachable.
-- [ ] Retrieval eval re-run on the same recording: before and after for `rec-family-electric-scenario`, and no other question regresses.
+- [x] For intent `recommend`, retrieval runs across all cars with the existing cross-car caps; cars named in the plan (including those carried over from the history) are only a hint: their spec boxes are always included, but they do not restrict the search.
+- [x] Small and deterministic; unit tests include the follow-up case where the plan names Kia EV9, Link & Co 01 and Genesis GV80 while MG S6 and Aion HT must be reachable.
+- [x] Retrieval eval re-run on the same recording: before and after for `rec-family-electric-scenario`, and no other question regresses. Result: the scenario passes (Aion HT spec box retrieved, first within its car); tuning set 23/23, 26/26, MRR 0.631 (was 22/23); no question regressed; recommend questions now send 12 to 19 chunks instead of 24 to 27; hold-out unchanged at 5/6.
 
 ### CW-302 Eval runner and per-category report
 - [x] Retrieval eval (no LLM, deterministic, free): expected car and section among retrieved chunks.
@@ -363,7 +363,6 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Idea | Why it is not in scope | Promote when |
 |---|---|---|
-| Recommendations restricted to cars named by the understand step (CW-303) | In the recorded family scenario the plan named three cars from earlier answers, so the MG S6 and Aion HT were never searched; fixing it means changing the plan step (for example, recommend searches all cars and treats named cars as a hint), which no retrieval setting can do | The answer eval shows the scenario recommending the wrong cars |
 | Hybrid search (keywords plus embeddings) | Adds complexity without evidence of need | Eval shows model names or numbers are missed |
 | Reranker | Corpus is small | Right car is retrieved but ranked too low |
 | LLM judge for groundedness | Imperfect and costs tokens | Keyword checks prove too coarse |
@@ -396,6 +395,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 | 2026-10-30 | CW-202 done: car-name post-check with one stricter regeneration, then a code-built fallback; per-prompt versions, generate v2. CW-201 fix: hint words come only from the user's own messages. |
 | 2026-10-30 | CW-201 done: refusals suggest the closest of the eight cars (hint words from the user's message, else best-scoring chunks, else all eight grouped by powertrain and body type) and invite a follow-up; similarity threshold stays configurable at 0 until CW-303. |
 | 2026-10-29 | CW-101 done: `config/cars.yaml` plus `registry.py`, `fetch.py` (the CW-002 probe folded in and deleted), `clean.py` on beautifulsoup4 with `html.parser`, and `python -m app ingest` printing a per-article report. Each registry body type and powertrain carries the article words behind it; the Elantra article never states the Elantra's body type, so that value is null. Cleaner findings: the spec table uses `role=row` markup inside `<li>` and is kept as one line per row; "סיכום AI" is a script-loaded widget and is skipped; the Elantra sections are numbered `<h3>` questions; the Kia report has no subheadings and ends with four label/value stats. |
+| 2026-10-30 | CW-306 done: a recommendation searches all cars and named cars only add their spec boxes; the family scenario passes, tuning set 23/23; the Backlog item it came from is removed. |
 | 2026-10-30 | CW-303 done (ADR 0003): every chunk fits the window (`max_chars` 1400, 60-character header label), each named car's spec box forced into comparisons, k and caps unchanged, threshold 0.80 as an off-topic backstop. Tuning set 22/23 (was 21/23); hold-out 5/6, reported separately. Known weakness: prose-only figures in comparisons. CW-306 added (P1) before the answer level. |
 | 2026-10-30 | CW-305 done: e5-large chosen (21/23 vs 17/23 for e5-base on the retrieval eval, no regression); BM25 fusion did not fix the spec-box comparisons and stays off; score separation is weak for every candidate, so the registry gate stays the main refusal mechanism. ADR 0002 accepted. |
 | 2026-10-30 | CW-302 retrieval level done (answer level, judge and attribution check still open). Question set v2 adds four direction-of-comparison questions after the first baseline. Negatives v2: the six off-topic probes only check the out-of-scope reply; eight threshold probes, each naming one car and a topic its article lacks (checked by text search), are the only threshold sample. Baseline before tuning: 17/23, MRR 0.553. |

@@ -139,5 +139,4 @@ def test_option_b_adds_missing_spec_boxes_for_comparisons_only() -> None:
     assert "mg_s6:001" not in plain and "aion_ht:001" not in plain  # the cap of 1 kept prose
     assert forced[: len(plain)] == plain  # the normal result is kept, in order
     assert set(forced) - set(plain) == {"mg_s6:001", "aion_ht:001"}
-    assert _ask(True, Intent.RECOMMEND, ["mg_s6", "aion_ht"]) == forced
     assert _ask(True, Intent.FACT, ["mg_s6"]) == _ask(False, Intent.FACT, ["mg_s6"])

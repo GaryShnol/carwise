@@ -186,3 +186,13 @@ separately, as a small sanity check, never folded into the tuning numbers.
 Settings now: `chunking.max_chars` 1400, `chunking.embed_section_chars` 60, `chunking.spec_header`
 false, `retrieval.force_spec_box` true, `top_k` 5, `per_car_cap` 3, `cross_car_top_k` 12,
 `cross_car_per_car_cap` 2, `relevance_threshold` 0.80, lexical fusion off.
+
+## Follow-up: CW-306, recommendations search all cars
+
+The step 3 miss was fixed in its own ticket, not by tuning: for intent `recommend` (which also
+carries rankings), retrieval now runs across all cars with the cross-car caps, and the cars the
+plan names are only a hint whose spec boxes are added. On the same recording the tuning set is
+23/23, 26/26, MRR 0.631; `rec-family-electric-scenario` passes (the Aion HT spec box, first within
+its car); no other question regressed; recommendation and ranking questions send 12 to 19 chunks
+instead of 24 to 27. The hold-out, re-run as a regression check only, is unchanged at 5/6.
+(`eval/reports/cw306/`)

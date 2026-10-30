@@ -55,8 +55,6 @@ from carwise.schemas import (
 from carwise.telemetry import TurnLogger
 
 NO_RETRIEVAL_INTENTS = (Intent.CHITCHAT, Intent.OUT_OF_SCOPE)
-# Questions that need each named car's figures side by side (rankings arrive as RECOMMEND).
-SPEC_BOX_INTENTS = (Intent.COMPARE, Intent.RECOMMEND)
 
 
 @dataclass
@@ -363,8 +361,19 @@ class Pipeline:
         return _Plan(intent, cars, not_covered, question, message)
 
     def _retrieve(self, plan: _Plan) -> list[RetrievedChunk]:
-        """One car: filter on it. Several: each car separately. None: all cars, capped."""
+        """One car: filter on it. Several: each car separately. None: all cars, capped.
+
+        A recommendation (or ranking) always searches all cars (CW-306): the cars the
+        plan names, often carried over from earlier answers, are only a hint, so a
+        car the user never mentioned can still be the best match.
+        """
         config = self._settings.retrieval
+        if plan.intent is Intent.RECOMMEND:
+            hits = self._retriever.search_all(
+                plan.question, config.cross_car_top_k, config.cross_car_per_car_cap
+            )
+            # The hint: each named car's spec box joins the candidates, never filters them.
+            return self._with_spec_boxes(plan, hits) if plan.cars else hits
         if len(plan.cars) > 1:
             hits = self._retriever.search_per_car(plan.question, plan.cars, config.per_car_cap)
         elif plan.cars:
@@ -373,13 +382,17 @@ class Pipeline:
             return self._retriever.search_all(
                 plan.question, config.cross_car_top_k, config.cross_car_per_car_cap
             )
-        if config.force_spec_box and plan.intent in SPEC_BOX_INTENTS:
-            # Option B: comparisons and rankings need each car's price and figures, which
-            # sit in its spec box, whatever its similarity to the wording of the question.
-            have = {hit.chunk.chunk_id for hit in hits}
-            extra = self._retriever.spec_boxes(plan.question, plan.cars)
-            hits += [hit for hit in extra if hit.chunk.chunk_id not in have]
+        if config.force_spec_box and plan.intent is Intent.COMPARE:
+            # Option B: comparisons need each car's price and figures, which sit in its
+            # spec box, whatever its similarity to the wording of the question.
+            hits = self._with_spec_boxes(plan, hits)
         return hits
+
+    def _with_spec_boxes(self, plan: _Plan, hits: list[RetrievedChunk]) -> list[RetrievedChunk]:
+        """The hits, then each named car's spec box that is not among them yet."""
+        have = {hit.chunk.chunk_id for hit in hits}
+        extra = self._retriever.spec_boxes(plan.question, plan.cars)
+        return hits + [hit for hit in extra if hit.chunk.chunk_id not in have]
 
     def _suggest(
         self, message: str, history: list[Message], hits: list[RetrievedChunk]
