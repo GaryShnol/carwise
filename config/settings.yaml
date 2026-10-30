@@ -54,6 +54,11 @@ retrieval:             # provisional, tuned in CW-303
   cross_car_top_k: 12    # recommendation and ranking questions across all cars...
   cross_car_per_car_cap: 2   # ...with at most this many chunks per car, so most cars appear
   relevance_threshold: 0.0   # cosine; 0 disables it until CW-303 tunes it on the eval
+  lexical:                   # CW-305: BM25 fused with the dense ranking (reciprocal rank fusion)
+    enabled: false           # the order changes; scores stay cosine, so the gate is unaffected
+    rrf_k: 60                # the usual RRF constant (Cormack et al. 2009), not tuned
+    bm25_k1: 1.5             # the usual Okapi BM25 defaults, not tuned
+    bm25_b: 0.75
 
 input:
   max_message_chars: 500       # the current message; longer is refused politely

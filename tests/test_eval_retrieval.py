@@ -356,7 +356,7 @@ def test_markdown_report_holds_metrics_and_no_chunk_text() -> None:
     report = RetrievalReport(
         created="2026-10-30T00:00:00+00:00",
         embedder={"provider": "fake", "model": "fake", "revision": None},
-        retrieval=SETTINGS.retrieval.model_dump(),
+        retrieval=SETTINGS.retrieval,
         chunking=SETTINGS.chunking.model_dump(),
         recording={"model": MODEL, "understand_prompt": "v1", "recorded_at": "x", "cost_usd": 0},
         runs=1,

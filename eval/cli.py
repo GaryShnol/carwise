@@ -156,7 +156,7 @@ def retrieval_report(
             "model": embedder.model,
             "revision": embedder.revision,
         },
-        retrieval=settings.retrieval.model_dump(),
+        retrieval=settings.retrieval,
         chunking=settings.chunking.model_dump(),
         recording={
             "model": recording.model,

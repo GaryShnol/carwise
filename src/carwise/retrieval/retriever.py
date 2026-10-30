@@ -13,6 +13,7 @@ from typing import Protocol
 
 from carwise.config import RetrievalConfig, Settings
 from carwise.retrieval.embedder import Embedder, Vector, make_embedder
+from carwise.retrieval.lexical import LexicalIndex, fuse
 from carwise.retrieval.store import ChunkStore
 from carwise.schemas import Chunk, RetrievedChunk
 
@@ -42,10 +43,19 @@ class ChunkRetriever(Protocol):
 
 
 class Retriever:
-    def __init__(self, store: CandidateSource, embedder: Embedder, config: RetrievalConfig) -> None:
+    """Dense ranking, optionally fused with BM25 (`retrieval.lexical.enabled`)."""
+
+    def __init__(
+        self,
+        store: CandidateSource,
+        embedder: Embedder,
+        config: RetrievalConfig,
+        lexical: LexicalIndex | None = None,
+    ) -> None:
         self._store = store
         self._embedder = embedder
         self._config = config
+        self._lexical = lexical
 
     def warm_up(self) -> None:
         """Load the embedding model now (about a minute on a cold CPU start, not mid-chat)."""
@@ -60,7 +70,10 @@ class Retriever:
             for chunk, score in self._store.candidates(vector, car_ids)
         ]
         # Score first, chunk id breaks ties: same index and query, same order, always.
-        return sorted(hits, key=lambda hit: (-hit.score, hit.chunk.chunk_id))
+        ranked = sorted(hits, key=lambda hit: (-hit.score, hit.chunk.chunk_id))
+        if self._lexical is None:
+            return ranked
+        return fuse(query, ranked, self._lexical, self._config.lexical.rrf_k)
 
     def search(
         self, query: str, car_ids: list[str] | None = None, top_k: int | None = None
@@ -91,7 +104,9 @@ def open_retriever(settings: Settings) -> Retriever:
     """
     embedder = make_embedder(settings.embeddings)
     store = ChunkStore(Path(settings.paths.index_dir), embedder)
-    return Retriever(store, embedder, settings.retrieval)
+    config = settings.retrieval
+    lexical = LexicalIndex(store.chunks(), config.lexical) if config.lexical.enabled else None
+    return Retriever(store, embedder, config, lexical)
 
 
 def _default(value: int | None, fallback: int) -> int:

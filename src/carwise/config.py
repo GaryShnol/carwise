@@ -59,12 +59,20 @@ class ChunkingConfig(_Strict):
     max_chars: int
 
 
+class LexicalConfig(_Strict):
+    enabled: bool
+    rrf_k: int
+    bm25_k1: float
+    bm25_b: float
+
+
 class RetrievalConfig(_Strict):
     top_k: int
     per_car_cap: int
     cross_car_top_k: int
     cross_car_per_car_cap: int
     relevance_threshold: float
+    lexical: LexicalConfig
 
 
 class GuardrailsConfig(_Strict):

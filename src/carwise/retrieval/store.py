@@ -154,6 +154,14 @@ class ChunkStore:
     def count(self) -> int:
         return self._collection.count()
 
+    def chunks(self) -> list[Chunk]:
+        """Every stored chunk, in id order: the corpus the lexical index is built on."""
+        result = self._collection.get(include=["documents", "metadatas"])
+        documents = result["documents"] or []
+        metadatas = result["metadatas"] or []
+        pairs = zip(documents, metadatas, strict=True)
+        return sorted((_chunk(t, dict(m)) for t, m in pairs), key=lambda c: c.chunk_id)
+
     def candidates(self, vector: Vector, car_ids: list[str] | None) -> list[tuple[Chunk, float]]:
         """Every chunk (of the given cars), with cosine similarity, unsorted.
 

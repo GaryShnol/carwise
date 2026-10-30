@@ -12,6 +12,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict
 
+from carwise.config import RetrievalConfig
 from eval.retrieval import (
     CategorySummary,
     ProbeResult,
@@ -29,7 +30,7 @@ class RetrievalReport(BaseModel):
     level: str = "retrieval"
     created: str
     embedder: dict[str, str | None]
-    retrieval: dict[str, float | int]
+    retrieval: RetrievalConfig
     chunking: dict[str, int]
     recording: dict[str, str | int | float]  # model, prompt version, date, cost of recording it
     runs: int
@@ -92,6 +93,13 @@ def spread_rows(scores: dict[str, ScoreSpread]) -> list[str]:
     return rows
 
 
+def _settings(report: RetrievalReport) -> str:
+    flat = {**report.retrieval.model_dump(exclude={"lexical"}), **report.chunking}
+    lexical = report.retrieval.lexical
+    fusion = f"BM25 fused by RRF (k {lexical.rrf_k})" if lexical.enabled else "off"
+    return ", ".join([*(f"{k} {v}" for k, v in flat.items()), f"lexical {fusion}"])
+
+
 def _pass(passed: bool | None) -> str:
     return "-" if passed is None else ("pass" if passed else "FAIL")
 
@@ -105,9 +113,7 @@ def markdown(report: RetrievalReport) -> str:
         f"prompt {report.recording['understand_prompt']}, "
         f"recorded {report.recording['recorded_at']}).",
         "",
-        "Settings: "
-        + ", ".join(f"{k} {v}" for k, v in {**report.retrieval, **report.chunking}.items())
-        + ".",
+        f"Settings: {_settings(report)}.",
         "",
         "## Summary",
         "",
