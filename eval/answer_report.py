@@ -77,7 +77,7 @@ class AnswerReport(BaseModel):
     tokens: dict[str, int]
     latency_ms: dict[str, float | None]  # p50 / p95 of the graded turn and of generate
     another_article_total: int
-    excerpt_wording_total: int = 0
+    excerpt_wording_total: int | None = None  # None: a report from before the metric existed
     post_check: dict[str, int]  # outcome -> count over graded turns
 
 
@@ -238,6 +238,8 @@ def markdown(report: AnswerReport) -> str:
     total = sum(len(q.runs) for q in report.questions)
     summary.append(f"| **total** | {done}/{total} |")
     lat = report.latency_ms
+    wording = report.excerpt_wording_total
+    excerpts = "not recorded" if wording is None else str(wording)
 
     def ms(value: float | None) -> str:
         return "-" if value is None else f"{value:.0f}"
@@ -263,7 +265,7 @@ def markdown(report: AnswerReport) -> str:
         "Post-check outcomes: "
         + (", ".join(f"{k} {v}" for k, v in sorted(report.post_check.items())) or "-")
         + f'. "Another article" phrasings: {report.another_article_total}; '
-        + f'"excerpts" wording: {report.excerpt_wording_total}.',
+        + f'"excerpts" wording: {excerpts}.',
         "",
         "## Summary",
         "",

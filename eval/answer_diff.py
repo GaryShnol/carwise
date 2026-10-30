@@ -22,6 +22,10 @@ def _failed(question: AnswerQuestion) -> str:
     return ", ".join(names) or "-"
 
 
+def _count(value: int | None) -> str:
+    return "not recorded" if value is None else str(value)
+
+
 def _state(question: AnswerQuestion | None) -> str:
     if question is None:
         return "not run"
@@ -51,7 +55,8 @@ def diff_markdown(before: AnswerReport, after: AnswerReport) -> str:
         f"{after.latency_ms['turn_p95']:.0f} |",
         f'| "Another article" phrasings | {before.another_article_total} | '
         f"{after.another_article_total} |",
-        f'| "Excerpts" wording | {before.excerpt_wording_total} | {after.excerpt_wording_total} |',
+        f'| "Excerpts" wording | {_count(before.excerpt_wording_total)} | '
+        f"{_count(after.excerpt_wording_total)} |",
         f"| Prompts | {before.prompts} | {after.prompts} |",
         "",
         "| Question | Category | Before | After | Change | Failed before | Failed after |",
