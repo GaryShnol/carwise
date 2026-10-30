@@ -1,0 +1,462 @@
+{
+ "format": 1,
+ "model": "gpt-5.4-nano",
+ "understand_prompt": "v1",
+ "understand_system_sha256": "48e31e93c3010be5b0e95e4aacd55c43dc5a2545fb7cbc1c3e9e00bbc48aae3d",
+ "recorded_at": "2026-10-30T19:34:19+00:00",
+ "calls": 35,
+ "tokens": {
+  "input": 57364,
+  "cached": 0,
+  "output": 3499
+ },
+ "cost_usd": 0.015847,
+ "cases": {
+  "fact-mg-real-range": [
+   {
+    "message_sha256": "02b62818090f5ae1bdf79b584e3e96493a4c66210f4e528e1bfaa43d4225cb0c",
+    "understanding": {
+     "intent": "fact",
+     "cars": [
+      "mg_s6"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "כמה קילומטרים אפשר באמת לנסוע עם MG S6 על טעינה אחת?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "fact-audi-rs3-power": [
+   {
+    "message_sha256": "f80269657ecfef736aff7bad70dce561a1c54249ee05534c069aa9ebca60ba77",
+    "understanding": {
+     "intent": "fact",
+     "cars": [
+      "audi_rs3"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "כמה כוח סוס יש לאודי RS3 המחודשת וכמה זמן לוקח לה להגיע ל-100 קמ\"ש?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "fact-kia-monthly-range": [
+   {
+    "message_sha256": "c0be3a4ba499c267371ca4b56a7621dff7a417ddb525e4f8f9c097c390a004f9",
+    "understanding": {
+     "intent": "fact",
+     "cars": [
+      "kia_ev9"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "מה הטווח הממוצע החודשי שנמדד בדוח ארוך הטווח של קיה EV9?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "fact-genesis-engine": [
+   {
+    "message_sha256": "5e43b8d4a5068908af0de6219fca60126de59528f11341776b6ca2d9b1260ce9",
+    "understanding": {
+     "intent": "fact",
+     "cars": [
+      "genesis_gv80"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "איזה מנוע יש בג'נסיס GV80 החדש ומה ההספק שלו?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "compare-mg-aion-range": [
+   {
+    "message_sha256": "507bf02ebf95857c573111ddd5d9fecaf528087ae0416db0554eec0bd6fa6ea7",
+    "understanding": {
+     "intent": "compare",
+     "cars": [
+      "mg_s6",
+      "aion_ht"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "מה ההבדל בטווח בפועל בין MG S6 לבין GAC איון HT (Aion HT)?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "compare-elantra-rs3-acceleration": [
+   {
+    "message_sha256": "b0b4c4137f09a86ca0e728e7d92802d5b24e91be1a0a009405f9a4fb18e0f525",
+    "understanding": {
+     "intent": "compare",
+     "cars": [
+      "hyundai_elantra_n",
+      "audi_rs3"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "איזו מהירה יותר ל-100 קמ\"ש: יונדאי אלנטרה N הידנית או אודי RS3, ובכמה שניות כל אחת?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "rec-manual-sport": [
+   {
+    "message_sha256": "97c1904559b364930ba5fb6b9e97b05f781ba94a4ab05077985a432cc1baa508",
+    "understanding": {
+     "intent": "recommend",
+     "cars": [],
+     "unrecognized_cars": [],
+     "standalone_question": "אני מחפש מכונית ספורטיבית עם תיבה ידנית במחיר סביר—האם יש משהו מתאים מבין סיטרואן C3, אודי RS3, קיה EV9, MG S6, יונדאי אלנטרה N, GAC איון HT, לינק אנד קו 01 וג'נסיס GV80?",
+     "preference_updates": [
+      {
+       "field": "powertrain",
+       "value": "תיבה ידנית"
+      },
+      {
+       "field": "primary_use",
+       "value": "מכונית ספורטיבית"
+      },
+      {
+       "field": "budget",
+       "value": "מחיר סביר"
+      }
+     ]
+    }
+   }
+  ],
+  "rec-family-electric-scenario": [
+   {
+    "message_sha256": "ff99f15176dccc50bc2ffefcf5833727a1f8854acb758083591859d0bbf2b5fc",
+    "understanding": {
+     "intent": "recommend",
+     "cars": [],
+     "unrecognized_cars": [],
+     "standalone_question": "אני מחפש רכב חשמלי.",
+     "preference_updates": [
+      {
+       "field": "powertrain",
+       "value": "רכב חשמלי"
+      }
+     ]
+    }
+   },
+   {
+    "message_sha256": "fd1ba722f00a14a59d2ac111d6f6f1bdcc86bca9979660f2ca9fea30d3f1bc22",
+    "understanding": {
+     "intent": "recommend",
+     "cars": [],
+     "unrecognized_cars": [],
+     "standalone_question": "יש לי תקציב עד 190 אלף שקל—איזה רכב חשמלי מתוך הסיטרואן C3, אודי RS3, קיה EV9, MG S6, יונדאי אלנטרה N, GAC איון HT, לינק אנד קו 01 וג'נסיס GV80 כדאי לבחור?",
+     "preference_updates": [
+      {
+       "field": "budget",
+       "value": "עד 190 אלף שקל"
+      }
+     ]
+    }
+   },
+   {
+    "message_sha256": "c2ae58069e43ae9ed199a0406d590ee8fb9dfaa8888870b49aeaa228268f7d61",
+    "understanding": {
+     "intent": "recommend",
+     "cars": [
+      "aion_ht",
+      "mg_s6"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "בהתחשב בכך שמדובר במשפחה של 5 אנשים (כולל שני ילדים קטנים) וצריך הרבה מקום, איזה מבין הרכבים החשמליים בתקציב עד 190 אלף שקל—GAC איון HT או MG S6—מתאים יותר מבחינת מרווח?",
+     "preference_updates": [
+      {
+       "field": "passengers",
+       "value": "5 אנשים, כולל שני ילדים קטנים"
+      },
+      {
+       "field": "priorities",
+       "value": "הרבה מקום/מרווח"
+      }
+     ]
+    }
+   },
+   {
+    "message_sha256": "785972c03cfc9a8d3d835beb211b95255774f1372e2e4eeb2f68d69eb027ce61",
+    "understanding": {
+     "intent": "recommend",
+     "cars": [
+      "aion_ht",
+      "mg_s6"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "בהתחשב בתקציב עד 190 אלף שקל ובמשפחה של 5 אנשים (כולל שני ילדים קטנים) שצריכה הרבה מקום, מה מומלץ מבין GAC איון HT ו-MG S6?",
+     "preference_updates": [
+      {
+       "field": "budget",
+       "value": "עד 190 אלף שקל"
+      },
+      {
+       "field": "passengers",
+       "value": "5 אנשים, כולל שני ילדים קטנים"
+      },
+      {
+       "field": "priorities",
+       "value": "הרבה מקום"
+      }
+     ]
+    }
+   }
+  ],
+  "rank-fastest": [
+   {
+    "message_sha256": "c62f85a61d0bb4f90059a37c7be3657aa92a3f678301ec3b67f34232097189f2",
+    "understanding": {
+     "intent": "recommend",
+     "cars": [
+      "citroen_c3",
+      "audi_rs3",
+      "kia_ev9",
+      "mg_s6",
+      "hyundai_elantra_n",
+      "aion_ht",
+      "link_and_co_01",
+      "genesis_gv80"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "מבין סיטרואן C3, אודי RS3, קיה EV9, MG S6, יונדאי אלנטרה N, GAC איון HT, לינק אנד קו 01 וג'נסיס GV80—איזה מהם היה הכי מהיר במבחן 0 ל-100?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "rank-cheapest": [
+   {
+    "message_sha256": "9185442ca4151cb058e3fe58dbd162ca292b64a50ff3653f6bc2939cbb2fa8f4",
+    "understanding": {
+     "intent": "recommend",
+     "cars": [],
+     "unrecognized_cars": [],
+     "standalone_question": "מהו הרכב הכי זול מבין סיטרואן C3, אודי RS3, קיה EV9, MG S6, יונדאי אלנטרה N, GAC איון HT, לינק אנד קו 01 וג'נסיס GV80 שנבחנו?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "followup-genesis-fuel": [
+   {
+    "message_sha256": "329c6d0e020258b0f8d28fe7431bd9077edfb6bddfdab92c8ebbda72f88293fa",
+    "understanding": {
+     "intent": "fact",
+     "cars": [
+      "genesis_gv80"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "ספר בקצרה על ג'נסיס GV80.",
+     "preference_updates": []
+    }
+   },
+   {
+    "message_sha256": "3e594b59b3585d8af5ee00c8869788f77605c7b5ed260af5531723be8a21b325",
+    "understanding": {
+     "intent": "fact",
+     "cars": [
+      "genesis_gv80"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "מה צריכת הדלק בפועל של ג'נסיס GV80 לפי מבחן דרכים?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "followup-switch-car": [
+   {
+    "message_sha256": "6a0881ef509711ec88449a9bb541f9b74fbd0631b79ed1974bde65f8f0535e20",
+    "understanding": {
+     "intent": "fact",
+     "cars": [
+      "mg_s6"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "מה המחיר של MG S6?",
+     "preference_updates": []
+    }
+   },
+   {
+    "message_sha256": "432b8661adb7aed53a601efc699ecac70ade8367c8debd33f116b6d424bb28c6",
+    "understanding": {
+     "intent": "fact",
+     "cars": [
+      "aion_ht"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "מה המחיר של GAC איון HT (Aion HT)?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "trap-unknown-car-toyota": [
+   {
+    "message_sha256": "2b670f7c267696553782aa8367e070cd69fdbbded76a652b046ddacf877b26b8",
+    "understanding": {
+     "intent": "recommend",
+     "cars": [],
+     "unrecognized_cars": [
+      "טויוטה קורולה"
+     ],
+     "standalone_question": "מה דעתך על טויוטה קורולה היברידית, האם כדאי לקנות אותה?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "trap-known-and-unknown-car": [
+   {
+    "message_sha256": "aaf8bca3390c5136e96bda8896de147c30e8b39a384811ad85cb74c2e758e7a4",
+    "understanding": {
+     "intent": "compare",
+     "cars": [
+      "genesis_gv80"
+     ],
+     "unrecognized_cars": [
+      "BMW X5"
+     ],
+     "standalone_question": "כמה עולה BMW X5 לעומת ג'נסיס GV80?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "trap-missing-detail": [
+   {
+    "message_sha256": "3e3acf94f435e20e1ec057a82e52f2bfec97ea2170b38426b2e7e44b74188cb9",
+    "understanding": {
+     "intent": "fact",
+     "cars": [
+      "kia_ev9"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "כמה כוחות סוס יש לקיה EV9?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "trap-mixing-specs": [
+   {
+    "message_sha256": "c6d678b964e97dfd324490dd4ed06b7c2d9b6081ef9948f45a3fa565111fc714",
+    "understanding": {
+     "intent": "fact",
+     "cars": [
+      "mg_s6"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "מה הטווח של MG S6 עם סוללה של 72.7 קוט\"ש?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "trap-missing-feature-distractors": [
+   {
+    "message_sha256": "c4324fc36a86b1f96cb57ca39a374ac3b25667d3b1b2a97f366812c629772e8a",
+    "understanding": {
+     "intent": "fact",
+     "cars": [
+      "link_and_co_01"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "מה ההספק של טעינה מהירה ב-DC של לינק אנד קו 01 (Link & Co 01)?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "trap-injection-unknown-car": [
+   {
+    "message_sha256": "9d1718c8ce9a083f92d99e02646c351a7a37bdaaed1093fbf7d11591d978ff81",
+    "understanding": {
+     "intent": "out_of_scope",
+     "cars": [],
+     "unrecognized_cars": [
+      "טסלה מודל 3"
+     ],
+     "standalone_question": "מה הטווח והמחיר של טסלה מודל 3?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "trap-off-topic": [
+   {
+    "message_sha256": "d2995b18ccf5bd28bfd836d6efc395d2fde63a88022a5cbf1ba6797827b612af",
+    "understanding": {
+     "intent": "out_of_scope",
+     "cars": [],
+     "unrecognized_cars": [],
+     "standalone_question": "תכתוב לי שיר על הים.",
+     "preference_updates": []
+    }
+   }
+  ],
+  "neg-insurance": [
+   {
+    "message_sha256": "14f168405463459c12898552369ea548d7c0604af9a8be75884ffdd01fc1765b",
+    "understanding": {
+     "intent": "out_of_scope",
+     "cars": [],
+     "unrecognized_cars": [],
+     "standalone_question": "כמה עולה ביטוח מקיף לרכב חדש?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "neg-change-tyre": [
+   {
+    "message_sha256": "a7e98985a369e28d0adb7822bc3511b90495d465bd1aefc5b274b3ebec549f87",
+    "understanding": {
+     "intent": "out_of_scope",
+     "cars": [],
+     "unrecognized_cars": [],
+     "standalone_question": "איך מחליפים גלגל בצד הדרך?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "neg-driving-lessons": [
+   {
+    "message_sha256": "98c2ca56ea15585824ad7b0550ab77e48f69c9ec15b29f0d55c159e517723fef",
+    "understanding": {
+     "intent": "out_of_scope",
+     "cars": [],
+     "unrecognized_cars": [],
+     "standalone_question": "כמה שיעורי נהיגה צריך לעשות לפני הטסט?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "neg-license-fee": [
+   {
+    "message_sha256": "04b912681bba0365d3c24d4aea611e9f9014870b1453e25f01ba4f458532831b",
+    "understanding": {
+     "intent": "out_of_scope",
+     "cars": [],
+     "unrecognized_cars": [],
+     "standalone_question": "כמה עולה אגרת הרישוי השנתית לרכב?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "neg-dead-battery": [
+   {
+    "message_sha256": "d56704b9438d3033da476e9eb236325c5d618bc40192c05ac83f78fb234b4bc3",
+    "understanding": {
+     "intent": "out_of_scope",
+     "cars": [],
+     "unrecognized_cars": [],
+     "standalone_question": "מה עושים כשהמצבר מת בבוקר קר?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "neg-sell-used-car": [
+   {
+    "message_sha256": "78e6146f6b6afe9bcdb85acee10ce45d84073da758bed0b0823e330094c1a288",
+    "understanding": {
+     "intent": "out_of_scope",
+     "cars": [],
+     "unrecognized_cars": [],
+     "standalone_question": "איך מוכרים רכב יד שנייה במחיר טוב?",
+     "preference_updates": []
+    }
+   }
+  ]
+ }
+}
