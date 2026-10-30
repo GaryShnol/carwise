@@ -56,6 +56,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": null,
@@ -106,6 +111,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": null,
@@ -154,6 +164,11 @@
       },
       {
        "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
        "passed": true,
        "detail": ""
       }
@@ -214,6 +229,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": null,
@@ -264,6 +284,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": null,
@@ -312,6 +337,11 @@
       },
       {
        "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
        "passed": true,
        "detail": ""
       }
@@ -372,6 +402,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": null,
@@ -422,6 +457,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": null,
@@ -470,6 +510,11 @@
       },
       {
        "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
        "passed": true,
        "detail": ""
       }
@@ -530,6 +575,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": null,
@@ -580,6 +630,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": null,
@@ -628,6 +683,11 @@
       },
       {
        "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
        "passed": true,
        "detail": ""
       }
@@ -688,6 +748,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": null,
@@ -739,6 +804,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": null,
@@ -788,6 +858,11 @@
       },
       {
        "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
        "passed": true,
        "detail": ""
       }
@@ -849,6 +924,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": true,
@@ -900,6 +980,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": false,
@@ -949,6 +1034,11 @@
       },
       {
        "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
        "passed": true,
        "detail": ""
       }
@@ -1010,6 +1100,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": true,
@@ -1061,6 +1156,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": true,
@@ -1110,6 +1210,11 @@
       },
       {
        "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
        "passed": true,
        "detail": ""
       }
@@ -1171,6 +1276,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": true,
@@ -1222,6 +1332,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": true,
@@ -1271,6 +1386,11 @@
       },
       {
        "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
        "passed": true,
        "detail": ""
       }
@@ -1332,6 +1452,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": true,
@@ -1383,6 +1508,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": true,
@@ -1432,6 +1562,11 @@
       },
       {
        "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
        "passed": true,
        "detail": ""
       }
@@ -1493,6 +1628,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": false,
@@ -1544,6 +1684,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": false,
@@ -1593,6 +1738,11 @@
       },
       {
        "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
        "passed": true,
        "detail": ""
       }
@@ -1654,6 +1804,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": null,
@@ -1711,6 +1866,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": null,
@@ -1766,6 +1926,11 @@
       },
       {
        "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
        "passed": true,
        "detail": ""
       }
@@ -1848,6 +2013,11 @@
        "name": "preference:passengers",
        "passed": false,
        "detail": "not set"
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": false,
@@ -1913,6 +2083,11 @@
       },
       {
        "name": "preference:passengers",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
        "passed": true,
        "detail": ""
       }
@@ -1982,6 +2157,11 @@
        "name": "preference:passengers",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": false,
@@ -2041,6 +2221,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": null,
@@ -2098,6 +2283,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": null,
@@ -2148,6 +2338,11 @@
       },
       {
        "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
        "passed": true,
        "detail": ""
       }
@@ -2209,6 +2404,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": null,
@@ -2259,6 +2459,11 @@
       },
       {
        "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
        "passed": true,
        "detail": ""
       }
@@ -2315,6 +2520,11 @@
       },
       {
        "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
        "passed": true,
        "detail": ""
       }
@@ -2378,6 +2588,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": null,
@@ -2428,6 +2643,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": null,
@@ -2476,6 +2696,11 @@
       },
       {
        "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
        "passed": true,
        "detail": ""
       }
@@ -2536,6 +2761,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": null,
@@ -2586,6 +2816,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": null,
@@ -2634,6 +2869,11 @@
       },
       {
        "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
        "passed": true,
        "detail": ""
       }
@@ -2801,6 +3041,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": null,
@@ -2851,6 +3096,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": null,
@@ -2899,6 +3149,11 @@
       },
       {
        "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
        "passed": true,
        "detail": ""
       }
@@ -2964,6 +3219,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": null,
@@ -3019,6 +3279,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": null,
@@ -3072,6 +3337,11 @@
       },
       {
        "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
        "passed": true,
        "detail": ""
       }
@@ -3132,6 +3402,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": true,
@@ -3182,6 +3457,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": true,
@@ -3230,6 +3510,11 @@
       },
       {
        "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
        "passed": true,
        "detail": ""
       }
@@ -3295,6 +3580,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": null,
@@ -3350,6 +3640,11 @@
        "name": "attribution",
        "passed": true,
        "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
       }
      ],
      "judge_passed": null,
@@ -3403,6 +3698,11 @@
       },
       {
        "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
        "passed": true,
        "detail": ""
       }
@@ -3660,7 +3960,7 @@
  "excerpt_wording_total": 2,
  "notes": [
   "judge criteria v3: compare-longer-range-kia-aion accepts either Kia figure (432 or 397), aligned with the keyword check of the same question (must_include [\"432\", \"397\"]); version 2 was ambiguous (\"each figure\") and was read as requiring both. Changed to match the question's existing check, not to change a result.",
-  "Re-scored offline from answer-tuning-final-generatev4-20261030T215631Z: attribution check recomputed with the current code."
+  "Re-scored offline from answer-tuning-final-generatev4-20261030T215631Z: attribution and false-not-mentioned checks computed with the current code."
  ],
  "runs_log": "answer-tuning-final-generatev4-20261030T215631Z",
  "stability": {

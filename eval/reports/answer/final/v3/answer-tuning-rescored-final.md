@@ -8,7 +8,7 @@ Latency of the graded turn: p50 2770 ms, p95 4106 ms; generate call p50 1577 ms,
 
 Post-check outcomes: clean 60. "Another article" phrasings: 0; "excerpts" wording: 8.
 
-Notes: judge criteria v3: compare-longer-range-kia-aion accepts either Kia figure (432 or 397), aligned with the keyword check of the same question (must_include ["432", "397"]); version 2 was ambiguous ("each figure") and was read as requiring both. Changed to match the question's existing check, not to change a result. Re-scored offline from answer-tuning-final-generatev3-20261030T215129Z: attribution check recomputed with the current code.
+Notes: judge criteria v3: compare-longer-range-kia-aion accepts either Kia figure (432 or 397), aligned with the keyword check of the same question (must_include ["432", "397"]); version 2 was ambiguous ("each figure") and was read as requiring both. Changed to match the question's existing check, not to change a result. Re-scored offline from answer-tuning-final-generatev3-20261030T215129Z: attribution and false-not-mentioned checks computed with the current code.
 
 Stability over 3 runs: same behavior in 23/23 questions, same numbers in 15/23, identical text in 28% of answer pairs (mean).
 
