@@ -26,6 +26,8 @@ from carwise.llm.base import (
     T,
     Usage,
 )
+from carwise.preferences import Session, prompt_block
+from carwise.preferences import merge as merge_preferences
 from carwise.prompts import (
     GENERATE_SYSTEM,
     generation_input,
@@ -42,6 +44,7 @@ from carwise.schemas import (
     Intent,
     PostCheck,
     PostCheckOutcome,
+    Preferences,
     RefusalReason,
     RetrievedChunk,
     Understanding,
@@ -60,6 +63,10 @@ class _Turn:
     llm_calls: int = 0
     latency_ms: dict[str, float] = field(default_factory=dict)
     flags: list[str] = field(default_factory=list)
+    # The profile the turn started with, updated once the understand step is checked;
+    # every reply, refusals included, hands it back so nothing said is lost.
+    preferences: Preferences = field(default_factory=Preferences)
+    updated_preferences: list[str] = field(default_factory=list)
 
     def charge(self, result: LLMResult[T]) -> T:
         self.usage += result.usage
@@ -108,9 +115,18 @@ class Pipeline:
         """First message of a conversation: says the knowledge is limited to eight cars."""
         return guardrails.greeting(self._registry)
 
-    def ask(self, message: str, history: list[Message]) -> Answer:
+    def answer(self, message: str, session: Session) -> Answer:
+        """One turn of a conversation: ask with the session's memory, then update it."""
+        answer = self.ask(message, session.history, session.preferences)
+        session.record(message, answer)
+        return answer
+
+    def ask(
+        self, message: str, history: list[Message], preferences: Preferences | None = None
+    ) -> Answer:
+        """Stateless turn: the caller passes the memory in and keeps what comes back."""
         started = time.perf_counter()
-        turn = _Turn()
+        turn = _Turn(preferences=preferences or Preferences())
         answer = self._ask(message.strip(), history, turn)
         latency = {**turn.latency_ms, "total": (time.perf_counter() - started) * 1000}
         answer = answer.model_copy(update={"latency_ms": latency})
@@ -249,6 +265,13 @@ class Pipeline:
         unrecognized = understanding.unrecognized_cars if understanding else []
         if understanding:
             intent = understanding.intent
+            turn.preferences, turn.updated_preferences, flags = merge_preferences(
+                turn.preferences,
+                understanding.preference_updates,
+                message,
+                self._settings.preferences.max_value_chars,
+            )
+            turn.flags += flags
         else:
             intent = Intent.COMPARE if len(cars) > 1 else Intent.FACT
         return _Plan(intent, cars, guardrails.not_covered(unrecognized, brands), question)
@@ -294,7 +317,10 @@ class Pipeline:
         retry_of: tuple[Generation, CheckFindings] | None = None,
     ) -> Generation:
         """One generate call; on a retry the rejected answer and the reasons follow it."""
-        content = generation_input(plan.question, hits, plan.not_covered)
+        # Preferences shape recommendations only; a fact question about one car
+        # should not be steered by a budget stated three turns ago.
+        wanted = prompt_block(turn.preferences) if plan.intent is Intent.RECOMMEND else ""
+        content = generation_input(plan.question, hits, plan.not_covered, wanted)
         messages: list[Message] = [{"role": "user", "content": content}]
         if retry_of:
             rejected, findings = retry_of
@@ -367,6 +393,8 @@ class Pipeline:
             retrieved=hits or [],
             dropped_chunk_ids=dropped or [],
             post_check=post_check,
+            preferences=turn.preferences,
+            updated_preferences=list(turn.updated_preferences),
             flags=list(turn.flags),
             llm_calls=turn.llm_calls,
             usage=turn.usage,

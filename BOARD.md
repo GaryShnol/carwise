@@ -68,11 +68,11 @@ Items outside the code that must not be forgotten. Update the status as each is 
 |---|---|---|---|---|---|
 | E0 Scaffold and source check | none | 3 | 3 | 3 | DONE |
 | E1 Thin vertical slice | `v0.1` | 6 | 6 | 11 | DONE |
-| E2 Reliability and guardrails | none | 6 | 2 | 9 | IN PROGRESS |
+| E2 Reliability and guardrails | none | 6 | 3 | 9 | IN PROGRESS |
 | E3 Measurement | none | 3 | 0 | 5 | TODO |
 | E4 Interface and packaging | none | 3 | 0 | 4 | TODO |
 | E5 Documentation and release | `v1.0` | 3 | 0 | 4 | TODO |
-| **Total** |  | **24** | **11** | **36** |  |
+| **Total** |  | **24** | **12** | **36** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -111,7 +111,7 @@ Branch: `epic/e2-reliability` | Tag: none
 |---|---|---|---|---|---|---|
 | CW-201 | Relevance gate and fixed refusal | `feat` | M | P1 | DONE | CW-105 |
 | CW-202 | Post-check for cars not retrieved this turn | `feat` | M | P1 | DONE | CW-105 |
-| CW-203 | Preference model and `/prefs` command | `feat` | M | P1 | IN PROGRESS | CW-105 |
+| CW-203 | Preference model and `/prefs` command | `feat` | M | P1 | DONE | CW-105 |
 | CW-204 | Turn telemetry and cost estimate | `feat` | S | P2 | TODO | CW-105 |
 | CW-205 | Injection hygiene and input limits | `feat` | S | P2 | TODO | CW-105 |
 | CW-206 | Numeric claim check in post-check | `feat` | S | P2 | TODO | CW-202 |
@@ -251,10 +251,12 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [x] Live check of the CW-105 "another article" issue: not reproduced in 9 runs with generate v1 (3 comparison questions on `dev` and `final`, one of them 3 times) nor in 3 runs with v2. The v2 rule stays as prevention; CW-302 should count this phrasing in the answer eval.
 
 ### CW-203 Preference model and `/prefs`
-- [ ] Typed preference object updated every turn; each field records its source message.
-- [ ] `/prefs` prints the current profile; preferences last for one conversation only.
-- [ ] Preferences may shape recommendation queries but never override grounding.
-- [ ] Unit tests: updates merge across turns, a later statement overrides an earlier one, and each field keeps its source message.
+- [x] Typed preference object updated every turn; each field records its source message.
+- [x] `/prefs` prints the current profile; preferences last for one conversation only.
+- [x] Preferences may shape recommendation queries but never override grounding.
+- [x] Unit tests: updates merge across turns, a later statement overrides an earlier one, and each field keeps its source message.
+- [x] As built: `schemas.Preferences` (one `Preference(value, source)` per field) and `carwise/preferences.py` (merge, validation, Hebrew `/prefs` text, in-memory `Session`). The pipeline stays stateless: `Pipeline.ask(message, history, preferences)` returns the merged profile in `Answer.preferences`, and `Pipeline.answer(message, session)` keeps it in the session; refusals and an understand fallback keep the profile. Validation in code: unknown field names are dropped and flagged (the strict schema still lists the allowed names; a plain string without the enum let the model invent names in the first live run), values are capped at `preferences.max_value_chars`, and a value is kept only if at least half of its content words occur in the user's current message, so a value lifted from an assistant turn or article text is dropped (`preference_not_from_user`). The generate call gets a "User preferences" block for recommend intents only (generate prompt v3 says to name the preference behind a choice). Retrieval queries are not changed: the understand rewrite already carries stated constraints. Chat adds `/prefs` and `/reset`; telemetry logs field names only.
+- [x] Live 4-turn run (dev): the budget change replaced the earlier budget and kept the powertrain; on follow-up turns the model re-sends earlier preferences, which the grounding check drops (flagged, harmless). Notes for CW-302: one answer called Aion HT (187,000) "cheaper" than MG S6 (178,888), a comparison error the planned numeric check cannot catch; very long merged section names make citations noisy (chunking, CW-303).
 
 ### CW-204 Turn telemetry and cost estimate
 - [ ] One JSON line per turn: chunk ids, scores, intent, tokens in and out, estimated cost, latency, post-check result.
@@ -365,6 +367,8 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 | 2026-10-29 | CW-002 done: all eight URLs return 200 with real article bodies, `robots.txt` was read and allows them. Decision: automatic download (identifiable User-Agent, 3 s delay, cache in `data/raw/`); manual placement stays as the documented fallback. |
 
 | 2026-10-29 | CW-003 done: six milestones (E0 to E5), PR template, pre-publish scan of the history found no secrets or data files, `.gitattributes` added to keep LF line endings (the Makefile needs them). Epic E0 closed. |
+
+| 2026-10-30 | CW-203 done: typed preference memory with source messages, validated in code, used for recommendations; `/prefs` and `/reset` in chat; in-memory `Session`; generate prompt v3. |
 
 | 2026-10-30 | CW-202 done: car-name post-check with one stricter regeneration, then a code-built fallback; per-prompt versions, generate v2. CW-201 fix: hint words come only from the user's own messages. |
 

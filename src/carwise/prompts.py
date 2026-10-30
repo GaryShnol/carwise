@@ -17,7 +17,8 @@ from carwise.schemas import RetrievedChunk
 PROMPT_DIR = Path(__file__).parent / "llm" / "prompts"
 # Each prompt is versioned on its own, so changing one keeps the others comparable.
 # generate v2 (CW-202): excerpts are one set of articles, no "in another article".
-PROMPT_VERSIONS = {"understand": "v1", "generate": "v2", "regenerate": "v1"}
+# generate v3 (CW-203): how to use the "User preferences" block for recommendations.
+PROMPT_VERSIONS = {"understand": "v1", "generate": "v3", "regenerate": "v1"}
 
 
 def _load(name: str) -> str:
@@ -42,11 +43,18 @@ def regenerate_instruction(problems: list[str]) -> str:
     return REGENERATE_TEMPLATE.substitute(problems="; ".join(problems) + ".")
 
 
-def generation_input(question: str, chunks: list[RetrievedChunk], not_covered: list[str]) -> str:
+def generation_input(
+    question: str,
+    chunks: list[RetrievedChunk],
+    not_covered: list[str],
+    preferences: str = "",
+) -> str:
     """The user message of the generate call: the question, then the excerpts as data."""
     parts = [f"Question: {question}"]
     if not_covered:
         parts.append(f"Cars the articles do not cover: {', '.join(not_covered)}")
+    if preferences:
+        parts.append(f"User preferences (stated by the user in this conversation):\n{preferences}")
     excerpts = [
         f'<excerpt id="{hit.chunk.chunk_id}" car="{hit.chunk.car_name}" '
         f'section="{hit.chunk.section}">\n{hit.chunk.text}\n</excerpt>'

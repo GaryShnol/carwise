@@ -20,7 +20,7 @@ if TYPE_CHECKING:  # schemas imports this module for the answer guard
 _K = TypeVar("_K", BodyType, Powertrain)
 
 # Hebrew attaches up to a few one-letter prefixes to a name: "לאודי", "ובטויוטה".
-_HEBREW_PREFIXES = "והבכלמש"
+HEBREW_PREFIXES = "והבכלמש"
 _MAX_PREFIXES = 3
 # Geresh and gershayim have look-alikes (׳ ’ ` and ״ ”); one form makes names comparable.
 _APOSTROPHES = str.maketrans({"׳": "'", "’": "'", "`": "'", "״": '"', "“": '"', "”": '"'})
@@ -66,7 +66,7 @@ def normalize(text: str) -> str:
 
 def _name_pattern(name: str) -> re.Pattern[str]:
     words = r"\s+".join(re.escape(word) for word in normalize(name).split())
-    prefixes = f"[{_HEBREW_PREFIXES}]{{0,{_MAX_PREFIXES}}}"
+    prefixes = f"[{HEBREW_PREFIXES}]{{0,{_MAX_PREFIXES}}}"
     return re.compile(rf"(?<!\w){prefixes}{words}(?!\w)")
 
 

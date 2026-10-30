@@ -78,6 +78,10 @@ class InputConfig(_Strict):
     max_message_chars: int
 
 
+class PreferencesConfig(_Strict):
+    max_value_chars: int
+
+
 class FetchConfig(_Strict):
     user_agent: str
     delay_s: float
@@ -100,6 +104,7 @@ class Settings(_Strict):
     chunking: ChunkingConfig
     retrieval: RetrievalConfig
     input: InputConfig
+    preferences: PreferencesConfig
     guardrails: GuardrailsConfig
     fetch: FetchConfig
     paths: PathsConfig

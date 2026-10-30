@@ -136,11 +136,11 @@ def test_telemetry_records_both_post_check_attempts(tmp_path: Path) -> None:
         "outcome": "regenerated",
         "attempts": [{"cars": ["טויוטה"]}, {"cars": []}],
     }
-    assert record["prompt_versions"]["generate"] == "v2"
+    assert record["prompt_versions"] == PROMPT_VERSIONS
 
 
 # --- prompt v2 ---------------------------------------------------------------------------
-def test_generate_prompt_v2_forbids_another_article_and_keeps_v1() -> None:
-    assert PROMPT_VERSIONS["generate"] == "v2"
+def test_generate_prompt_forbids_another_article_since_v2_and_keeps_old_versions() -> None:
+    assert PROMPT_VERSIONS["generate"] >= "v2"
     assert "בכתבה אחרת" in GENERATE_SYSTEM and "one set of eight" in GENERATE_SYSTEM
-    assert (PROMPT_DIR / "generate.v1.txt").exists()
+    assert (PROMPT_DIR / "generate.v1.txt").exists() and (PROMPT_DIR / "generate.v2.txt").exists()

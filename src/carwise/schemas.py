@@ -64,12 +64,53 @@ class PreferenceField(StrEnum):
 
 
 class PreferenceUpdate(BaseModel):
-    """A preference stated in the latest message; merged into a profile in CW-203."""
+    """A preference stated in the latest message, as the model reported it.
+
+    `field` parses as a plain string so code can validate it (carwise.preferences):
+    one unknown field name drops that update instead of failing the whole call.
+    The JSON schema still lists the allowed names, so strict mode keeps OpenAI
+    models on them; the code check covers providers without strict mode. (A
+    plain string with no enum let the model invent names: seen in the CW-203 run.)
+    """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    field: PreferenceField
+    field: str = Field(json_schema_extra={"enum": [item.value for item in PreferenceField]})
     value: str
+
+
+class Preference(BaseModel):
+    """One remembered preference and the user message it came from (for /prefs)."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    value: str
+    source: str
+
+
+class Preferences(BaseModel):
+    """The user's preferences in this conversation only; never stored on disk.
+
+    One value per field: a later statement on the same field replaces the earlier
+    one, which is how a user changes their mind ("actually, up to 250 thousand").
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    budget: Preference | None = None
+    powertrain: Preference | None = None
+    primary_use: Preference | None = None
+    passengers: Preference | None = None
+    priorities: Preference | None = None
+    dislikes: Preference | None = None
+
+    def items(self) -> list[tuple[PreferenceField, Preference]]:
+        """The fields that are set, in a fixed order."""
+        values = ((field, getattr(self, field.value)) for field in PreferenceField)
+        return [(field, value) for field, value in values if value is not None]
+
+    def field_names(self) -> list[str]:
+        return [field.value for field, _ in self.items()]
 
 
 class Understanding(BaseModel):
@@ -175,6 +216,8 @@ class Answer(BaseModel):
     retrieved: list[RetrievedChunk]
     dropped_chunk_ids: list[str]  # cited by the model but not retrieved this turn
     post_check: PostCheck | None  # None when no answer was generated
+    preferences: Preferences  # the profile after this turn; the caller keeps it (Session)
+    updated_preferences: list[str]  # field names this turn set or changed
     flags: list[str]
     llm_calls: int
     usage: Usage

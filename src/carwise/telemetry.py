@@ -41,6 +41,9 @@ def turn_record(
         "used_chunk_ids": [source.chunk_id for source in answer.sources],
         "dropped_chunk_ids": answer.dropped_chunk_ids,
         "flags": answer.flags,
+        # Field names only: the values and their source messages are the user's words.
+        "preferences": answer.preferences.field_names(),
+        "updated_preferences": answer.updated_preferences,
         "post_check": answer.post_check.model_dump(mode="json") if answer.post_check else None,
         "llm_calls": answer.llm_calls,
         "tokens": asdict(answer.usage),

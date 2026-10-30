@@ -58,6 +58,9 @@ retrieval:             # provisional, tuned in CW-303
 input:
   max_message_chars: 500
 
+preferences:           # CW-203: one conversation only, never written to disk
+  max_value_chars: 80  # a preference longer than this is cut (and flagged)
+
 guardrails:
   # Well-known brands with no article in the corpus (CW-105 gate, CW-202 post-check).
   # A question naming only these is refused without a generation call. Brands that

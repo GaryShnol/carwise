@@ -12,9 +12,11 @@ import argparse
 from pathlib import Path
 
 from carwise.config import load_settings
-from carwise.llm.base import BudgetExceededError, LLMConfigError, Message
+from carwise.llm.base import BudgetExceededError, LLMConfigError
 from carwise.llm.openai_client import OpenAIClient
 from carwise.pipeline import Pipeline
+from carwise.preferences import RESET_REPLY, Session
+from carwise.preferences import describe as describe_preferences
 from carwise.registry import load_registry
 from carwise.retrieval.retriever import open_retriever
 from carwise.retrieval.store import IndexNotReadyError
@@ -22,7 +24,21 @@ from carwise.schemas import Answer
 from carwise.telemetry import TurnLogger
 
 EXIT_COMMANDS = {"/exit", "/quit", "יציאה"}
+PREFS_COMMAND = "/prefs"
+RESET_COMMAND = "/reset"
+HELP_LINE = "(העדפות: /prefs | שיחה חדשה: /reset | יציאה: /exit)"
 PROMPT = "\nשאלה> "
+
+
+def run_command(line: str, session: Session) -> str | None:
+    """Output of a chat command, or None when the line is a question for the bot."""
+    command = line.strip()
+    if command == PREFS_COMMAND:
+        return describe_preferences(session.preferences)
+    if command == RESET_COMMAND:
+        session.reset()
+        return RESET_REPLY
+    return None
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
@@ -78,8 +94,8 @@ def run(args: argparse.Namespace) -> int:
     print("טוען את מודל החיפוש...", flush=True)
     retriever.warm_up()  # otherwise the first question pays the model load (~1 min cold)
     print(pipeline.greeting())
-    print("(ליציאה: /exit)")
-    history: list[Message] = []
+    print(HELP_LINE)
+    session = Session(history_window=settings.llm.history_window)
     while True:
         try:
             message = input(PROMPT)
@@ -90,14 +106,13 @@ def run(args: argparse.Namespace) -> int:
             return 0
         if not message.strip():
             continue
+        output = run_command(message, session)
+        if output is not None:
+            print(output)
+            continue
         try:
-            answer = pipeline.ask(message, history)
+            answer = pipeline.answer(message, session)
         except BudgetExceededError as error:
             print(error)
             return 1
         print(format_answer(answer, show_cost=args.show_cost))
-        history += [
-            {"role": "user", "content": message},
-            {"role": "assistant", "content": answer.text},
-        ]
-        history = history[-settings.llm.history_window :]
