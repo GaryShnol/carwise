@@ -2,9 +2,9 @@
 
 Living task board for the project, kept in the repository like a lightweight Jira. It is the single source of truth for scope and progress. Rules for updating it are in `CLAUDE.md`, section 19.
 
-**Last updated:** 2026-10-30
+**Last updated:** 2026-10-31
 **Release target:** `v1.0`
-**Effort budget:** the assignment suggests 3 to 5 hours, and the owner accepts more time in exchange for a solid result. Target: all P1 and P2 tickets (36 points, about 6 to 7 hours with Claude Code assistance); P3 only if time allows. Points: S = 1, M = 2, L = 3.
+**Effort budget:** the assignment suggests 3 to 5 hours, and the owner accepts more time in exchange for a solid result. Target: all P1 and P2 tickets (37 points, about 6 to 7 hours with Claude Code assistance); P3 only if time allows. Points: S = 1, M = 2, L = 3.
 
 ## How to use this board
 
@@ -26,7 +26,7 @@ The assignment estimates 3 to 5 hours and asks for clarity and decisions rather 
 
 | Tier | Meaning | Tickets | Points |
 |---|---|---|---|
-| P1 | Everything the assignment asks for, plus the evidence for it | 16 | 27 |
+| P1 | Everything the assignment asks for, plus the evidence for it | 17 | 28 |
 | P2 | Role signals: telemetry, injection hygiene, numeric check, embedding comparison, tuning, Docker, CI, GitHub setup | 8 | 9 |
 | P3 | Nice to have: nothing at present | 0 | 0 |
 
@@ -69,10 +69,10 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E0 Scaffold and source check | none | 3 | 3 | 3 | DONE |
 | E1 Thin vertical slice | `v0.1` | 6 | 6 | 11 | DONE |
 | E2 Reliability and guardrails | none | 6 | 6 | 9 | DONE |
-| E3 Measurement | none | 3 | 0 | 5 | IN PROGRESS |
+| E3 Measurement | none | 4 | 4 | 6 | DONE (pull request not opened yet) |
 | E4 Interface and packaging | none | 3 | 0 | 4 | TODO |
 | E5 Documentation and release | `v1.0` | 3 | 0 | 4 | TODO |
-| **Total** |  | **24** | **15** | **36** |  |
+| **Total** |  | **25** | **19** | **37** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -125,7 +125,7 @@ Branch: `epic/e3-measurement` | Tag: none
 | ID | Ticket | Type | Size | Pri | Status | Depends on |
 |---|---|---|---|---|---|---|
 | CW-306 | Recommend intent searches all cars; named cars are a hint | `fix` | S | P1 | DONE | CW-303 |
-| CW-302 | Eval runner and per-category report | `feat` | M | P1 | IN PROGRESS | CW-201, CW-202, CW-106 |
+| CW-302 | Eval runner and per-category report | `feat` | M | P1 | DONE | CW-201, CW-202, CW-106 |
 | CW-305 | Embedding model comparison on the retrieval eval | `feat` | M | P2 | DONE | CW-302 |
 | CW-303 | Tune relevance threshold, top-k and chunk size | `fix` | S | P2 | DONE | CW-302, CW-305 |
 
@@ -289,18 +289,18 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 
 ### CW-302 Eval runner and per-category report
 - [x] Retrieval eval (no LLM, deterministic, free): expected car and section among retrieved chunks.
-- [ ] Answer eval: required keywords, refusal detected, no car outside the retrieved set.
-- [ ] Each question runs several times; report shows stability and pass rate per category, plus tokens and cost of the run.
-- [ ] The report records the profile and model name; the retrieval eval is provider-independent and runs locally for free.
-- [ ] The answer eval runs on the local profile during development and once or twice on the `final` profile near the end; the `final` run supplies the published numbers.
+- [x] Answer eval: required keywords, refusal detected, no car outside the retrieved set. Done: `--level answer`; cars outside the retrieved set are the CW-202 post-check outcome, recorded per answer.
+- [x] Each question runs several times; report shows stability and pass rate per category, plus tokens and cost of the run. Done: `--runs 3`, k/N per question, per-category pass rate, tokens and cost per run.
+- [x] The report records the profile and model name; the retrieval eval is provider-independent and runs locally for free. Done: profile, models, prompt versions and judge-criteria version (with the reason it changed).
+- [x] The answer eval runs on the local profile during development and once or twice on the `final` profile near the end; the `final` run supplies the published numbers. Done: dev runs for development (nano), three `final` runs for the published numbers (generate v3, v4, v5; ADR 0004).
 - [x] Plan (agreed 2026-10-30): `python -m app eval --level retrieval|answer --runs N`. The real understand outputs are recorded once (`--record`, nano, about 30 calls including follow-up turns and the negative probes) into `eval/recorded/`, so the retrieval eval replays them through the real pipeline code and is free and repeatable. A recording that no longer matches the questions, the understand prompt or the model is refused.
 - [x] Retrieval level reports per question: behavior from the gates, every expected source (hit, rank in the retrieved list, rank within its car), MRR, best score; per category hit rate.
-- [ ] Answer level, deterministic checks: behavior (from the refusal type), sources, `must_include`, `must_not_include`, `must_not_match`, the CW-202/CW-206 post-check outcome, "in another article" phrasings, the preference scenario (numbers parsed plus powertrain hint words), and car-number attribution for comparisons (a number next to car A must come from A's chunks). Direction-of-comparison questions are added to the eval because a wrong "cheaper" was seen once (CW-203).
-- [ ] An LLM judge runs only where code cannot decide (mixing trap, the preference scenario, directional comparisons). It is not the generation model: a larger model with a verified price in config, or mini with the self-grading limitation stated.
-- [ ] Caps: `eval.answer_max_cost_usd` 0.50 and `eval.judge_max_cost_usd` 0.20 (`llm.max_cost_usd` unchanged); every run prints its cost and stops at its cap, including on the `budget_exceeded` refusal.
-- [ ] Report: pass/fail per question (k/N over runs), tokens, cost, p50/p95 latency, profile and models. Committed reports hold metrics only (ids, scores, matched keywords, tokens, cost, latency); answer text goes to the gitignored `eval/runs/`.
-- [ ] Published numbers: 3 runs per question on `final`; stability as identical behavior, identical numbers, and the share of identical text.
-- [ ] Hold-out: `eval/questions.yaml` is reported on, not tuned on; threshold negatives live in `eval/negatives.yaml`.
+- [x] Answer level, deterministic checks: behavior (from the refusal type), sources, `must_include`, `must_not_include`, `must_not_match`, the CW-202/CW-206 post-check outcome, "in another article" phrasings, the preference scenario (numbers parsed plus powertrain hint words), and car-number attribution for comparisons (a number next to car A must come from A's chunks). Direction-of-comparison questions are added to the eval because a wrong "cheaper" was seen once (CW-203). Done, plus an eval-only "false not mentioned" check (price, 0-100, range).
+- [x] An LLM judge runs only where code cannot decide (mixing trap, the preference scenario, directional comparisons). It is not the generation model: a larger model with a verified price in config, or mini with the self-grading limitation stated. Done: gpt-5.4, price verified 2026-10-30; criteria in `eval/judge.yaml` (v3).
+- [x] Caps: `eval.answer_max_cost_usd` 0.50 and `eval.judge_max_cost_usd` 0.20 (`llm.max_cost_usd` unchanged); every run prints its cost and stops at its cap, including on the `budget_exceeded` refusal. The judge cap was raised to 0.30 (owner decision) so a 3-run `final` eval fits; every run stayed inside its caps.
+- [x] Report: pass/fail per question (k/N over runs), tokens, cost, p50/p95 latency, profile and models. Committed reports hold metrics only (ids, scores, matched keywords, tokens, cost, latency); answer text goes to the gitignored `eval/runs/`. Done; answers and judge reasons are in `eval/runs/` only.
+- [x] Published numbers: 3 runs per question on `final`; stability as identical behavior, identical numbers, and the share of identical text. Done: v3 64/69, same behavior 23/23, same numbers 15/23, identical text 28% (ADR 0004).
+- [x] Hold-out: `eval/questions.yaml` is reported on, not tuned on; threshold negatives live in `eval/negatives.yaml`. Revised in CW-303: the original questions became the tuning set; the hold-out is the version-3 block written after tuning (`holdout: true`), reported separately (final, v3: 15/18).
 
 ### CW-305 Embedding model comparison
 - [x] At least two multilingual candidates that support Hebrew are compared on the retrieval eval.
@@ -363,18 +363,22 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Idea | Why it is not in scope | Promote when |
 |---|---|---|
-| Hybrid search (keywords plus embeddings) | Adds complexity without evidence of need | Eval shows model names or numbers are missed |
+| Hybrid search (keywords plus embeddings) | Measured in CW-305: BM25 fusion did not fix the spec-box misses (a vocabulary gap); kept in the code behind `retrieval.lexical.enabled`, off | Eval shows model names or exact codes are missed |
 | Reranker | Corpus is small | Right car is retrieved but ranked too low |
 | LLM judge for groundedness | Imperfect and costs tokens | Keyword checks prove too coarse |
 | Second LLM provider (for example Bedrock) | One provider is enough | Provider switching becomes a requirement |
 | Cross-session memory | Out of scope for a proof of concept | Persistent users are required |
 | Agent loop with tools | Flow is linear | Live prices or external tools are needed |
+| False "not mentioned" check in the pipeline's post-check (CW-302) | Eval-only for now: 1 case in 207 final answers, and a first version had 8 false positives in 9, so its precision needs more data before it can trigger a regenerate | A longer eval run shows it precise, or a demo shows such a claim |
+| Preference grounding accepts digits for number words; log rejected values (CW-302) | Diagnosis only: the CW-203 check drops "5 נוסעים" when the user wrote "חמישה" (2 of 3 v3 runs of the family scenario); the recommendation still passed the judge | The preference panel (CW-401) shows a missing passenger count, or the scenario fails on it |
+| Remove the remaining "excerpts" wording (8 of 69 v3 answers) | v4 and v5 removed it but cost accuracy or brought back "another article" (ADR 0004) | A wording that names only the articles is measured on `final` without losing pass rate or stability |
 | Make SDK-level retries visible (`retries_taken`) and revisit `llm.timeout_s` | The SDK retries a timed-out request silently, so a 30 s timeout can cost about 60 s while `attempts` stays 1 (seen once in CW-206) | More than an occasional turn exceeds 10 s in the eval or the demo |
 
 ## Change log
 
 | Date | Change |
 |---|---|
+| 2026-10-31 | E3 done (CW-302, CW-303, CW-305, CW-306). Answer level on `final` (3 runs): generate v3 64/69, kept as default over v4 (60/69) and v5 (63/69, less stable); hold-out 15/18. Judge gpt-5.4, cap raised to $0.30. Eval-only false "not mentioned" check added; three Backlog items. ADRs 0002 to 0004. Process slip: commit 288307c went in with a failing test (fixed in 70757be). |
 | 2026-10-28 | Board created with 22 tickets across 6 epics. |
 | 2026-10-28 | Added CW-003, CW-206, CW-305, CW-404 (26 tickets, 38 points). Raw articles are no longer committed: download script plus private archive. |
 | 2026-10-28 | Branching simplified: one branch per epic (E1 to E5), E0 on `main`, one commit series per ticket, one pull request per epic. The Branch and PR columns were replaced by a commit Type column. |
