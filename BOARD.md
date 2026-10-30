@@ -371,16 +371,10 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 | 2026-10-29 | Provider decision revised: OpenAI only. `dev` = `gpt-5.4-nano`; `final` = nano for understanding and mini for generation. Ollama is optional. Entry point is `python -m app`, the Makefile is a thin wrapper. Tags reduced to `v0.1` and `v1.0`. |
 | 2026-10-29 | CW-001 done. Entry point is `python -m app <ingest|chat|eval|ui>` (not `python -m carwise`), so the core package never imports from `app/` or `eval/`. `LICENSE` (MIT), `.gitignore` and a short `README.md` came from the repository's initial commit and were kept. |
 | 2026-10-29 | Branching tightened: after the first scaffold commit (CW-001) nothing goes to `main` directly. Rest of E0 uses `epic/e0-source-check`; every epic gets a pull request. |
-
 | 2026-10-29 | CW-002 done: all eight URLs return 200 with real article bodies, `robots.txt` was read and allows them. Decision: automatic download (identifiable User-Agent, 3 s delay, cache in `data/raw/`); manual placement stays as the documented fallback. |
-
 | 2026-10-29 | CW-003 done: six milestones (E0 to E5), PR template, pre-publish scan of the history found no secrets or data files, `.gitattributes` added to keep LF line endings (the Makefile needs them). Epic E0 closed. |
-
 | 2026-10-30 | CW-203 done: typed preference memory with source messages, validated in code, used for recommendations; `/prefs` and `/reset` in chat; in-memory `Session`; generate prompt v3. |
-
 | 2026-10-30 | CW-202 done: car-name post-check with one stricter regeneration, then a code-built fallback; per-prompt versions, generate v2. CW-201 fix: hint words come only from the user's own messages. |
-
 | 2026-10-30 | CW-201 done: refusals suggest the closest of the eight cars (hint words from the user's message, else best-scoring chunks, else all eight grouped by powertrain and body type) and invite a follow-up; similarity threshold stays configurable at 0 until CW-303. |
-
 | 2026-10-29 | CW-101 done: `config/cars.yaml` plus `registry.py`, `fetch.py` (the CW-002 probe folded in and deleted), `clean.py` on beautifulsoup4 with `html.parser`, and `python -m app ingest` printing a per-article report. Each registry body type and powertrain carries the article words behind it; the Elantra article never states the Elantra's body type, so that value is null. Cleaner findings: the spec table uses `role=row` markup inside `<li>` and is kept as one line per row; "סיכום AI" is a script-loaded widget and is skipped; the Elantra sections are numbered `<h3>` questions; the Kia report has no subheadings and ends with four label/value stats. |
 | 2026-10-30 | E2 done (CW-201 to CW-206). CW-206 decision: "545,00" in the Audi RS3 article stays a decimal (known source case). CW-205 bounds the whole turn input with `input.max_turn_input_chars`; user messages in the history obey `max_message_chars`. Backlog: SDK-level retries. |
