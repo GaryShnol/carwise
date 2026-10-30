@@ -68,11 +68,11 @@ Items outside the code that must not be forgotten. Update the status as each is 
 |---|---|---|---|---|---|
 | E0 Scaffold and source check | none | 3 | 3 | 3 | DONE |
 | E1 Thin vertical slice | `v0.1` | 6 | 6 | 11 | DONE |
-| E2 Reliability and guardrails | none | 6 | 3 | 9 | IN PROGRESS |
+| E2 Reliability and guardrails | none | 6 | 4 | 9 | IN PROGRESS |
 | E3 Measurement | none | 3 | 0 | 5 | TODO |
 | E4 Interface and packaging | none | 3 | 0 | 4 | TODO |
 | E5 Documentation and release | `v1.0` | 3 | 0 | 4 | TODO |
-| **Total** |  | **24** | **12** | **36** |  |
+| **Total** |  | **24** | **13** | **36** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -114,7 +114,7 @@ Branch: `epic/e2-reliability` | Tag: none
 | CW-203 | Preference model and `/prefs` command | `feat` | M | P1 | DONE | CW-105 |
 | CW-204 | Turn telemetry and cost estimate | `feat` | S | P2 | TODO | CW-105 |
 | CW-205 | Injection hygiene and input limits | `feat` | S | P2 | TODO | CW-105 |
-| CW-206 | Numeric claim check in post-check | `feat` | S | P2 | IN PROGRESS | CW-202 |
+| CW-206 | Numeric claim check in post-check | `feat` | S | P2 | DONE | CW-202 |
 
 ## Epic E3: Measurement
 
@@ -270,9 +270,11 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [ ] Unit tests: over-long input is rejected politely; an instruction planted in a chunk is not followed.
 
 ### CW-206 Numeric claim check
-- [ ] Every number in an answer (horsepower, price, consumption, dimensions) must appear in the retrieved chunks.
-- [ ] A missing number marks the answer as suspect and feeds the same regenerate-or-fallback path as CW-202.
-- [ ] Unit tests: matching numbers pass; an invented number is flagged; formatting differences (commas, units) are handled.
+- [x] Every number in an answer (horsepower, price, consumption, dimensions) must appear in the retrieved chunks (or in the user's own words: the message, the rewritten question, preference values).
+- [x] A missing number marks the answer as suspect and feeds the same regenerate-or-fallback path as CW-202 (`CheckFindings.numbers`, flag `postcheck_numbers`, regenerate prompt v2).
+- [x] Unit tests: matching numbers pass; an invented number is flagged; formatting differences (commas, units) are handled. Also: decimal comma, thousands and "אלף"/"מיליון", ranges, percent, numbers inside car names, years, list markers, rounding (never added precision), derived sums and differences only with both operands in the answer.
+- [x] False-positive suite over the real chunks (229 quoted sentences, 279 reformatted numbers: 0 flagged) and a recall check (every integer nudged by one is caught).
+- [x] Live (`final`): a forced unsupported price was flagged and regenerated away ($0.0039, 3 calls). 10 real answers (46 numbers): 1 flagged, "545,000" where the Audi RS3 article itself prints "545,00" (a publisher typo). Limit: numbers written as words are not checked.
 
 ### CW-302 Eval runner and per-category report
 - [ ] Retrieval eval (no LLM, deterministic, free): expected car and section among retrieved chunks.

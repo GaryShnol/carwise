@@ -144,6 +144,9 @@ guardrails:
     mild_hybrid: [היברידי, היברידית, היברידיים, Hybrid]
     plug_in_hybrid: [היברידי, היברידית, היברידיים, נטען, נטענת, פלאג-אין, PHEV, Hybrid]
     electric: [חשמלי, חשמלית, חשמליים, חשמליות]
+  # Numeric post-check (CW-206): numbers that never need a source. 0 is the start
+  # of "0-100", which answers write even when the article says only "ל-100".
+  numbers_always_allowed: [0]
 
 display:              # what the user sees; telemetry and Citation keep the full value
   max_section_chars: 60   # merged headings can run to 150+ chars; cut at a word boundary

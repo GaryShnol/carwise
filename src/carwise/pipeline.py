@@ -90,6 +90,7 @@ class _Plan:
     cars: list[str] = field(default_factory=list)
     not_covered: list[str] = field(default_factory=list)
     question: str = ""
+    message: str = ""  # the user's own words, which may state numbers (CW-206)
 
 
 class Pipeline:
@@ -188,12 +189,13 @@ class Pipeline:
         failed twice on the same excerpts is unlikely to pass a third time, so the
         bounded path (one extra call, then a safe reply) keeps cost and latency fixed.
         """
-        findings = self._post_check(plan, hits, generation)
+        findings = self._post_check(plan, hits, generation, turn)
         if not findings.suspect:
             check = PostCheck(outcome=PostCheckOutcome.CLEAN, attempts=[findings])
             return self._grounded(turn, plan, hits, generation, check)
 
         turn.flags.append("postcheck_suspect")
+        turn.flags += findings.kinds()
         attempts = [findings]
         try:
             retry = self._generate(plan, hits, turn, retry_of=(generation, findings))
@@ -201,8 +203,9 @@ class Pipeline:
             turn.charge_failure(error)
             turn.flags.append(f"regenerate_{type(error).__name__}")
         else:
-            retry_findings = self._post_check(plan, hits, retry)
+            retry_findings = self._post_check(plan, hits, retry, turn)
             attempts.append(retry_findings)
+            turn.flags += [kind for kind in retry_findings.kinds() if kind not in turn.flags]
             if not retry_findings.suspect:
                 turn.flags.append("postcheck_regenerated")
                 check = PostCheck(outcome=PostCheckOutcome.REGENERATED, attempts=attempts)
@@ -217,16 +220,19 @@ class Pipeline:
         return self._reply(turn, text, RefusalReason.UNVERIFIED, plan, hits, post_check=check)
 
     def _post_check(
-        self, plan: _Plan, hits: list[RetrievedChunk], generation: Generation
+        self, plan: _Plan, hits: list[RetrievedChunk], generation: Generation, turn: _Turn
     ) -> CheckFindings:
+        config = self._settings.guardrails
         cars = guardrails.unsupported_cars(
-            generation.answer,
-            hits,
-            plan.not_covered,
-            self._registry,
-            self._settings.guardrails.outside_brands,
+            generation.answer, hits, plan.not_covered, self._registry, config.outside_brands
         )
-        return CheckFindings(cars=cars)
+        # The user's words may state numbers: the question as written and as rewritten,
+        # and the preference values the generate call received.
+        user_texts = [plan.message, plan.question, *(p.value for _, p in turn.preferences.items())]
+        numbers = guardrails.unsupported_numbers(
+            generation.answer, hits, user_texts, self._registry, config.numbers_always_allowed
+        )
+        return CheckFindings(cars=cars, numbers=numbers)
 
     def _understand(self, message: str, history: list[Message], turn: _Turn) -> _Plan:
         window = history[-self._settings.llm.history_window :] if history else []
@@ -276,7 +282,8 @@ class Pipeline:
             turn.flags += flags
         else:
             intent = Intent.COMPARE if len(cars) > 1 else Intent.FACT
-        return _Plan(intent, cars, guardrails.not_covered(unrecognized, brands), question)
+        not_covered = guardrails.not_covered(unrecognized, brands)
+        return _Plan(intent, cars, not_covered, question, message)
 
     def _retrieve(self, plan: _Plan) -> list[RetrievedChunk]:
         """One car: filter on it. Several: each car separately. None: all cars, capped."""

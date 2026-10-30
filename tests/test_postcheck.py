@@ -134,7 +134,7 @@ def test_telemetry_records_both_post_check_attempts(tmp_path: Path) -> None:
     record = json.loads(logger.path.read_text(encoding="utf-8").strip())
     assert record["post_check"] == {
         "outcome": "regenerated",
-        "attempts": [{"cars": ["טויוטה"]}, {"cars": []}],
+        "attempts": [{"cars": ["טויוטה"], "numbers": []}, {"cars": [], "numbers": []}],
     }
     assert record["prompt_versions"] == PROMPT_VERSIONS
 

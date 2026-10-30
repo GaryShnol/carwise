@@ -165,16 +165,29 @@ class CheckFindings(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     cars: list[str]  # car names the retrieved chunks and the question cannot back
+    numbers: list[str]  # numbers as written that neither the chunks nor the user stated (CW-206)
 
     @property
     def suspect(self) -> bool:
-        return bool(self.cars)
+        return bool(self.cars or self.numbers)
 
     def problems(self) -> list[str]:
         """English sentences for the regenerate instruction."""
-        if not self.cars:
-            return []
-        return [f"it names cars that the excerpts do not support: {', '.join(self.cars)}"]
+        problems = []
+        if self.cars:
+            problems.append(
+                f"it names cars that the excerpts do not support: {', '.join(self.cars)}"
+            )
+        if self.numbers:
+            problems.append(
+                f"it states numbers that the excerpts do not contain: {', '.join(self.numbers)}"
+            )
+        return problems
+
+    def kinds(self) -> list[str]:
+        """Turn flags naming what was found, so telemetry can count each kind."""
+        found = {"postcheck_cars": self.cars, "postcheck_numbers": self.numbers}
+        return [flag for flag, items in found.items() if items]
 
 
 class PostCheckOutcome(StrEnum):

@@ -10,8 +10,11 @@ from __future__ import annotations
 import re
 import unicodedata
 from collections.abc import Iterable, Mapping
+from decimal import Decimal
+from itertools import combinations, product
 from typing import TYPE_CHECKING, TypeVar
 
+from carwise import numbers
 from carwise.registry import BodyType, Car, Powertrain, Registry
 
 if TYPE_CHECKING:  # schemas imports this module for the answer guard
@@ -128,6 +131,60 @@ def unsupported_cars(
         if not mentioned(sources, [brand]) and not mentioned(asked, [brand])
     ]
     return problems
+
+
+def unsupported_numbers(
+    answer: str,
+    hits: Iterable[RetrievedChunk],
+    user_texts: Iterable[str],
+    registry: Registry,
+    always_allowed: Iterable[float],
+) -> list[str]:
+    """Numbers in the answer, as written, that neither the sources nor the user stated.
+
+    Backed: a retrieved chunk (its text, car name or section, all of which the model
+    saw) or the user's own words state the number, to the precision the answer
+    wrote it in (`carwise.numbers`). Derived: a difference or sum of two numbers
+    is allowed only when both operands are chunk numbers that the answer itself
+    states, so the reader can verify the arithmetic. Numbers inside car names
+    ("MG S6", "GV80", "לינק אנד קו 01") are not claims and are skipped.
+    Limit: numbers written as words are not checked.
+    """
+    hits = list(hits)
+    text = "\n".join(normalize(line) for line in answer.splitlines())  # keeps list markers
+    for car in registry.cars:
+        for name in (car.display_name, *car.aliases):
+            text = _name_pattern(name).sub(" ", text)
+    from_chunks = numbers.source_values(
+        f"{hit.chunk.car_name}\n{hit.chunk.section}\n{hit.chunk.text}" for hit in hits
+    )
+    from_user = numbers.source_values(user_texts)
+    allowed = {Decimal(str(value)) for value in always_allowed}
+    found = numbers.find_numbers(text)
+    operands = [number for number in found if _backed(number, from_chunks)]
+    problems = [
+        number.text
+        for number in found
+        if not _backed(number, from_chunks | from_user | allowed)
+        and not _derived(number, [other for other in operands if other is not number])
+    ]
+    return list(dict.fromkeys(problems))
+
+
+def _backed(number: numbers.Number, values: set[Decimal]) -> bool:
+    return any(reading.backed_by(value) for reading in number.readings for value in values)
+
+
+def _derived(number: numbers.Number, operands: list[numbers.Number]) -> bool:
+    """True when the number is the sum or difference of two other numbers in the answer."""
+    for first, second in combinations(operands, 2):
+        for a, b, n in product(first.readings, second.readings, number.readings):
+            tolerance = max(a.unit, b.unit, n.unit)
+            if abs(n.value - (a.value + b.value)) < tolerance:
+                return True
+            if abs(n.value - abs(a.value - b.value)) < tolerance:
+                return True
+    return False
 
 
 # --- suggestions inside the corpus (CW-201) -------------------------------------------

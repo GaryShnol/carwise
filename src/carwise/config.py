@@ -72,6 +72,7 @@ class GuardrailsConfig(_Strict):
     max_suggestions: int
     body_type_words: dict[BodyType, list[str]]
     powertrain_words: dict[Powertrain, list[str]]
+    numbers_always_allowed: list[float]
 
 
 class InputConfig(_Strict):
