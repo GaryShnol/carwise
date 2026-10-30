@@ -1,6 +1,6 @@
 # ADR 0002: Embedding model for retrieval
 
-- **Status:** Proposed (awaiting owner review; `config/settings.yaml` still uses e5-base)
+- **Status:** Accepted (2026-10-30; `config/settings.yaml` uses e5-large)
 - **Date:** 2026-10-30
 - **Ticket:** CW-305 (board decision D3)
 - **Evidence:** `eval/reports/candidates.md` and `eval/reports/retrieval-<candidate>.{md,json}`;
@@ -96,7 +96,7 @@ stage (query embedding plus scoring), p50/p95 over the 60 replays that reach ret
 questions x 3; gate refusals have no retrieve stage). It moved by up to 2x between identical
 runs of e5-base, so read it as an order of magnitude.
 
-## Decision (proposed)
+## Decision
 
 **Use `intfloat/multilingual-e5-large` at revision `3d7cfbdacd47fdda877c5cd8a79fbcc4f2a574f3`,
 with the `query: ` / `passage: ` prefixes. Keep the lexical fusion in the code, off by default.**
@@ -131,6 +131,16 @@ Why not the others:
 - **e5-base**: smallest and fastest, but six misses.
 
 ## Caveats
+
+- **Weak score separation, for every candidate.** No embedding model separates answerable
+  questions from the threshold probes: every probe minimum sits at or above the answerable
+  minimum, and even e5-large has 2 of 8 probes above the answerable median. The registry gate
+  (a car outside the eight) stays the main refusal mechanism, together with the generation
+  rule "not mentioned in the articles"; a similarity threshold can at most catch the clearly
+  off-topic case.
+- **Not a hold-out after tuning.** CW-303 tunes chunking, k, caps and the threshold on this same
+  question set, so after CW-303 its numbers are training numbers, not a hold-out estimate. The
+  hold-out result is the separate set of questions written after tuning (CW-303 step 5).
 
 - **Small sample.** 23 questions and 26 expected sources: one question is 4 points of pass rate.
   The ranking between e5-large and the rest is clear; finer differences (bge-m3 vs lexical) are
@@ -176,4 +186,7 @@ Why not the others:
 > CPU. BM25 did not fix the comparisons it targeted: users ask "which is cheaper", the spec box says
 > "price", and keyword matching cannot bridge that. No model separates answerable questions from
 > unanswerable ones by similarity score, so the car-registry gate, not a score threshold, does the
-> refusing. Details: `docs/decisions/0002-embedding-model.md`.
+> refusing, with the "not mentioned in the articles" rule in generation. The sample is small
+> (23 questions; one question is 4 points), and because the same questions are later used
+> for tuning, the published hold-out number comes from questions written after tuning.
+> Details: `docs/decisions/0002-embedding-model.md`.

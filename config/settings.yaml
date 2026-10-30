@@ -37,10 +37,10 @@ prices:
 
 embeddings:
   provider: sentence_transformers        # or "fake": hash-based, no download (tests, offline CI)
-  model: intfloat/multilingual-e5-base   # provisional, chosen by data in CW-305
-  revision: d128750597153bb5987e10b1c3493a34e5a4502a   # Hugging Face commit, pinned in CW-103
-  query_prefix: "query: "                # e5 models are trained with these prefixes;
-  passage_prefix: "passage: "            # other candidates in CW-305 may use none
+  model: intfloat/multilingual-e5-large  # chosen in CW-305, see docs/decisions/0002
+  revision: 3d7cfbdacd47fdda877c5cd8a79fbcc4f2a574f3   # Hugging Face commit, pinned in CW-305
+  query_prefix: "query: "                # e5 models are trained with these prefixes
+  passage_prefix: "passage: "
   device: cpu
   batch_size: 16
 
