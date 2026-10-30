@@ -68,7 +68,7 @@ Items outside the code that must not be forgotten. Update the status as each is 
 |---|---|---|---|---|---|
 | E0 Scaffold and source check | none | 3 | 3 | 3 | DONE |
 | E1 Thin vertical slice | `v0.1` | 6 | 6 | 11 | DONE |
-| E2 Reliability and guardrails | none | 6 | 0 | 9 | TODO |
+| E2 Reliability and guardrails | none | 6 | 0 | 9 | IN PROGRESS |
 | E3 Measurement | none | 3 | 0 | 5 | TODO |
 | E4 Interface and packaging | none | 3 | 0 | 4 | TODO |
 | E5 Documentation and release | `v1.0` | 3 | 0 | 4 | TODO |
@@ -109,7 +109,7 @@ Branch: `epic/e2-reliability` | Tag: none
 
 | ID | Ticket | Type | Size | Pri | Status | Depends on |
 |---|---|---|---|---|---|---|
-| CW-201 | Relevance gate and fixed refusal | `feat` | M | P1 | TODO | CW-105 |
+| CW-201 | Relevance gate and fixed refusal | `feat` | M | P1 | IN PROGRESS | CW-105 |
 | CW-202 | Post-check for cars not retrieved this turn | `feat` | M | P1 | TODO | CW-105 |
 | CW-203 | Preference model and `/prefs` command | `feat` | M | P1 | TODO | CW-105 |
 | CW-204 | Turn telemetry and cost estimate | `feat` | S | P2 | TODO | CW-105 |
