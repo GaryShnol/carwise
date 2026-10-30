@@ -138,6 +138,7 @@ class Answer(BaseModel):
     intent: Intent | None
     cars: list[str]
     not_covered: list[str]  # car names the user asked about that the articles do not cover
+    suggested_cars: list[str]  # registry ids a refusal offered instead (CW-201)
     standalone_question: str
     retrieved: list[RetrievedChunk]
     dropped_chunk_ids: list[str]  # cited by the model but not retrieved this turn

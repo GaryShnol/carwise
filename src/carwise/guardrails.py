@@ -9,9 +9,15 @@ from __future__ import annotations
 
 import re
 import unicodedata
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
+from typing import TYPE_CHECKING, TypeVar
 
-from carwise.registry import Registry
+from carwise.registry import BodyType, Car, Powertrain, Registry
+
+if TYPE_CHECKING:  # schemas imports this module for the answer guard
+    from carwise.schemas import RetrievedChunk
+
+_K = TypeVar("_K", BodyType, Powertrain)
 
 # Hebrew attaches up to a few one-letter prefixes to a name: "לאודי", "ובטויוטה".
 _HEBREW_PREFIXES = "והבכלמש"
@@ -88,9 +94,101 @@ def not_covered(llm_names: list[str], brand_hits: list[str]) -> list[str]:
     return list(dict.fromkeys(names))
 
 
+# --- suggestions inside the corpus (CW-201) -------------------------------------------
+def hinted_cars(
+    text: str,
+    registry: Registry,
+    body_type_words: Mapping[BodyType, Iterable[str]],
+    powertrain_words: Mapping[Powertrain, Iterable[str]],
+    limit: int,
+) -> list[str]:
+    """Cars that fit the body type or powertrain the user's own words point at.
+
+    Why only the user's words: the unknown car itself must not be classified from
+    the model's knowledge, so "an electric SUV like X" is the only grounded signal.
+    A car scores one point per matching dimension; only the best score is kept, so
+    "electric SUV" suggests electric SUVs before any electric or any SUV.
+    """
+    bodies = _most_specific(text, body_type_words)
+    powertrains = _most_specific(text, powertrain_words)
+    scores = {
+        car.id: (car.body_type in bodies) + (car.powertrain in powertrains) for car in registry.cars
+    }
+    best = max(scores.values(), default=0)
+    if best == 0:
+        return []
+    return [car_id for car_id, score in scores.items() if score == best][:limit]
+
+
+def _most_specific(text: str, words_by_kind: Mapping[_K, Iterable[str]]) -> set[_K]:
+    """The kinds with the most hint words in the text: "היברידי נטען" is a plug-in
+    hybrid only, while a bare "היברידי" fits both hybrid kinds."""
+    counts = {kind: len(mentioned(text, words)) for kind, words in words_by_kind.items()}
+    best = max(counts.values(), default=0)
+    return {kind for kind, count in counts.items() if count == best} if best else set()
+
+
+def closest_by_score(hits: Iterable[RetrievedChunk], limit: int) -> list[str]:
+    """Cars of the best-scoring chunks, best first, each car once."""
+    ranked = sorted(hits, key=lambda hit: (-hit.score, hit.chunk.chunk_id))
+    return list(dict.fromkeys(hit.chunk.car for hit in ranked))[:limit]
+
+
 # --- fixed replies (Hebrew, gender-neutral address) -----------------------------------
+_BODY_TYPE_HE = {
+    BodyType.SUPERMINI: "סופרמיני",
+    BodyType.HATCHBACK: "האצ'בק",
+    BodyType.SEDAN: "סדאן",
+    BodyType.SUV: "רכב פנאי",
+    BodyType.SUV_COUPE: "פנאי-קופה",
+}
+_POWERTRAIN_HE = {
+    Powertrain.ELECTRIC: "חשמלי",
+    Powertrain.PLUG_IN_HYBRID: "היברידי נטען",
+    Powertrain.MILD_HYBRID: "היברידי מתון",
+    Powertrain.PETROL: "בנזין",
+}
+FOLLOW_UP = "אפשר לשאול על כל אחד מהם, להשוות ביניהם או לבקש המלצה."
+
+
 def _car_list(registry: Registry) -> str:
     return ", ".join(car.display_name for car in registry.cars)
+
+
+def describe(car: Car) -> str:
+    """'MG S6 (רכב פנאי, חשמלי)': name plus what the registry says, nothing more."""
+    facts = [
+        _BODY_TYPE_HE[car.body_type] if car.body_type else "",
+        _POWERTRAIN_HE[car.powertrain] if car.powertrain else "",
+    ]
+    facts = [fact for fact in facts if fact]
+    return f"{car.display_name} ({', '.join(facts)})" if facts else car.display_name
+
+
+def corpus_overview(registry: Registry) -> str:
+    """The eight cars grouped by powertrain, each with its body type when the article says it."""
+    groups: list[str] = []
+    for kind, label in _POWERTRAIN_HE.items():
+        cars = [car for car in registry.cars if car.powertrain is kind]
+        if cars:
+            names = ", ".join(
+                f"{car.display_name} ({_BODY_TYPE_HE[car.body_type]})"
+                if car.body_type
+                else car.display_name
+                for car in cars
+            )
+            groups.append(f"{label}: {names}")
+    rest = [car.display_name for car in registry.cars if car.powertrain is None]
+    if rest:
+        groups.append(", ".join(rest))
+    return "; ".join(groups)
+
+
+def _suggestion_text(registry: Registry, suggested: list[str]) -> str:
+    if suggested:
+        cars = ", ".join(describe(registry.get(car_id)) for car_id in suggested)
+        return f"מבין שמונה הרכבים שנבחנו, הכי קרובים לשאלה: {cars}. {FOLLOW_UP}"
+    return f"אלה שמונה הרכבים שנבחנו - {corpus_overview(registry)}. {FOLLOW_UP}"
 
 
 def greeting(registry: Registry) -> str:
@@ -101,24 +199,22 @@ def greeting(registry: Registry) -> str:
     )
 
 
-def unknown_car_reply(names: list[str], registry: Registry) -> str:
+def unknown_car_reply(names: list[str], registry: Registry, suggested: list[str]) -> str:
+    """Says what is not covered, then helps within the corpus; never describes the unknown car."""
     return (
-        f"אין לי מידע על {', '.join(names)}: הכתבות שאני מכיר עוסקות רק בשמונה רכבים - "
-        f"{_car_list(registry)}. אפשר לשאול על כל אחד מהם, או לבקש המלצה מתוכם."
+        f"אין לי מידע על {', '.join(names)}: הכתבות שאני מכיר עוסקות רק בשמונה רכבים. "
+        + _suggestion_text(registry, suggested)
     )
 
 
-def low_relevance_reply(registry: Registry) -> str:
-    return (
-        "לא מצאתי בכתבות מידע שעונה על השאלה הזאת. אפשר לשאול על שמונה הרכבים שנבחנו: "
-        f"{_car_list(registry)}."
-    )
+def low_relevance_reply(registry: Registry, suggested: list[str]) -> str:
+    return "לא מצאתי בכתבות מידע שעונה על השאלה הזאת. " + _suggestion_text(registry, suggested)
 
 
 def out_of_scope_reply(registry: Registry) -> str:
     return (
-        "אני עוזר רק בשאלות על רכבים, לפי כתבות המבחן של שמונה רכבים: "
-        f"{_car_list(registry)}. אפשר לשאול על נתונים, השוואות או המלצות."
+        "אני עוזר רק בשאלות על רכבים, לפי כתבות המבחן של שמונה רכבים - "
+        f"{corpus_overview(registry)}. אפשר לשאול על נתונים, השוואות או המלצות."
     )
 
 

@@ -3,7 +3,8 @@
 Fixed order: validate input, understand (LLM call 1), registry gate, retrieve,
 similarity gate, generate (LLM call 2), check citations. Every refusal happens
 before the generation call and is filled in by code, so the cheapest and most
-reliable path is also the one taken when the corpus cannot answer. CLI, UI and
+reliable path is also the one taken when the corpus cannot answer; it still
+helps, by suggesting the closest of the eight cars. CLI, UI and
 the eval runner all call `Pipeline.ask`; none of them holds logic of its own.
 """
 
@@ -126,8 +127,9 @@ class Pipeline:
         # Registry gate first: only cars outside the corpus were named. Known and
         # unknown together go on, and the answer says what is not covered.
         if plan.not_covered and not plan.cars:
-            text = guardrails.unknown_car_reply(plan.not_covered, self._registry)
-            return self._reply(turn, text, RefusalReason.UNKNOWN_CAR, plan)
+            suggested = self._suggest(message, plan, [])
+            text = guardrails.unknown_car_reply(plan.not_covered, self._registry, suggested)
+            return self._reply(turn, text, RefusalReason.UNKNOWN_CAR, plan, suggested=suggested)
         if plan.intent in NO_RETRIEVAL_INTENTS and not plan.cars:
             text = guardrails.out_of_scope_reply(self._registry)
             return self._reply(turn, text, RefusalReason.OUT_OF_SCOPE, plan)
@@ -137,8 +139,11 @@ class Pipeline:
         turn.latency_ms["retrieve"] = (time.perf_counter() - started) * 1000
         threshold = self._settings.retrieval.relevance_threshold
         if not hits or max(hit.score for hit in hits) < threshold:
-            text = guardrails.low_relevance_reply(self._registry)
-            return self._reply(turn, text, RefusalReason.LOW_RELEVANCE, plan, hits)
+            suggested = self._suggest(message, plan, hits)
+            text = guardrails.low_relevance_reply(self._registry, suggested)
+            return self._reply(
+                turn, text, RefusalReason.LOW_RELEVANCE, plan, hits, suggested=suggested
+            )
 
         try:
             generation = self._generate(plan, hits, turn)
@@ -203,6 +208,18 @@ class Pipeline:
             plan.question, config.cross_car_top_k, config.cross_car_per_car_cap
         )
 
+    def _suggest(self, message: str, plan: _Plan, hits: list[RetrievedChunk]) -> list[str]:
+        """Closest cars for a refusal: the user's own hint words first, then chunk scores."""
+        config = self._settings.guardrails
+        hinted = guardrails.hinted_cars(
+            f"{message}\n{plan.question}",
+            self._registry,
+            config.body_type_words,
+            config.powertrain_words,
+            config.max_suggestions,
+        )
+        return hinted or guardrails.closest_by_score(hits, config.max_suggestions)
+
     def _generate(self, plan: _Plan, hits: list[RetrievedChunk], turn: _Turn) -> Generation:
         content = generation_input(plan.question, hits, plan.not_covered)
         started = time.perf_counter()
@@ -248,6 +265,8 @@ class Pipeline:
         hits: list[RetrievedChunk] | None = None,
         sources: list[Citation] | None = None,
         dropped: list[str] | None = None,
+        *,
+        suggested: list[str] | None = None,
     ) -> Answer:
         plan = plan or _Plan()
         return Answer(
@@ -257,6 +276,7 @@ class Pipeline:
             intent=plan.intent,
             cars=plan.cars,
             not_covered=plan.not_covered,
+            suggested_cars=suggested or [],
             standalone_question=plan.question,
             retrieved=hits or [],
             dropped_chunk_ids=dropped or [],

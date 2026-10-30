@@ -33,6 +33,7 @@ def turn_record(
         "intent": answer.intent.value if answer.intent else None,
         "cars": answer.cars,
         "not_covered": answer.not_covered,
+        "suggested_cars": answer.suggested_cars,
         "refusal": answer.refusal.value if answer.refusal else None,
         "retrieved": [
             {"chunk_id": hit.chunk.chunk_id, "score": hit.score} for hit in answer.retrieved

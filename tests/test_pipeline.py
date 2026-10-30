@@ -197,12 +197,33 @@ def test_known_and_unknown_car_together_is_answered_with_a_note() -> None:
     assert "Cars the articles do not cover: BMW X5" in llm.calls[1].messages[0]["content"]
 
 
+def test_unknown_car_refusal_suggests_cars_from_the_users_own_words() -> None:
+    message = "כמה טווח יש לטסלה מודל Y החשמלית?"
+    plan = understanding(unrecognized=["טסלה מודל Y"], question=message)
+    pipeline, llm, retriever = make([plan])
+    answer = pipeline.ask(message, [])
+    assert answer.refusal is RefusalReason.UNKNOWN_CAR
+    assert answer.suggested_cars == ["kia_ev9", "mg_s6", "aion_ht"]  # the three electric cars
+    assert "MG S6 (רכב פנאי, חשמלי)" in answer.text and "ג'נסיס GV80" not in answer.text
+    assert len(llm.calls) == 1 and retriever.calls == []
+
+
 # --- similarity gate ---------------------------------------------------------------------
 def test_low_similarity_is_refused_without_a_generation_call() -> None:
     pipeline, llm, _ = make([understanding(cars=["mg_s6"])], threshold=0.99)
     answer = pipeline.ask("כמה טווח יש ל-MG S6?", [])
     assert answer.refusal is RefusalReason.LOW_RELEVANCE
     assert len(llm.calls) == 1 and answer.retrieved  # retrieval ran, generation did not
+    assert answer.suggested_cars == ["mg_s6"]  # closest by chunk score, inside the corpus
+    assert answer.text.startswith("לא מצאתי בכתבות") and "MG S6" in answer.text
+
+
+def test_threshold_comes_from_config_and_passes_scores_at_or_above_it() -> None:
+    probe, _, _ = make([understanding(cars=["mg_s6"])], threshold=0.99)
+    best = max(hit.score for hit in probe.ask("כמה טווח יש ל-MG S6?", []).retrieved)
+    pipeline, llm, _ = make([understanding(cars=["mg_s6"]), generation()], threshold=best)
+    answer = pipeline.ask("כמה טווח יש ל-MG S6?", [])
+    assert answer.refusal is None and len(llm.calls) == 2 and answer.suggested_cars == []
 
 
 # --- history -------------------------------------------------------------------------------

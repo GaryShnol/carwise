@@ -68,11 +68,11 @@ Items outside the code that must not be forgotten. Update the status as each is 
 |---|---|---|---|---|---|
 | E0 Scaffold and source check | none | 3 | 3 | 3 | DONE |
 | E1 Thin vertical slice | `v0.1` | 6 | 6 | 11 | DONE |
-| E2 Reliability and guardrails | none | 6 | 0 | 9 | IN PROGRESS |
+| E2 Reliability and guardrails | none | 6 | 1 | 9 | IN PROGRESS |
 | E3 Measurement | none | 3 | 0 | 5 | TODO |
 | E4 Interface and packaging | none | 3 | 0 | 4 | TODO |
 | E5 Documentation and release | `v1.0` | 3 | 0 | 4 | TODO |
-| **Total** |  | **24** | **9** | **36** |  |
+| **Total** |  | **24** | **10** | **36** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -109,7 +109,7 @@ Branch: `epic/e2-reliability` | Tag: none
 
 | ID | Ticket | Type | Size | Pri | Status | Depends on |
 |---|---|---|---|---|---|---|
-| CW-201 | Relevance gate and fixed refusal | `feat` | M | P1 | IN PROGRESS | CW-105 |
+| CW-201 | Relevance gate and fixed refusal | `feat` | M | P1 | DONE | CW-105 |
 | CW-202 | Post-check for cars not retrieved this turn | `feat` | M | P1 | TODO | CW-105 |
 | CW-203 | Preference model and `/prefs` command | `feat` | M | P1 | TODO | CW-105 |
 | CW-204 | Turn telemetry and cost estimate | `feat` | S | P2 | TODO | CW-105 |
@@ -235,11 +235,12 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [x] Each answerable question also records the expected car and section for the retrieval eval.
 
 ### CW-201 Relevance gate and fixed refusal
-- [ ] Below-threshold score, or a car that is not in the car registry, returns a fixed refusal without the generation call.
-- [ ] The registry check, including `unrecognized_cars`, is the primary gate; the threshold is tuned on the eval, which includes near-miss questions (a known car, a detail the articles never mention).
-- [ ] The reply is templated and filled in by code: it says plainly what the articles do not cover, then suggests the closest cars among the eight (by body type and powertrain from the registry, or by the best-scoring chunks) and invites a follow-up question.
-- [ ] No outside knowledge is ever added; for a known car with a missing detail the generation step says "not mentioned in the articles" and offers the closest related facts from the chunks.
-- [ ] Unit tests: refuses below threshold; refuses unknown car.
+- [x] Below-threshold score, or a car that is not in the car registry, returns a fixed refusal without the generation call.
+- [x] The registry check, including `unrecognized_cars`, is the primary gate; the threshold is tuned on the eval, which includes near-miss questions (a known car, a detail the articles never mention). (The threshold stays configurable at 0 until CW-303 tunes it.)
+- [x] The reply is templated and filled in by code: it says plainly what the articles do not cover, then suggests the closest cars among the eight (by body type and powertrain from the registry, or by the best-scoring chunks) and invites a follow-up question.
+- [x] No outside knowledge is ever added; for a known car with a missing detail the generation step says "not mentioned in the articles" and offers the closest related facts from the chunks. (Generate prompt rule 2.)
+- [x] Unit tests: refuses below threshold; refuses unknown car.
+- [x] As built: the unknown car is never classified (that would be outside knowledge); suggestions come from the user's own words, via hint words in `guardrails.body_type_words` and `powertrain_words` mapped to the registry values (a car scores one point per matching dimension; within a dimension the kind with the most hint words wins, so "היברידי נטען" is plug-in only). Without a hint, the low-relevance refusal suggests the cars of the best-scoring chunks; with neither, every refusal lists the eight cars grouped by powertrain with their body type. `Answer.suggested_cars` and the telemetry line record what was offered; at most `guardrails.max_suggestions` cars.
 
 ### CW-202 Post-check
 - [ ] A car named in the answer is acceptable only if it was retrieved this turn or appears in the text of the retrieved chunks (articles may mention rival cars legitimately); otherwise the answer is suspect.
@@ -362,5 +363,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 | 2026-10-29 | CW-002 done: all eight URLs return 200 with real article bodies, `robots.txt` was read and allows them. Decision: automatic download (identifiable User-Agent, 3 s delay, cache in `data/raw/`); manual placement stays as the documented fallback. |
 
 | 2026-10-29 | CW-003 done: six milestones (E0 to E5), PR template, pre-publish scan of the history found no secrets or data files, `.gitattributes` added to keep LF line endings (the Makefile needs them). Epic E0 closed. |
+
+| 2026-10-30 | CW-201 done: refusals suggest the closest of the eight cars (hint words from the user's message, else best-scoring chunks, else all eight grouped by powertrain and body type) and invite a follow-up; similarity threshold stays configurable at 0 until CW-303. |
 
 | 2026-10-29 | CW-101 done: `config/cars.yaml` plus `registry.py`, `fetch.py` (the CW-002 probe folded in and deleted), `clean.py` on beautifulsoup4 with `html.parser`, and `python -m app ingest` printing a per-article report. Each registry body type and powertrain carries the article words behind it; the Elantra article never states the Elantra's body type, so that value is null. Cleaner findings: the spec table uses `role=row` markup inside `<li>` and is kept as one line per row; "סיכום AI" is a script-loaded widget and is skipped; the Elantra sections are numbered `<h3>` questions; the Kia report has no subheadings and ends with four label/value stats. |

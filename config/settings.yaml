@@ -123,6 +123,24 @@ guardrails:
     - Zeekr
     - אקספנג
     - XPeng
+  # Refusals (CW-201) suggest the closest of the eight cars. Without outside knowledge
+  # the only grounded signal is the user's own words: these hint words map to the
+  # registry's body_type and powertrain values. A car scores one point per matching
+  # dimension; the best-scoring cars are suggested. With no hint, the cars of the
+  # best-scoring retrieved chunks are suggested instead, and with neither, the reply
+  # lists all eight grouped by powertrain.
+  max_suggestions: 3
+  body_type_words:
+    supermini: [סופרמיני, עירוני, עירונית]
+    hatchback: [האצ'בק, Hatchback]
+    sedan: [סדאן, סדן, Sedan]
+    suv: [פנאי, SUV, ג'יפ, ג'יפון, קרוסאובר, Crossover]
+    suv_coupe: [פנאי, פנאי-קופה, קופה, Coupe]   # an SUV coupe is an SUV too
+  powertrain_words:
+    petrol: [בנזין, בנזינים]
+    mild_hybrid: [היברידי, היברידית, היברידיים, Hybrid]
+    plug_in_hybrid: [היברידי, היברידית, היברידיים, נטען, נטענת, פלאג-אין, PHEV, Hybrid]
+    electric: [חשמלי, חשמלית, חשמליים, חשמליות]
 
 fetch:                 # polite download of the eight articles (CW-101)
   user_agent: "carwise-takehome/0.1 (+https://github.com/GaryShnol/carwise)"
