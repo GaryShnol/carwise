@@ -20,7 +20,15 @@ from carwise.registry import load_registry
 from carwise.retrieval.embedder import FakeEmbedder, Vector
 from carwise.retrieval.retriever import Retriever
 from carwise.schemas import Chunk, Generation, Intent, Understanding
-from eval.questions import Behavior, Category, Expect, Negative, Question, Source
+from eval.questions import (
+    Behavior,
+    Category,
+    Expect,
+    Negative,
+    ProbePurpose,
+    Question,
+    Source,
+)
 from eval.recording import (
     RecordedTurn,
     Recording,
@@ -39,6 +47,7 @@ from eval.retrieval import (
     percentile,
     probe_result,
     replay,
+    score_spreads,
 )
 
 SETTINGS = load_settings()
@@ -266,8 +275,9 @@ def test_grade_names_each_failure() -> None:
     )
     result = grade(q, [_graded(q, understanding("הטווח של MG S6", ["mg_s6"]))], RETRIEVER)
     assert not result.passed
-    assert "missed kia_ev9 / קיה EV9" in result.failures
-    assert "missed every sources_any alternative" in result.failures
+    # Each miss names the source's rank within its car: a parameter or an embedding problem.
+    assert "missed kia_ev9 / קיה EV9 (car rank 1)" in result.failures
+    assert any(f.startswith("missed every sources_any alternative") for f in result.failures)
     assert result.reciprocal_rank == 0.0
     assert result.sources[0].car_rank == 1  # the right chunk exists; the plan picked another car
 
@@ -299,11 +309,50 @@ def test_percentile_is_nearest_rank() -> None:
     assert percentile([float(v) for v in range(1, 21)], 95) == 19.0
 
 
+def _probe(purpose: ProbePurpose, turns: list[str]) -> Negative:
+    absent = ["ביטוח"] if purpose is ProbePurpose.THRESHOLD else []
+    return Negative(id=f"neg-{purpose}", purpose=purpose, turns=turns, absent=absent, why="t")
+
+
+def test_behavior_probes_are_graded_and_threshold_probes_feed_the_spread() -> None:
+    off_topic = understanding("ביטוח לרכב", [], Intent.OUT_OF_SCOPE)
+    behavior = _probe(ProbePurpose.BEHAVIOR, ["כמה עולה ביטוח לרכב?"])
+    behavior_result = probe_result(
+        behavior, replay(behavior, recorded(off_topic, turns=behavior.turns), make_pipeline, 6)
+    )
+    on_topic = understanding("ביטוח ל-MG S6", ["mg_s6"])
+    threshold = _probe(ProbePurpose.THRESHOLD, ["כמה עולה ביטוח ל-MG S6?"])
+    threshold_result = probe_result(
+        threshold, replay(threshold, recorded(on_topic, turns=threshold.turns), make_pipeline, 6)
+    )
+    assert behavior_result.passed is True and behavior_result.best_score is None
+    assert threshold_result.passed is None and threshold_result.best_score is not None
+
+    q = question("q", ["מה הטווח של MG S6?"])
+    answered = grade(q, [_graded(q, understanding("הטווח של MG S6", ["mg_s6"]))], RETRIEVER)
+    spreads = score_spreads([answered], [behavior_result, threshold_result])
+    assert spreads["answerable"].n == 1
+    assert spreads["answerable"].median == round(answered.best_score or 0, 4)
+    # The behavior probe has no score, so only the threshold probe is in the sample.
+    assert spreads["threshold_probes"].n == 1
+    assert spreads["threshold_probes"].max == round(threshold_result.best_score, 4)
+
+
+def test_a_behavior_probe_that_reaches_retrieval_fails() -> None:
+    plan = understanding("ביטוח", [])
+    probe = _probe(ProbePurpose.BEHAVIOR, ["כמה עולה ביטוח?"])
+    result = probe_result(probe, replay(probe, recorded(plan, turns=probe.turns), make_pipeline, 6))
+    assert result.passed is False
+
+
 def test_markdown_report_holds_metrics_and_no_chunk_text() -> None:
     q = question("q", ["מה הטווח של MG S6?"], sources=[Source(car="mg_s6", section="הטווח")])
     result = grade(q, [_graded(q, understanding("הטווח של MG S6", ["mg_s6"]))], RETRIEVER)
-    probe = Negative(id="neg", turns=["כמה עולה ביטוח?"], why="test")
-    probe_turns = recorded(understanding("ביטוח", []), turns=probe.turns)
+    plan = understanding("ביטוח", [])
+    probe = _probe(ProbePurpose.BEHAVIOR, ["כמה עולה ביטוח?"])
+    probes = [
+        probe_result(probe, replay(probe, recorded(plan, turns=probe.turns), make_pipeline, 6))
+    ]
     report = RetrievalReport(
         created="2026-10-30T00:00:00+00:00",
         embedder={"provider": "fake", "model": "fake", "revision": None},
@@ -314,10 +363,12 @@ def test_markdown_report_holds_metrics_and_no_chunk_text() -> None:
         warm_up_s=0.0,
         latency_ms={"p50": 1.0, "p95": 2.0},
         summary=by_category([result]),
+        scores=score_spreads([result], probes),
         questions=[result],
-        probes=[probe_result(probe, replay(probe, probe_turns, make_pipeline, 6))],
+        probes=probes,
     )
     text = markdown(report) + report.model_dump_json()
     assert "| q | single_fact | answer |" in text
-    assert "| neg | answer | fact |" in text
+    assert "| neg-behavior | behavior | answer | fact |" in text
+    assert "| threshold_probes | 0 |" in text
     assert SECRET_TEXT not in text

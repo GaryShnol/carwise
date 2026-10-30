@@ -12,7 +12,13 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict
 
-from eval.retrieval import CategorySummary, ProbeResult, QuestionResult, SourceResult
+from eval.retrieval import (
+    CategorySummary,
+    ProbeResult,
+    QuestionResult,
+    ScoreSpread,
+    SourceResult,
+)
 
 REPORTS_DIR = Path(__file__).parent / "reports"
 
@@ -30,6 +36,7 @@ class RetrievalReport(BaseModel):
     warm_up_s: float
     latency_ms: dict[str, float | None]  # p50 / p95 of the retrieve stage over all runs
     summary: list[CategorySummary]
+    scores: dict[str, ScoreSpread]  # best score: answerable questions vs threshold probes
     questions: list[QuestionResult]
     probes: list[ProbeResult]
 
@@ -74,6 +81,21 @@ def summary_rows(summary: list[CategorySummary]) -> list[str]:
     return rows
 
 
+def spread_rows(scores: dict[str, ScoreSpread]) -> list[str]:
+    rows = [
+        "| Best score of | n | min | Q1 | median | Q3 | max |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    for label, s in scores.items():
+        values = " | ".join(_num(v) for v in (s.min, s.q1, s.median, s.q3, s.max))
+        rows.append(f"| {label} | {s.n} | {values} |")
+    return rows
+
+
+def _pass(passed: bool | None) -> str:
+    return "-" if passed is None else ("pass" if passed else "FAIL")
+
+
 def markdown(report: RetrievalReport) -> str:
     lines = [
         f"# Retrieval eval: {report.embedder.get('model')}",
@@ -95,6 +117,14 @@ def markdown(report: RetrievalReport) -> str:
         f"p95 {_num(report.latency_ms['p95'], 0)} ms (query embedding plus scoring, CPU). "
         f"Model warm-up {report.warm_up_s:.1f} s.",
         "",
+        "## Score distribution",
+        "",
+        "Best retrieval score per case. Threshold probes ask about one of the eight cars on a",
+        "topic its article does not cover (eval/negatives.yaml); CW-303 sets the relevance",
+        "threshold between the two rows.",
+        "",
+        *spread_rows(report.scores),
+        "",
         "## Questions",
         "",
         "| Question | Category | Behavior | Expected sources: rank | Best score | Pass |",
@@ -114,9 +144,15 @@ def markdown(report: RetrievalReport) -> str:
         "",
         "## Negative probes (no article answers these)",
         "",
-        "| Probe | Behavior | Intent | Best score |",
-        "|---|---|---|---|",
+        "Behavior probes must get the out-of-scope reply; threshold probes are not graded",
+        "here, they supply the score distribution above.",
+        "",
+        "| Probe | Purpose | Behavior | Intent | Best score | Pass |",
+        "|---|---|---|---|---|---|",
     ]
     for p in report.probes:
-        lines.append(f"| {p.id} | {p.behavior} | {p.intent or '-'} | {_num(p.best_score)} |")
+        lines.append(
+            f"| {p.id} | {p.purpose} | {p.behavior} | {p.intent or '-'} | "
+            f"{_num(p.best_score)} | {_pass(p.passed)} |"
+        )
     return "\n".join(lines) + "\n"

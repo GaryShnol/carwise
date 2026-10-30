@@ -30,8 +30,15 @@ from eval.recording import (
     save_recording,
     stale_reasons,
 )
-from eval.report import REPORTS_DIR, RetrievalReport, summary_rows, write_report
-from eval.retrieval import by_category, grade, percentile, probe_result, replay
+from eval.report import REPORTS_DIR, RetrievalReport, spread_rows, summary_rows, write_report
+from eval.retrieval import (
+    by_category,
+    grade,
+    percentile,
+    probe_result,
+    replay,
+    score_spreads,
+)
 
 PipelineFactory = Callable[[LLMClient], Pipeline]
 
@@ -104,6 +111,12 @@ def run(args: argparse.Namespace) -> int:
     failed = [q for q in report.questions if not q.passed]
     for q in failed:
         print(f"FAIL {q.id}: {'; '.join(q.failures)}")
+    for p in report.probes:
+        if p.passed is False:
+            print(f"FAIL probe {p.id}: behavior {p.behavior}, expected out_of_scope")
+        if p.passed is None and p.best_score is None:
+            print(f"threshold probe {p.id} gave no score (behavior {p.behavior})")
+    print("\n".join(spread_rows(report.scores)))
     unstable = [q.id for q in report.questions if not q.stable]
     if unstable:
         print(f"unstable across runs: {', '.join(unstable)}")
@@ -155,6 +168,7 @@ def retrieval_report(
         warm_up_s=0.0,
         latency_ms={"p50": percentile(latencies, 50), "p95": percentile(latencies, 95)},
         summary=by_category(results),
+        scores=score_spreads(results, probe_results),
         questions=results,
         probes=probe_results,
     )
