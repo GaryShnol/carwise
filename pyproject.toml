@@ -35,6 +35,10 @@ packages = ["src/carwise"]
 testpaths = ["tests"]
 # app/ and eval/ live at the repository root and depend on src/carwise, never the reverse.
 pythonpath = ["."]
+# Slow tests load the real embedding model (1.1 GB download on first run); run them
+# explicitly with `uv run pytest -m slow`, since a later -m overrides this one.
+addopts = "-m 'not slow'"
+markers = ["slow: loads the real embedding model; opt-in with -m slow"]
 
 [tool.ruff]
 line-length = 100

@@ -67,7 +67,7 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | Epic | Milestone / tag | Tickets | Done | Points | Status |
 |---|---|---|---|---|---|
 | E0 Scaffold and source check | none | 3 | 3 | 3 | DONE |
-| E1 Thin vertical slice | `v0.1` | 6 | 2 | 11 | IN PROGRESS |
+| E1 Thin vertical slice | `v0.1` | 6 | 3 | 11 | IN PROGRESS |
 | E2 Reliability and guardrails | none | 6 | 0 | 9 | TODO |
 | E3 Measurement | none | 3 | 0 | 5 | TODO |
 | E4 Interface and packaging | none | 3 | 0 | 4 | TODO |
@@ -96,7 +96,7 @@ Branch: `epic/e1-vertical-slice` | Tag: `v0.1`
 |---|---|---|---|---|---|---|
 | CW-101 | Download script, cache and clean the eight articles | `feat` | S | P1 | DONE | CW-002 |
 | CW-102 | Structure-aware chunking with metadata | `feat` | M | P1 | DONE | CW-101 |
-| CW-103 | Embeddings, Chroma index, per-car retrieval | `feat` | M | P1 | IN PROGRESS | CW-102 |
+| CW-103 | Embeddings, Chroma index, per-car retrieval | `feat` | M | P1 | DONE | CW-102 |
 | CW-104 | `LLMClient` interface and one implementation | `feat` | S | P1 | TODO | CW-001 |
 | CW-105 | Basic pipeline (understand, generate) and CLI | `feat` | L | P1 | TODO | CW-103, CW-104 |
 | CW-106 | Eval question set (about 15, with trap questions), written before the guardrails | `feat` | M | P1 | TODO | CW-102 |
@@ -194,10 +194,12 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [x] Heading lines stay in the chunk text, so merged sections (pros and cons, several FAQ questions) keep their boundaries; `embed_text` adds the car name and section in front.
 
 ### CW-103 Embeddings, Chroma index, per-car retrieval
-- [ ] Multilingual embedding model with Hebrew support; version pinned in config.
-- [ ] `make ingest` builds the index; retrieval is deterministic for the same query.
-- [ ] Retrieval can filter by car and returns similarity scores.
-- [ ] Unit tests: per-car filter returns only that car.
+- [x] Multilingual embedding model with Hebrew support; version pinned in config.
+- [x] `make ingest` builds the index; retrieval is deterministic for the same query.
+- [x] Retrieval can filter by car and returns similarity scores.
+- [x] Unit tests: per-car filter returns only that car.
+- [x] As built: `embeddings.provider` selects the embedder (`sentence_transformers`, or `fake` for offline tests); `intfloat/multilingual-e5-base` pinned to commit `d1287505`, loaded from the local cache when present. The index fingerprint (embedder, chunk limits, chunk ids, chunk text) skips unchanged rebuilds. Retrieval ranks every candidate exactly and breaks ties by chunk id; `search`, `search_per_car` and `search_all` (cap per car). `python -m app search` prints metadata only.
+- [x] Finding for CW-303: 5 of 75 chunks exceed the model's 512-token window (max 647 tokens), so their tails are not embedded; tune `max_chars` (or measure in tokens). Similarity scores are compressed (about 0.79 to 0.86, an off-corpus car scores like a real match), which confirms the registry check must be the primary gate.
 
 ### CW-104 `LLMClient` interface and one implementation
 - [ ] Interface with `complete()` (supports structured output) and `embed()` if needed.
