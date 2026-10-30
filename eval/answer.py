@@ -199,7 +199,7 @@ def number_words(text: str) -> set[int]:
     """Small numbers written as Hebrew words ("חמישה", "לחמישה", "ושניים")."""
     found = set()
     for word in re.findall(r"[א-ת]+", text):
-        for cut in range(3):  # up to two one-letter prefixes, as in "ולחמישה"
+        for cut in range(min(3, len(word))):  # up to two one-letter prefixes, as in "ולחמישה"
             if cut and word[cut - 1] not in guardrails.HEBREW_PREFIXES:
                 break
             if word[cut:] in _NUMBER_WORDS:

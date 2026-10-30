@@ -282,3 +282,10 @@ def test_answer_diff_marks_fixed_and_regressed_questions() -> None:
     assert "| a | comparison | 0/1 | 1/1 | fixed | judge | - |" in text
     assert "| b | comparison | 1/1 | 0/1 | REGRESSED | - | judge |" in text
     assert "generate v3 -> v4" in text
+
+
+def test_number_words_handle_one_and_two_letter_words() -> None:
+    from eval.answer import number_words
+
+    assert number_words("ו ב של לי חמישה") == {5}
+    assert number_words("") == set()
