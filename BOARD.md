@@ -67,7 +67,7 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | Epic | Milestone / tag | Tickets | Done | Points | Status |
 |---|---|---|---|---|---|
 | E0 Scaffold and source check | none | 3 | 3 | 3 | DONE |
-| E1 Thin vertical slice | `v0.1` | 6 | 3 | 11 | IN PROGRESS |
+| E1 Thin vertical slice | `v0.1` | 6 | 4 | 11 | IN PROGRESS |
 | E2 Reliability and guardrails | none | 6 | 0 | 9 | TODO |
 | E3 Measurement | none | 3 | 0 | 5 | TODO |
 | E4 Interface and packaging | none | 3 | 0 | 4 | TODO |
@@ -99,7 +99,7 @@ Branch: `epic/e1-vertical-slice` | Tag: `v0.1`
 | CW-103 | Embeddings, Chroma index, per-car retrieval | `feat` | M | P1 | DONE | CW-102 |
 | CW-104 | `LLMClient` interface and one implementation | `feat` | S | P1 | TODO | CW-001 |
 | CW-105 | Basic pipeline (understand, generate) and CLI | `feat` | L | P1 | TODO | CW-103, CW-104 |
-| CW-106 | Eval question set (about 15, with trap questions), written before the guardrails | `feat` | M | P1 | TODO | CW-102 |
+| CW-106 | Eval question set (about 15, with trap questions), written before the guardrails | `feat` | M | P1 | DONE | CW-102 |
 
 ## Epic E2: Reliability and guardrails
 
@@ -225,12 +225,12 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [ ] Unit tests with the fake `LLMClient`: intent handling, fallback on invalid output, chitchat skipping retrieval.
 
 ### CW-106 Eval question set
-- [ ] About 15 questions in `eval/questions.yaml`, written after reading the articles and before building the guardrails and tuning, so the eval guides the work.
-- [ ] Categories: single-car facts, two-car comparisons, preference-driven recommendations, ranking questions across all cars, history-dependent follow-ups.
-- [ ] At least one scripted multi-turn scenario in which preferences accumulate and the final recommendation reflects them.
-- [ ] At least 4 trap questions: car not in the corpus, detail never mentioned, a mixing trap, and one more of the author's choice.
-- [ ] Each question states what must hold (cars, required fact or keyword, or expected refusal), not a full reference answer.
-- [ ] Each answerable question also records the expected car and section for the retrieval eval.
+- [x] About 15 questions in `eval/questions.yaml`, written after reading the articles and before building the guardrails and tuning, so the eval guides the work.
+- [x] Categories: single-car facts, two-car comparisons, preference-driven recommendations, ranking questions across all cars, history-dependent follow-ups.
+- [x] At least one scripted multi-turn scenario in which preferences accumulate and the final recommendation reflects them.
+- [x] At least 4 trap questions: car not in the corpus, detail never mentioned, a mixing trap, and one more of the author's choice.
+- [x] Each question states what must hold (cars, required fact or keyword, or expected refusal), not a full reference answer.
+- [x] Each answerable question also records the expected car and section for the retrieval eval.
 
 ### CW-201 Relevance gate and fixed refusal
 - [ ] Below-threshold score, or a car that is not in the car registry, returns a fixed refusal without the generation call.
