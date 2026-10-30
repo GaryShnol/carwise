@@ -56,7 +56,7 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | # | Item | Default if unanswered | Status |
 |---|---|---|---|
 | D1 | Interviewer questions (language, no-answer behavior, preference memory) | Answered by email on 2026-10-29: Hebrew only; do what is best for the user without outside information; preferences for one conversation only | DECIDED |
-| D2 | LLM provider | Decided: OpenAI only. `dev` profile: `gpt-5.4-nano` for both calls; `final` profile: `gpt-5.4-nano` for understanding and `gpt-5.4-mini` for generation (confirmed by the answer eval). Ollama stays an optional offline runtime via `base_url`. Still needed from the owner: `OPENAI_API_KEY` as an environment variable. Prices to be verified on the official pricing page in CW-104 | DECIDED, key pending |
+| D2 | LLM provider | Decided: OpenAI only. `dev` profile: `gpt-5.4-nano` for both calls; `final` profile: `gpt-5.4-nano` for understanding and `gpt-5.4-mini` for generation (confirmed by the answer eval). Ollama stays an optional offline runtime via `base_url`. `OPENAI_API_KEY` provided by the owner in a local `.env` (gitignored). Prices verified on the official pricing page in CW-104 (no difference) | DECIDED |
 | D3 | Default embedding model | Local multilingual sentence-transformers model, confirmed by CW-305 | OPEN |
 | D4 | Repository visibility | Public (decided); raw articles never committed | DECIDED |
 | D5 | Fetch fallback | Script download; private archive sent to the interviewer | DECIDED |
@@ -67,7 +67,7 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | Epic | Milestone / tag | Tickets | Done | Points | Status |
 |---|---|---|---|---|---|
 | E0 Scaffold and source check | none | 3 | 3 | 3 | DONE |
-| E1 Thin vertical slice | `v0.1` | 6 | 4 | 11 | IN PROGRESS |
+| E1 Thin vertical slice | `v0.1` | 6 | 5 | 11 | IN PROGRESS |
 | E2 Reliability and guardrails | none | 6 | 0 | 9 | TODO |
 | E3 Measurement | none | 3 | 0 | 5 | TODO |
 | E4 Interface and packaging | none | 3 | 0 | 4 | TODO |
@@ -97,7 +97,7 @@ Branch: `epic/e1-vertical-slice` | Tag: `v0.1`
 | CW-101 | Download script, cache and clean the eight articles | `feat` | S | P1 | DONE | CW-002 |
 | CW-102 | Structure-aware chunking with metadata | `feat` | M | P1 | DONE | CW-101 |
 | CW-103 | Embeddings, Chroma index, per-car retrieval | `feat` | M | P1 | DONE | CW-102 |
-| CW-104 | `LLMClient` interface and one implementation | `feat` | S | P1 | IN PROGRESS | CW-001 |
+| CW-104 | `LLMClient` interface and one implementation | `feat` | S | P1 | DONE | CW-001 |
 | CW-105 | Basic pipeline (understand, generate) and CLI | `feat` | L | P1 | TODO | CW-103, CW-104 |
 | CW-106 | Eval question set (about 15, with trap questions), written before the guardrails | `feat` | M | P1 | DONE | CW-102 |
 
@@ -202,14 +202,14 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [x] Finding for CW-303: 5 of 75 chunks exceed the model's 512-token window (max 647 tokens), so their tails are not embedded; tune `max_chars` (or measure in tokens). Similarity scores are compressed (about 0.79 to 0.86, an off-corpus car scores like a real match), which confirms the registry check must be the primary gate.
 
 ### CW-104 `LLMClient` interface and one implementation
-- [ ] Interface with `complete()` (supports structured output) and `embed()` if needed.
-- [ ] One implementation over the official OpenAI SDK with a configurable `base_url`; it serves OpenAI by default, and any OpenAI-compatible server (for example Ollama at `http://localhost:11434/v1`) as an option.
-- [ ] Config profiles `dev` (local) and `final` (OpenAI), selected by an environment variable or flag; keys from environment only.
-- [ ] Structured output is always validated with Pydantic, because local models are less reliable at following a schema.
-- [ ] Profiles: `dev` = `gpt-5.4-nano` for both calls; `final` = `gpt-5.4-nano` for understanding and `gpt-5.4-mini` for generation. Names and prices live in config.
-- [ ] Spike, documented in the commit message: does the chosen model accept a custom temperature? If not, use a low `reasoning_effort` plus a seed and note it in the README (determinism section). Check that reasoning tokens do not inflate cost, and verify prices on the official OpenAI pricing page.
-- [ ] Three-prompt Hebrew sanity check (a fact, a comparison, a refusal) with the chosen models.
-- [ ] Timeouts and one retry; a fake client exists for tests.
+- [x] Interface with `complete()` (supports structured output) and `embed()` if needed. As built: one method, `complete_json(system, messages, schema, *, model) -> LLMResult` (parsed object, usage, cost, latency, model); no `embed()`, embeddings stay local.
+- [x] One implementation over the official OpenAI SDK with a configurable `base_url`; it serves OpenAI by default, and any OpenAI-compatible server (for example Ollama at `http://localhost:11434/v1`) as an option. Uses Chat Completions, the API those servers implement.
+- [x] Config profiles selected by an environment variable or flag; keys from environment only. (Both profiles use OpenAI per decision D2, not a local `dev` model as first drafted.)
+- [x] Structured output is always validated with Pydantic, because local models are less reliable at following a schema. Strict JSON schema plus Pydantic; one corrective retry with the validation error, then `LLMOutputError`.
+- [x] Profiles: `dev` = `gpt-5.4-nano` for both calls; `final` = `gpt-5.4-nano` for understanding and `gpt-5.4-mini` for generation. Names and prices live in config.
+- [x] Spike: both models accept `temperature=0` and a seed; `reasoning_effort` accepts `none` and `low` (not `minimal`); defaults spend no reasoning tokens, `low` adds 17 to 32 billed as output. Config sends temperature 0, seed 7, effort `none`. Prices match the official page. Wording still varies between runs on open questions. See `docs/decisions/0001-llm-sampling-controls.md`.
+- [x] Three-prompt Hebrew sanity check (a fact, a comparison, a refusal) with the chosen models: 12 of 12 valid Hebrew JSON replies with correct facts and refusals (in `scripts/llm_spike.py`).
+- [x] Timeouts and one retry; a fake client exists for tests. Also: cost per call from config prices, a running total that refuses calls past `llm.max_cost_usd`, and a `live` test (deselected by default).
 
 ### CW-105 Basic pipeline and CLI
 - [ ] `pipeline.answer(message, session) -> Response` is the single entry point.

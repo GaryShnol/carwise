@@ -15,10 +15,12 @@ profiles:
     generate_model: gpt-5.4-mini
 
 llm:
-  # Sampling controls; null means "do not send". Which ones the models accept
-  # is decided by the CW-104 spike (docs/decisions/0001-llm-sampling-controls.md).
+  # Sampling controls; null means "do not send". Measured in the CW-104 spike
+  # (docs/decisions/0001-llm-sampling-controls.md): both gpt-5.4 models accept
+  # all three. "none" is sent explicitly so a provider default cannot add
+  # reasoning tokens (cost and latency); "minimal" is rejected by these models.
   temperature: 0.0
-  reasoning_effort: null   # none | minimal | low | medium | high
+  reasoning_effort: none   # none | low | medium | high
   seed: 7
   timeout_s: 30
   retries: 1
