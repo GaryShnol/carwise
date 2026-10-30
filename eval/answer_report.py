@@ -22,7 +22,7 @@ from carwise.prompts import PROMPT_VERSIONS
 from carwise.registry import Registry
 from eval.answer import BudgetStopError, Check, behavior_of, checks_for, play
 from eval.judge import PROMPT_VERSION as JUDGE_PROMPT
-from eval.judge import Judged, judge, load_criteria
+from eval.judge import Judged, criteria_version, judge, load_criteria
 from eval.questions import Behavior, Category, Question
 from eval.retrieval import percentile
 
@@ -188,7 +188,7 @@ def run_answer_eval(
         question_set=question_set,
         profile=profile,
         models=models,
-        prompts={**PROMPT_VERSIONS, "judge": JUDGE_PROMPT},
+        prompts={**PROMPT_VERSIONS, "judge": JUDGE_PROMPT, "judge_criteria": criteria_version()},
         runs_per_question=runs,
         complete=complete,
         questions=results,

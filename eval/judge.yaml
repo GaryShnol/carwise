@@ -4,7 +4,10 @@
 # Criteria are in English and state the expected outcome as the articles give it; the
 # judge grades against the excerpts the answer was given, never its own knowledge.
 
-version: 1
+# Version 2 (2026-10-30): trap-mixing-specs now requires the premise correction, as the
+# question itself does (version 1 also passed an answer that only avoided the mix-up).
+
+version: 2
 
 criteria:
   compare-elantra-rs3-acceleration: >
@@ -40,10 +43,11 @@ criteria:
 
   trap-mixing-specs: >
     The question attributes a 72.7 kWh battery to the MG S6. In the excerpts 72.7 kWh is
-    the Aion HT battery; the MG S6 battery is 77 kWh. Pass if the answer does not present
-    72.7 kWh as an MG S6 battery: it corrects the premise (the MG S6 has 77 kWh) or at least
-    gives MG S6 range figures only for its own battery. Fail if it states an MG S6 range for
-    a 72.7 kWh battery, accepts the premise, or attributes Aion HT figures to the MG S6.
+    the Aion HT battery; the MG S6 battery is 77 kWh. Pass only if the answer corrects the
+    premise: it states that the MG S6 battery is 77 kWh (saying that 72.7 kWh belongs to the
+    Aion HT is a plus, not required), and gives MG S6 figures only for its own battery. Fail
+    if it does not state the MG S6's 77 kWh battery, states an MG S6 range for a 72.7 kWh
+    battery, accepts the premise, or attributes Aion HT figures to the MG S6.
 
   rec-family-electric-scenario: >
     Over four turns the user said: an electric car, a budget up to 190,000 NIS, a family of

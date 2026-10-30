@@ -52,6 +52,12 @@ def load_criteria(path: Path = CRITERIA_PATH) -> dict[str, str]:
     return {key: " ".join(str(value).split()) for key, value in raw["criteria"].items()}
 
 
+def criteria_version(path: Path = CRITERIA_PATH) -> str:
+    """The judge.yaml version, recorded in every answer report next to the prompt version."""
+    raw: Any = yaml.safe_load(path.read_text(encoding="utf-8"))
+    return f"v{raw['version']}"
+
+
 def judge_input(criterion: str, user_turns: list[str], answer: Answer) -> str:
     """The judge's user message: the criterion, the conversation, the answer, the excerpts."""
     turns = "\n".join(f"{i}. {escape_text(turn)}" for i, turn in enumerate(user_turns, 1))

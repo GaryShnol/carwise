@@ -176,7 +176,7 @@ fetch:                 # polite download of the eight articles (CW-101)
 eval:                  # CW-302: every real-model eval run prints its cost and stops at its cap
   record_max_cost_usd: 0.10   # recording the understand outputs (about 30 nano calls)
   answer_max_cost_usd: 0.50   # one answer-eval run (every turn of every question)
-  judge_max_cost_usd: 0.20    # the judge's calls in one answer-eval run
+  judge_max_cost_usd: 0.30    # the judge's calls in one run (3 runs on final: about $0.21)
   judge_model: gpt-5.4        # larger than the generators; price verified (see prices)
 
 paths:

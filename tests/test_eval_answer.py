@@ -34,7 +34,7 @@ from eval.answer import (
     preference_checks,
 )
 from eval.answer_report import markdown, run_answer_eval
-from eval.judge import Verdict, judge, judge_input
+from eval.judge import Verdict, criteria_version, judge, judge_input
 from eval.questions import Behavior, Category, Expect, Question, Source
 
 REGISTRY = load_registry()
@@ -238,6 +238,7 @@ def test_run_keeps_answers_out_of_the_committed_report(tmp_path: Path) -> None:
         runs_dir=tmp_path / "runs",
     )
     assert report.complete and report.questions[0].passed_runs == 1
+    assert report.prompts["judge_criteria"] == criteria_version() == "v2"
     committed = markdown(report) + report.model_dump_json()
     assert SECRET not in committed and "זולה יותר" not in committed
     logged = (tmp_path / "runs" / "answers.jsonl").read_text(encoding="utf-8")
