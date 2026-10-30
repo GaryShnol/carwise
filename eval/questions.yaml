@@ -8,8 +8,11 @@
 #   must_not_*   facts that would prove the bot mixed cars or invented something
 # Facts were checked against the cleaned article text by tests/test_eval_questions.py.
 # Keywords are plain digits and short Hebrew words so that formatting variants still match.
+#
+# Version 2 (2026-10-30) only adds the direction-of-comparison block, after the first
+# retrieval baseline and before any tuning; no version-1 question was changed.
 
-version: 1
+version: 2
 
 shared:
   missing_phrases: &missing
@@ -95,6 +98,73 @@ questions:
         - ["5.8", "5,8"]
         - ["3.8", "3,8"]
     why: Both numbers must land on the right car; the numbers are close enough to be swapped.
+
+  # ---------------------------------------------------------------- direction of comparison
+  # ADDED IN VERSION 2, after the first retrieval baseline (see the header). A wrong
+  # "cheaper" was seen once in CW-203; these ask which car is more or less, for pairs
+  # where the articles give both numbers and every trim price in the articles points the
+  # same way. Keywords check the numbers; the direction itself is graded by the judge.
+  - id: compare-cheaper-mg-aion
+    category: comparison
+    turns: ["מה זול יותר, MG S6 או איון HT?"]
+    expect:
+      behavior: answer
+      sources:
+        - {car: mg_s6, section: "הרכב הנבחן"}
+        - {car: aion_ht, section: "הרכב הנבחן"}
+      must_include:
+        - ["168,888", "178,888", "168888", "178888"]
+        - ["179,990", "187,000", "179990", "187000"]
+    why: >
+      The MG S6 is cheaper under every price the articles give (168,888 or 178,888 against
+      179,990 or 187,000). The pair where the CW-203 run called the Aion HT cheaper.
+
+  - id: compare-pricier-elantra-link
+    category: comparison
+    turns: ["איזו יקרה יותר, יונדאי אלנטרה N או לינק אנד קו 01?"]
+    expect:
+      behavior: answer
+      sources:
+        - {car: hyundai_elantra_n, section: "הרכב הנבחן"}
+        - {car: link_and_co_01, section: "הרכב הנבחן"}
+      must_include:
+        - ["224,900", "225,000", "224900", "225000"]
+        - ["198,900", "199,000", "180,000", "198900", "199000", "180000"]
+    why: >
+      The Elantra N (224,900 or 225,000) is more expensive than either Link & Co 01 trim
+      (180,000 or 199,000). Asks "more expensive", the opposite word of the MG/Aion question.
+
+  - id: compare-faster-genesis-link
+    category: comparison
+    turns: ["מי מאיצה מהר יותר ל-100 קמ\"ש, ג'נסיס GV80 או לינק אנד קו 01?"]
+    expect:
+      behavior: answer
+      sources:
+        - {car: genesis_gv80, section: "הרכב הנבחן"}
+        - {car: link_and_co_01, section: "הרכב הנבחן"}
+      must_include:
+        - ["6.2", "6,2"]
+        - ["7.7", "7,7"]
+    why: >
+      The heavy luxury SUV is the quicker one (6.2 s against 7.7 s), against the intuition
+      a model might bring from outside the articles.
+
+  - id: compare-longer-range-kia-aion
+    category: comparison
+    turns: ["למי יש טווח ארוך יותר בפועל, לקיה EV9 או לאיון HT?"]
+    expect:
+      behavior: answer
+      sources:
+        - {car: kia_ev9, section: "קיה EV9"}
+      sources_any:
+        - {car: aion_ht, section: "הרכב הנבחן"}
+        - {car: aion_ht, section: "הטווח בפועל"}
+      must_include:
+        - ["432", "397"]
+        - ["370"]
+    why: >
+      Two kinds of figure: the Kia report measures a monthly and a cumulative average (432,
+      397), the Aion review states one real-world range (370). The Kia is longer either way.
 
   # ---------------------------------------------------------------- recommendations
   - id: rec-manual-sport
