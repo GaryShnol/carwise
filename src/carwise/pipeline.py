@@ -211,7 +211,9 @@ class Pipeline:
         turn.flags.append("postcheck_fallback")
         check = PostCheck(outcome=PostCheckOutcome.FALLBACK, attempts=attempts)
         limit = self._settings.guardrails.max_suggestions
-        text = guardrails.unverified_reply(self._registry, hits, limit)
+        text = guardrails.unverified_reply(
+            self._registry, hits, limit, self._settings.display.max_section_chars
+        )
         return self._reply(turn, text, RefusalReason.UNVERIFIED, plan, hits, post_check=check)
 
     def _post_check(

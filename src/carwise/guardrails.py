@@ -170,6 +170,29 @@ def closest_by_score(hits: Iterable[RetrievedChunk], limit: int) -> list[str]:
     return list(dict.fromkeys(hit.chunk.car for hit in ranked))[:limit]
 
 
+# --- section names shown to the user -------------------------------------------------
+# Must equal carwise.ingest.chunk.SECTION_SEPARATOR (a test checks it); not imported,
+# because chunk imports schemas, which imports this module.
+MERGED_SECTION_SEPARATOR = " / "
+ELLIPSIS = "…"
+
+
+def section_label(section: str, max_chars: int) -> str:
+    """A chunk's section name as the user sees it; Citation and telemetry keep the full one.
+
+    Why: merged sections join every heading ("שאלות נפוצות / מה הטווח? / כמה עולה?"),
+    which can run past 150 characters, and " / " reads like a path. A comma reads as a
+    list, and a cut at a word boundary keeps the line short without a broken word.
+    """
+    label = section.replace(MERGED_SECTION_SEPARATOR, ", ").strip()
+    if len(label) <= max_chars:
+        return label
+    cut = label[: max_chars - len(ELLIPSIS) + 1]
+    space = cut.rfind(" ")
+    cut = cut[:space] if space > 0 else cut[: max_chars - len(ELLIPSIS)]
+    return cut.rstrip(" ,;:-") + ELLIPSIS
+
+
 # --- fixed replies (Hebrew, gender-neutral address) -----------------------------------
 _BODY_TYPE_HE = {
     BodyType.SUPERMINI: "סופרמיני",
@@ -254,12 +277,18 @@ def out_of_scope_reply(registry: Registry) -> str:
     )
 
 
-def unverified_reply(registry: Registry, hits: list[RetrievedChunk], limit: int) -> str:
+def unverified_reply(
+    registry: Registry, hits: list[RetrievedChunk], limit: int, max_section_chars: int
+) -> str:
     """Safe fallback when two answers failed the post-check: no model text at all,
     only where in the articles the closest information is."""
     places = []
     for car_id in closest_by_score(hits, limit):
-        sections = [hit.chunk.section for hit in hits if hit.chunk.car == car_id]
+        sections = [
+            section_label(hit.chunk.section, max_section_chars)
+            for hit in hits
+            if hit.chunk.car == car_id
+        ]
         places.append(f"{registry.get(car_id).display_name} ({', '.join(dict.fromkeys(sections))})")
     where = f" המידע הקרוב ביותר נמצא בכתבות על {'; '.join(places)}." if places else ""
     return (

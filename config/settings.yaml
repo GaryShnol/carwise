@@ -145,6 +145,9 @@ guardrails:
     plug_in_hybrid: [היברידי, היברידית, היברידיים, נטען, נטענת, פלאג-אין, PHEV, Hybrid]
     electric: [חשמלי, חשמלית, חשמליים, חשמליות]
 
+display:              # what the user sees; telemetry and Citation keep the full value
+  max_section_chars: 60   # merged headings can run to 150+ chars; cut at a word boundary
+
 fetch:                 # polite download of the eight articles (CW-101)
   user_agent: "carwise-takehome/0.1 (+https://github.com/GaryShnol/carwise)"
   delay_s: 3.0         # between requests; robots.txt Crawl-delay wins if larger

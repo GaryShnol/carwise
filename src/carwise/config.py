@@ -82,6 +82,10 @@ class PreferencesConfig(_Strict):
     max_value_chars: int
 
 
+class DisplayConfig(_Strict):
+    max_section_chars: int
+
+
 class FetchConfig(_Strict):
     user_agent: str
     delay_s: float
@@ -106,6 +110,7 @@ class Settings(_Strict):
     input: InputConfig
     preferences: PreferencesConfig
     guardrails: GuardrailsConfig
+    display: DisplayConfig
     fetch: FetchConfig
     paths: PathsConfig
 

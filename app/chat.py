@@ -12,6 +12,7 @@ import argparse
 from pathlib import Path
 
 from carwise.config import load_settings
+from carwise.guardrails import section_label
 from carwise.llm.base import BudgetExceededError, LLMConfigError
 from carwise.llm.openai_client import OpenAIClient
 from carwise.pipeline import Pipeline
@@ -49,7 +50,7 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def format_answer(answer: Answer, *, show_cost: bool) -> str:
+def format_answer(answer: Answer, *, show_cost: bool, max_section_chars: int) -> str:
     lines = [answer.text]
     if answer.sources:
         lines.append("\nמקורות:")
@@ -58,7 +59,8 @@ def format_answer(answer: Answer, *, show_cost: bool) -> str:
             if (source.car, source.section) in seen:
                 continue
             seen.add((source.car, source.section))
-            lines.append(f"  - {source.car_name} | {source.section} | {source.source_url}")
+            section = section_label(source.section, max_section_chars)
+            lines.append(f"  - {source.car_name} | {section} | {source.source_url}")
     if show_cost:
         usage = answer.usage
         stages = ", ".join(f"{stage} {ms:.0f}" for stage, ms in answer.latency_ms.items())
@@ -115,4 +117,10 @@ def run(args: argparse.Namespace) -> int:
         except BudgetExceededError as error:
             print(error)
             return 1
-        print(format_answer(answer, show_cost=args.show_cost))
+        print(
+            format_answer(
+                answer,
+                show_cost=args.show_cost,
+                max_section_chars=settings.display.max_section_chars,
+            )
+        )
