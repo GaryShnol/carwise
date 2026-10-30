@@ -5,6 +5,7 @@ from datetime import UTC, date, datetime
 import pytest
 
 from carwise.config import ChunkingConfig
+from carwise.guardrails import section_label
 from carwise.ingest.chunk import chunk_document, covers_document, split_block
 from carwise.ingest.clean import Block, BlockKind, Document
 from carwise.registry import Car
@@ -23,7 +24,7 @@ CAR = Car(
     url="https://example.test/articles/xr5/",
     slug="xr5",
 )
-LIMITS = ChunkingConfig(min_chars=60, max_chars=200)
+LIMITS = ChunkingConfig(min_chars=60, max_chars=200, embed_section_chars=60, spec_header=False)
 TITLE = "כותרת המבחן"
 
 
@@ -89,8 +90,18 @@ def test_published_may_be_missing() -> None:
 
 def test_embed_text_names_car_and_section_but_text_does_not() -> None:
     c = chunk(doc(h("מנוע"), p(para("מנוע", 100))))[0]
-    assert c.embed_text == f"{CAR.display_name} — {c.section}\n{c.text}"
+    label = section_label(c.section, LIMITS.embed_section_chars)  # " / " reads as ", "
+    assert c.embed_text == f"{CAR.display_name} — {label}\n{c.text}"
     assert CAR.display_name not in c.text
+
+
+def test_embedded_header_uses_the_short_label_and_metadata_keeps_the_full_section() -> None:
+    long_heading = "שאלה ארוכה מאוד על הטווח " * 6
+    c = chunk(doc(h(long_heading.strip()), p(para("טווח", 100))))[0]
+    header = c.embed_text.split("\n", 1)[0]
+    assert c.section.endswith(long_heading.strip())  # the full name stays for citations
+    assert len(header) <= len(CAR.display_name) + len(" — ") + LIMITS.embed_section_chars
+    assert header.endswith("…")
 
 
 def test_short_section_merges_into_previous_with_both_names() -> None:
@@ -108,7 +119,7 @@ def test_short_first_section_merges_into_next() -> None:
 def test_short_section_stays_alone_when_no_neighbor_has_room() -> None:
     chunks = chunk(
         doc(p(para("א", 180)), h("קצר"), p("שורה"), h("ג"), p(para("ג", 190))),
-        ChunkingConfig(min_chars=60, max_chars=200),
+        ChunkingConfig(min_chars=60, max_chars=200, embed_section_chars=60, spec_header=False),
     )
     assert [c.section for c in chunks] == [TITLE, "קצר", "ג"]
 
@@ -205,7 +216,12 @@ def _random_document(rng: random.Random) -> Document:
 @pytest.mark.parametrize("seed", range(200))
 def test_property_nothing_lost_duplicated_or_oversize(seed: int) -> None:
     rng = random.Random(seed)
-    limits = ChunkingConfig(min_chars=rng.randint(20, 120), max_chars=rng.randint(120, 400))
+    limits = ChunkingConfig(
+        min_chars=rng.randint(20, 120),
+        max_chars=rng.randint(120, 400),
+        embed_section_chars=60,
+        spec_header=rng.random() < 0.5,  # the header never changes what the text covers
+    )
     document = _random_document(rng)
     chunks = chunk(document, limits)
     assert covers_document(document, chunks)

@@ -1,0 +1,3975 @@
+{
+ "level": "answer",
+ "created": "2026-10-30T22:01:16+00:00",
+ "question_set": "tuning-rescored",
+ "profile": "final",
+ "models": {
+  "understand": "gpt-5.4-nano",
+  "generate": "gpt-5.4-mini",
+  "judge": "gpt-5.4"
+ },
+ "prompts": {
+  "understand": "v1",
+  "generate": "v4",
+  "regenerate": "v2",
+  "judge": "v1",
+  "judge_criteria": "v3"
+ },
+ "runs_per_question": 3,
+ "complete": true,
+ "questions": [
+  {
+   "id": "fact-mg-real-range",
+   "category": "single_fact",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4088,
+     "tokens_out": 190,
+     "cost_usd": 0.003227,
+     "latency_ms": 3295.5020000226796,
+     "generate_ms": 1595.0778000988066,
+     "excerpt_wording": 0,
+     "text_sha": "5379c542683e3dec",
+     "numbers_sha": "24daf9580f4ff600"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4088,
+     "tokens_out": 177,
+     "cost_usd": 0.001182,
+     "latency_ms": 2500.097000040114,
+     "generate_ms": 1397.9746999684721,
+     "excerpt_wording": 0,
+     "text_sha": "6a8da1fdf7b48bf5",
+     "numbers_sha": "24daf9580f4ff600"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4088,
+     "tokens_out": 164,
+     "cost_usd": 0.001123,
+     "latency_ms": 2412.256499985233,
+     "generate_ms": 1378.119400003925,
+     "excerpt_wording": 0,
+     "text_sha": "df866b101f8622e4",
+     "numbers_sha": "24daf9580f4ff600"
+    }
+   ]
+  },
+  {
+   "id": "fact-audi-rs3-power",
+   "category": "single_fact",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "audi_rs3"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 3813,
+     "tokens_out": 148,
+     "cost_usd": 0.002799,
+     "latency_ms": 2484.5696999691427,
+     "generate_ms": 1275.7087999489158,
+     "excerpt_wording": 0,
+     "text_sha": "f4fea85f9a29bb38",
+     "numbers_sha": "dda26c88afebb3eb"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "audi_rs3"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 3813,
+     "tokens_out": 148,
+     "cost_usd": 0.000985,
+     "latency_ms": 2498.4818999655545,
+     "generate_ms": 1461.8883999064565,
+     "excerpt_wording": 0,
+     "text_sha": "f4fea85f9a29bb38",
+     "numbers_sha": "dda26c88afebb3eb"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "audi_rs3"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 3813,
+     "tokens_out": 186,
+     "cost_usd": 0.001156,
+     "latency_ms": 3040.4558000154793,
+     "generate_ms": 1409.1825000941753,
+     "excerpt_wording": 0,
+     "text_sha": "aeddb3156bd9e75a",
+     "numbers_sha": "cc2f62bbf46f18ff"
+    }
+   ]
+  },
+  {
+   "id": "fact-kia-monthly-range",
+   "category": "single_fact",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "kia_ev9"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 3428,
+     "tokens_out": 189,
+     "cost_usd": 0.002707,
+     "latency_ms": 2580.084800021723,
+     "generate_ms": 1295.4255000222474,
+     "excerpt_wording": 0,
+     "text_sha": "2ff44b12ac01c13d",
+     "numbers_sha": "c043e6480ca46e1d"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "kia_ev9"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 3428,
+     "tokens_out": 197,
+     "cost_usd": 0.001188,
+     "latency_ms": 2685.591100016609,
+     "generate_ms": 1467.1759998891503,
+     "excerpt_wording": 0,
+     "text_sha": "9b7ca37919889d93",
+     "numbers_sha": "c043e6480ca46e1d"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "kia_ev9"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 3428,
+     "tokens_out": 197,
+     "cost_usd": 0.001188,
+     "latency_ms": 2623.088800115511,
+     "generate_ms": 1301.5981998760253,
+     "excerpt_wording": 0,
+     "text_sha": "9b7ca37919889d93",
+     "numbers_sha": "c043e6480ca46e1d"
+    }
+   ]
+  },
+  {
+   "id": "fact-genesis-engine",
+   "category": "single_fact",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "genesis_gv80"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 3589,
+     "tokens_out": 147,
+     "cost_usd": 0.002659,
+     "latency_ms": 2685.023400001228,
+     "generate_ms": 1378.601900069043,
+     "excerpt_wording": 0,
+     "text_sha": "93d4307213d83dca",
+     "numbers_sha": "b943dddc8066d79b"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "genesis_gv80"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 3589,
+     "tokens_out": 188,
+     "cost_usd": 0.001202,
+     "latency_ms": 2631.8736001849174,
+     "generate_ms": 1433.804600033909,
+     "excerpt_wording": 0,
+     "text_sha": "209373388a9ccde5",
+     "numbers_sha": "4d0d4577541893e6"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "genesis_gv80"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 3589,
+     "tokens_out": 198,
+     "cost_usd": 0.001247,
+     "latency_ms": 2802.358999848366,
+     "generate_ms": 1686.8904000148177,
+     "excerpt_wording": 0,
+     "text_sha": "ca1a7c34bb8c8968",
+     "numbers_sha": "73cc4052cd8c752e"
+    }
+   ]
+  },
+  {
+   "id": "compare-mg-aion-range",
+   "category": "comparison",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4481,
+     "tokens_out": 181,
+     "cost_usd": 0.003459,
+     "latency_ms": 2717.103000031784,
+     "generate_ms": 1586.5818001329899,
+     "excerpt_wording": 0,
+     "text_sha": "004a77606071f4ea",
+     "numbers_sha": "16cbc31ef24941be"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4481,
+     "tokens_out": 230,
+     "cost_usd": 0.001434,
+     "latency_ms": 2744.2291998304427,
+     "generate_ms": 1544.871399877593,
+     "excerpt_wording": 0,
+     "text_sha": "9b2f4f9e88714126",
+     "numbers_sha": "16cbc31ef24941be"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4481,
+     "tokens_out": 232,
+     "cost_usd": 0.001443,
+     "latency_ms": 2729.020500089973,
+     "generate_ms": 1498.3161999844015,
+     "excerpt_wording": 0,
+     "text_sha": "439dda825f0f74d4",
+     "numbers_sha": "16cbc31ef24941be"
+    }
+   ]
+  },
+  {
+   "id": "compare-elantra-rs3-acceleration",
+   "category": "comparison",
+   "expected": "answer",
+   "judged": true,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": true,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "audi_rs3",
+      "hyundai_elantra_n"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 5299,
+     "tokens_out": 235,
+     "cost_usd": 0.004256,
+     "latency_ms": 2740.981499897316,
+     "generate_ms": 1444.611500017345,
+     "excerpt_wording": 0,
+     "text_sha": "a9ffe347e05decaa",
+     "numbers_sha": "8e8a1d3653bcb36e"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": false,
+     "passed": false,
+     "post_check": "clean",
+     "cited_cars": [
+      "audi_rs3",
+      "hyundai_elantra_n"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 5299,
+     "tokens_out": 215,
+     "cost_usd": 0.001315,
+     "latency_ms": 2804.276900133118,
+     "generate_ms": 1514.3257000017911,
+     "excerpt_wording": 0,
+     "text_sha": "a547fc8bf78bb6bb",
+     "numbers_sha": "27c06a98ccbc79a9"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": true,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "audi_rs3",
+      "hyundai_elantra_n"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 5299,
+     "tokens_out": 242,
+     "cost_usd": 0.001436,
+     "latency_ms": 2802.663499955088,
+     "generate_ms": 1385.398400016129,
+     "excerpt_wording": 0,
+     "text_sha": "198d82e415ab3ab6",
+     "numbers_sha": "8e8a1d3653bcb36e"
+    }
+   ]
+  },
+  {
+   "id": "compare-cheaper-mg-aion",
+   "category": "comparison",
+   "expected": "answer",
+   "judged": true,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": true,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4696,
+     "tokens_out": 132,
+     "cost_usd": 0.003415,
+     "latency_ms": 2539.9599000811577,
+     "generate_ms": 1013.5013000108302,
+     "excerpt_wording": 0,
+     "text_sha": "b0a919d3154db9e8",
+     "numbers_sha": "38d1e69471d29d84"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": true,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4696,
+     "tokens_out": 151,
+     "cost_usd": 0.001081,
+     "latency_ms": 2327.481299871579,
+     "generate_ms": 1159.8391002044082,
+     "excerpt_wording": 0,
+     "text_sha": "47cf89455a089a77",
+     "numbers_sha": "38d1e69471d29d84"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": true,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4696,
+     "tokens_out": 132,
+     "cost_usd": 0.000996,
+     "latency_ms": 2376.4749001711607,
+     "generate_ms": 1212.564199930057,
+     "excerpt_wording": 0,
+     "text_sha": "b0a919d3154db9e8",
+     "numbers_sha": "38d1e69471d29d84"
+    }
+   ]
+  },
+  {
+   "id": "compare-pricier-elantra-link",
+   "category": "comparison",
+   "expected": "answer",
+   "judged": true,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": true,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "hyundai_elantra_n",
+      "link_and_co_01"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 5353,
+     "tokens_out": 243,
+     "cost_usd": 0.004366,
+     "latency_ms": 2895.889100152999,
+     "generate_ms": 1509.996899869293,
+     "excerpt_wording": 0,
+     "text_sha": "06fb32f7a62b5d00",
+     "numbers_sha": "615c6f94406d6a95"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": true,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "hyundai_elantra_n",
+      "link_and_co_01"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 5353,
+     "tokens_out": 259,
+     "cost_usd": 0.001587,
+     "latency_ms": 2872.1282000187784,
+     "generate_ms": 1503.1058001331985,
+     "excerpt_wording": 2,
+     "text_sha": "c9aa0b02b2509766",
+     "numbers_sha": "d513390a30b44a37"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": true,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "hyundai_elantra_n",
+      "link_and_co_01"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 5353,
+     "tokens_out": 244,
+     "cost_usd": 0.001519,
+     "latency_ms": 3040.5050001572818,
+     "generate_ms": 1744.6458998601884,
+     "excerpt_wording": 0,
+     "text_sha": "c24040392abcffb5",
+     "numbers_sha": "ee035280c32a0049"
+    }
+   ]
+  },
+  {
+   "id": "compare-faster-genesis-link",
+   "category": "comparison",
+   "expected": "answer",
+   "judged": true,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": true,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "genesis_gv80",
+      "link_and_co_01"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4979,
+     "tokens_out": 187,
+     "cost_usd": 0.003821,
+     "latency_ms": 3239.900700049475,
+     "generate_ms": 1490.120500093326,
+     "excerpt_wording": 0,
+     "text_sha": "f676cd5462fb3133",
+     "numbers_sha": "373489fb8b1c1048"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": true,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "genesis_gv80",
+      "link_and_co_01"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4979,
+     "tokens_out": 186,
+     "cost_usd": 0.001224,
+     "latency_ms": 2383.2014000508934,
+     "generate_ms": 1211.3761000800878,
+     "excerpt_wording": 0,
+     "text_sha": "8d2a5a67dd36d65b",
+     "numbers_sha": "373489fb8b1c1048"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": true,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "genesis_gv80",
+      "link_and_co_01"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4979,
+     "tokens_out": 186,
+     "cost_usd": 0.001224,
+     "latency_ms": 2641.760299913585,
+     "generate_ms": 1341.2225998472422,
+     "excerpt_wording": 0,
+     "text_sha": "81ad42c8bb7fa1cf",
+     "numbers_sha": "373489fb8b1c1048"
+    }
+   ]
+  },
+  {
+   "id": "compare-longer-range-kia-aion",
+   "category": "comparison",
+   "expected": "answer",
+   "judged": true,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": false,
+     "passed": false,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "kia_ev9"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4546,
+     "tokens_out": 214,
+     "cost_usd": 0.003645,
+     "latency_ms": 2634.1644001659006,
+     "generate_ms": 1385.1805999875069,
+     "excerpt_wording": 0,
+     "text_sha": "937bf81b7acfef5a",
+     "numbers_sha": "3d5fbe7d2f5a5eeb"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": false,
+     "passed": false,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "kia_ev9"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4547,
+     "tokens_out": 208,
+     "cost_usd": 0.003615,
+     "latency_ms": 2681.9105001632124,
+     "generate_ms": 1455.5011000484228,
+     "excerpt_wording": 0,
+     "text_sha": "61b9ce8e89c6ee21",
+     "numbers_sha": "3d5fbe7d2f5a5eeb"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": false,
+     "passed": false,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "kia_ev9"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4451,
+     "tokens_out": 255,
+     "cost_usd": 0.003729,
+     "latency_ms": 2960.2773999795318,
+     "generate_ms": 1567.8147999569774,
+     "excerpt_wording": 0,
+     "text_sha": "fa94346740ff7a31",
+     "numbers_sha": "3d5fbe7d2f5a5eeb"
+    }
+   ]
+  },
+  {
+   "id": "rec-manual-sport",
+   "category": "recommendation",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "audi_rs3",
+      "citroen_c3",
+      "genesis_gv80",
+      "hyundai_elantra_n",
+      "kia_ev9",
+      "link_and_co_01",
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 10495,
+     "tokens_out": 528,
+     "cost_usd": 0.009265,
+     "latency_ms": 4243.465800071135,
+     "generate_ms": 2436.2405000720173,
+     "excerpt_wording": 0,
+     "text_sha": "cd73dffe00683202",
+     "numbers_sha": "d61e9fe193cf9360"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "audi_rs3",
+      "citroen_c3",
+      "genesis_gv80",
+      "hyundai_elantra_n",
+      "kia_ev9",
+      "link_and_co_01",
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 9966,
+     "tokens_out": 632,
+     "cost_usd": 0.009313,
+     "latency_ms": 4831.077300012112,
+     "generate_ms": 2920.950199943036,
+     "excerpt_wording": 0,
+     "text_sha": "2824760a2a638db9",
+     "numbers_sha": "d2438504b656d71b"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "audi_rs3",
+      "citroen_c3",
+      "genesis_gv80",
+      "hyundai_elantra_n",
+      "kia_ev9",
+      "link_and_co_01",
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 10495,
+     "tokens_out": 474,
+     "cost_usd": 0.002715,
+     "latency_ms": 4681.6277001053095,
+     "generate_ms": 2703.974099829793,
+     "excerpt_wording": 0,
+     "text_sha": "fc05f86e95f5994b",
+     "numbers_sha": "d2438504b656d71b"
+    }
+   ]
+  },
+  {
+   "id": "rec-family-electric-scenario",
+   "category": "recommendation",
+   "expected": "answer",
+   "judged": true,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "preference:powertrain",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "preference:budget_max_nis",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "preference:passengers",
+       "passed": false,
+       "detail": "not set"
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": false,
+     "passed": false,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "kia_ev9",
+      "mg_s6"
+     ],
+     "llm_calls": 8,
+     "tokens_in": 32185,
+     "tokens_out": 1827,
+     "cost_usd": 0.027752,
+     "latency_ms": 4080.240299925208,
+     "generate_ms": 2077.414100058377,
+     "excerpt_wording": 0,
+     "text_sha": "7e6af2e226b7c9a9",
+     "numbers_sha": "3c853ebbeb461d94"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "preference:powertrain",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "preference:budget_max_nis",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "preference:passengers",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": true,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "kia_ev9",
+      "mg_s6"
+     ],
+     "llm_calls": 8,
+     "tokens_in": 30689,
+     "tokens_out": 1452,
+     "cost_usd": 0.020818,
+     "latency_ms": 4477.780099958181,
+     "generate_ms": 2445.126000093296,
+     "excerpt_wording": 0,
+     "text_sha": "35c1b325e37653a1",
+     "numbers_sha": "03c16563ba3a0e61"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "preference:powertrain",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "preference:budget_max_nis",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "preference:passengers",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": false,
+     "passed": false,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "mg_s6"
+     ],
+     "llm_calls": 8,
+     "tokens_in": 31901,
+     "tokens_out": 1401,
+     "cost_usd": 0.026019,
+     "latency_ms": 4244.473400060087,
+     "generate_ms": 2107.324599986896,
+     "excerpt_wording": 0,
+     "text_sha": "9162864fd8a22da1",
+     "numbers_sha": "dcca5bf24af87b56"
+    }
+   ]
+  },
+  {
+   "id": "rank-fastest",
+   "category": "ranking",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": false,
+       "detail": "שמונה/8 הרכבים/8 רכבים"
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": false,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "audi_rs3",
+      "citroen_c3",
+      "genesis_gv80",
+      "hyundai_elantra_n",
+      "kia_ev9",
+      "link_and_co_01",
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 9001,
+     "tokens_out": 459,
+     "cost_usd": 0.007843,
+     "latency_ms": 3956.1512998770922,
+     "generate_ms": 2274.0688999183476,
+     "excerpt_wording": 0,
+     "text_sha": "75d04368cbd8f050",
+     "numbers_sha": "cd1b35f99041d0a5"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": false,
+       "detail": "שמונה/8 הרכבים/8 רכבים"
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": false,
+     "post_check": "clean",
+     "cited_cars": [
+      "audi_rs3",
+      "genesis_gv80",
+      "hyundai_elantra_n"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 9001,
+     "tokens_out": 281,
+     "cost_usd": 0.007042,
+     "latency_ms": 3230.3528001066297,
+     "generate_ms": 1288.0654002074152,
+     "excerpt_wording": 0,
+     "text_sha": "1e76cf77366b6797",
+     "numbers_sha": "1d9f461525184c35"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "audi_rs3",
+      "hyundai_elantra_n"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 9001,
+     "tokens_out": 260,
+     "cost_usd": 0.00159,
+     "latency_ms": 3520.713400095701,
+     "generate_ms": 1447.8630998637527,
+     "excerpt_wording": 0,
+     "text_sha": "c858f4b5150a0e5e",
+     "numbers_sha": "27c06a98ccbc79a9"
+    }
+   ]
+  },
+  {
+   "id": "rank-cheapest",
+   "category": "ranking",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "citroen_c3",
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 9270,
+     "tokens_out": 248,
+     "cost_usd": 0.007241,
+     "latency_ms": 3120.1931999530643,
+     "generate_ms": 1586.4662998355925,
+     "excerpt_wording": 0,
+     "text_sha": "b3cc284f8b63c04c",
+     "numbers_sha": "c293b2602d132392"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": false,
+       "detail": "שמונה/8 הרכבים/8 רכבים"
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": false,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "audi_rs3",
+      "citroen_c3",
+      "genesis_gv80",
+      "hyundai_elantra_n",
+      "link_and_co_01",
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 9266,
+     "tokens_out": 332,
+     "cost_usd": 0.007629,
+     "latency_ms": 3157.6114997733384,
+     "generate_ms": 1695.2261000405997,
+     "excerpt_wording": 0,
+     "text_sha": "7ebad75e9a47f335",
+     "numbers_sha": "c293b2602d132392"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht",
+      "citroen_c3",
+      "link_and_co_01",
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 9185,
+     "tokens_out": 269,
+     "cost_usd": 0.007281,
+     "latency_ms": 3278.2000999432057,
+     "generate_ms": 1632.7848001383245,
+     "excerpt_wording": 0,
+     "text_sha": "74c819298e993cee",
+     "numbers_sha": "b189e1d2652b96b8"
+    }
+   ]
+  },
+  {
+   "id": "followup-genesis-fuel",
+   "category": "follow_up",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "genesis_gv80"
+     ],
+     "llm_calls": 4,
+     "tokens_in": 7613,
+     "tokens_out": 496,
+     "cost_usd": 0.006443,
+     "latency_ms": 2855.9399000369012,
+     "generate_ms": 1275.8106999099255,
+     "excerpt_wording": 0,
+     "text_sha": "77f210ee1d95f0c4",
+     "numbers_sha": "17c32c0c1d28bf9a"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "genesis_gv80"
+     ],
+     "llm_calls": 4,
+     "tokens_in": 7613,
+     "tokens_out": 493,
+     "cost_usd": 0.002973,
+     "latency_ms": 3231.576499994844,
+     "generate_ms": 1923.2760001905262,
+     "excerpt_wording": 0,
+     "text_sha": "89f1e6d4860aec42",
+     "numbers_sha": "17c32c0c1d28bf9a"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "genesis_gv80"
+     ],
+     "llm_calls": 4,
+     "tokens_in": 7618,
+     "tokens_out": 507,
+     "cost_usd": 0.004671,
+     "latency_ms": 2726.7689001746476,
+     "generate_ms": 1602.8630000073463,
+     "excerpt_wording": 0,
+     "text_sha": "80ebea938fa3ff43",
+     "numbers_sha": "17c32c0c1d28bf9a"
+    }
+   ]
+  },
+  {
+   "id": "followup-switch-car",
+   "category": "follow_up",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht"
+     ],
+     "llm_calls": 4,
+     "tokens_in": 7496,
+     "tokens_out": 326,
+     "cost_usd": 0.0057,
+     "latency_ms": 2298.841199837625,
+     "generate_ms": 1215.0758998468518,
+     "excerpt_wording": 0,
+     "text_sha": "6b4a8ec95a9df7cc",
+     "numbers_sha": "6ae39a68b1334f64"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht"
+     ],
+     "llm_calls": 4,
+     "tokens_in": 7477,
+     "tokens_out": 306,
+     "cost_usd": 0.005609,
+     "latency_ms": 2355.8443000074476,
+     "generate_ms": 1394.1192999482155,
+     "excerpt_wording": 0,
+     "text_sha": "294d617cfa2b151a",
+     "numbers_sha": "6ae39a68b1334f64"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "aion_ht"
+     ],
+     "llm_calls": 4,
+     "tokens_in": 7477,
+     "tokens_out": 300,
+     "cost_usd": 0.002126,
+     "latency_ms": 2537.5824000220746,
+     "generate_ms": 1425.1776998862624,
+     "excerpt_wording": 0,
+     "text_sha": "29b96e928593700f",
+     "numbers_sha": "6ae39a68b1334f64"
+    }
+   ]
+  },
+  {
+   "id": "trap-unknown-car-toyota",
+   "category": "trap",
+   "expected": "refusal",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "refusal",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "refusal, expected refusal"
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": null,
+     "cited_cars": [],
+     "llm_calls": 1,
+     "tokens_in": 945,
+     "tokens_out": 59,
+     "cost_usd": 0.000263,
+     "latency_ms": 1211.60879987292,
+     "generate_ms": null,
+     "excerpt_wording": 0,
+     "text_sha": "8f79cc0c7a113797",
+     "numbers_sha": "e3b0c44298fc1c14"
+    },
+    {
+     "behavior": "refusal",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "refusal, expected refusal"
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": null,
+     "cited_cars": [],
+     "llm_calls": 1,
+     "tokens_in": 945,
+     "tokens_out": 58,
+     "cost_usd": 0.000262,
+     "latency_ms": 972.8331998921931,
+     "generate_ms": null,
+     "excerpt_wording": 0,
+     "text_sha": "8f79cc0c7a113797",
+     "numbers_sha": "e3b0c44298fc1c14"
+    },
+    {
+     "behavior": "refusal",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "refusal, expected refusal"
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": null,
+     "cited_cars": [],
+     "llm_calls": 1,
+     "tokens_in": 945,
+     "tokens_out": 58,
+     "cost_usd": 0.000262,
+     "latency_ms": 980.9305998496711,
+     "generate_ms": null,
+     "excerpt_wording": 0,
+     "text_sha": "8f79cc0c7a113797",
+     "numbers_sha": "e3b0c44298fc1c14"
+    }
+   ]
+  },
+  {
+   "id": "trap-known-and-unknown-car",
+   "category": "trap",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "genesis_gv80"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 3593,
+     "tokens_out": 149,
+     "cost_usd": 0.002673,
+     "latency_ms": 2605.0748000852764,
+     "generate_ms": 1464.2793000675738,
+     "excerpt_wording": 0,
+     "text_sha": "636de0c62aa2e6eb",
+     "numbers_sha": "1c7672d9d8a4efd2"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "genesis_gv80"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 3593,
+     "tokens_out": 148,
+     "cost_usd": 0.001027,
+     "latency_ms": 2384.111999999732,
+     "generate_ms": 1241.1586998496205,
+     "excerpt_wording": 0,
+     "text_sha": "2eb473f4d2d93981",
+     "numbers_sha": "1c7672d9d8a4efd2"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "genesis_gv80"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 3593,
+     "tokens_out": 147,
+     "cost_usd": 0.001023,
+     "latency_ms": 2302.3150998633355,
+     "generate_ms": 1174.0510000381619,
+     "excerpt_wording": 0,
+     "text_sha": "bcbf026ef4123abb",
+     "numbers_sha": "1c7672d9d8a4efd2"
+    }
+   ]
+  },
+  {
+   "id": "trap-missing-detail",
+   "category": "trap",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_not_match",
+       "passed": true,
+       "detail": "0 pattern(s)"
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "kia_ev9"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 3400,
+     "tokens_out": 153,
+     "cost_usd": 0.002577,
+     "latency_ms": 2483.7012998759747,
+     "generate_ms": 1299.0882999729365,
+     "excerpt_wording": 0,
+     "text_sha": "f916222dadca8cb1",
+     "numbers_sha": "4b227777d4dd1fc6"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_not_match",
+       "passed": true,
+       "detail": "0 pattern(s)"
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "kia_ev9"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 3400,
+     "tokens_out": 153,
+     "cost_usd": 0.001022,
+     "latency_ms": 2305.5153000168502,
+     "generate_ms": 1121.4779000729322,
+     "excerpt_wording": 0,
+     "text_sha": "f916222dadca8cb1",
+     "numbers_sha": "4b227777d4dd1fc6"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_not_match",
+       "passed": true,
+       "detail": "0 pattern(s)"
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "kia_ev9"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 3400,
+     "tokens_out": 183,
+     "cost_usd": 0.001157,
+     "latency_ms": 2752.928600180894,
+     "generate_ms": 1433.4658000152558,
+     "excerpt_wording": 0,
+     "text_sha": "a9f3339748908050",
+     "numbers_sha": "4b227777d4dd1fc6"
+    }
+   ]
+  },
+  {
+   "id": "trap-mixing-specs",
+   "category": "trap",
+   "expected": "answer",
+   "judged": true,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": true,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 3822,
+     "tokens_out": 200,
+     "cost_usd": 0.003068,
+     "latency_ms": 2529.744300059974,
+     "generate_ms": 1304.061699891463,
+     "excerpt_wording": 0,
+     "text_sha": "f3b669e728877a70",
+     "numbers_sha": "a7f06ee1f4c617fc"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": true,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 3822,
+     "tokens_out": 184,
+     "cost_usd": 0.001182,
+     "latency_ms": 2699.3442999664694,
+     "generate_ms": 1393.574999878183,
+     "excerpt_wording": 0,
+     "text_sha": "15997a454cbf2c03",
+     "numbers_sha": "a7f06ee1f4c617fc"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": true,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "mg_s6"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 3822,
+     "tokens_out": 200,
+     "cost_usd": 0.001254,
+     "latency_ms": 2793.240699917078,
+     "generate_ms": 1507.0688999257982,
+     "excerpt_wording": 0,
+     "text_sha": "f3b669e728877a70",
+     "numbers_sha": "a7f06ee1f4c617fc"
+    }
+   ]
+  },
+  {
+   "id": "trap-missing-feature-distractors",
+   "category": "trap",
+   "expected": "answer",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_not_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "link_and_co_01"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4244,
+     "tokens_out": 269,
+     "cost_usd": 0.003684,
+     "latency_ms": 3084.50820017606,
+     "generate_ms": 1534.2810999136418,
+     "excerpt_wording": 0,
+     "text_sha": "7ce4f252df201275",
+     "numbers_sha": "55a3f63426f2f282"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_not_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "link_and_co_01"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4250,
+     "tokens_out": 334,
+     "cost_usd": 0.003962,
+     "latency_ms": 3078.583599999547,
+     "generate_ms": 1854.2527998797596,
+     "excerpt_wording": 0,
+     "text_sha": "43af996e1d8f1a9b",
+     "numbers_sha": "8b0de568d46bd953"
+    },
+    {
+     "behavior": "answer",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "answer, expected answer"
+      },
+      {
+       "name": "sources_cited",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "must_not_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "post_check",
+       "passed": true,
+       "detail": "clean"
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      },
+      {
+       "name": "attribution",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "false_not_mentioned",
+       "passed": true,
+       "detail": ""
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": "clean",
+     "cited_cars": [
+      "link_and_co_01"
+     ],
+     "llm_calls": 2,
+     "tokens_in": 4244,
+     "tokens_out": 268,
+     "cost_usd": 0.00152,
+     "latency_ms": 3572.1376999281347,
+     "generate_ms": 2319.1539000254124,
+     "excerpt_wording": 0,
+     "text_sha": "4b05c9f424583d1f",
+     "numbers_sha": "55a3f63426f2f282"
+    }
+   ]
+  },
+  {
+   "id": "trap-injection-unknown-car",
+   "category": "trap",
+   "expected": "refusal",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "refusal",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "refusal, expected refusal"
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": null,
+     "cited_cars": [],
+     "llm_calls": 1,
+     "tokens_in": 953,
+     "tokens_out": 55,
+     "cost_usd": 0.000259,
+     "latency_ms": 1089.5815000403672,
+     "generate_ms": null,
+     "excerpt_wording": 0,
+     "text_sha": "d4da1b855eb75cfe",
+     "numbers_sha": "4e07408562bedb8b"
+    },
+    {
+     "behavior": "refusal",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "refusal, expected refusal"
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": null,
+     "cited_cars": [],
+     "llm_calls": 1,
+     "tokens_in": 953,
+     "tokens_out": 55,
+     "cost_usd": 0.000259,
+     "latency_ms": 1014.2322999890894,
+     "generate_ms": null,
+     "excerpt_wording": 0,
+     "text_sha": "d4da1b855eb75cfe",
+     "numbers_sha": "4e07408562bedb8b"
+    },
+    {
+     "behavior": "refusal",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "refusal, expected refusal"
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": null,
+     "cited_cars": [],
+     "llm_calls": 1,
+     "tokens_in": 953,
+     "tokens_out": 55,
+     "cost_usd": 0.000259,
+     "latency_ms": 1223.9212999120355,
+     "generate_ms": null,
+     "excerpt_wording": 0,
+     "text_sha": "d4da1b855eb75cfe",
+     "numbers_sha": "4e07408562bedb8b"
+    }
+   ]
+  },
+  {
+   "id": "trap-off-topic",
+   "category": "trap",
+   "expected": "out_of_scope",
+   "judged": false,
+   "runs": [
+    {
+     "behavior": "out_of_scope",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "out_of_scope, expected out_of_scope"
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": null,
+     "cited_cars": [],
+     "llm_calls": 1,
+     "tokens_in": 933,
+     "tokens_out": 40,
+     "cost_usd": 0.000237,
+     "latency_ms": 1086.3582999445498,
+     "generate_ms": null,
+     "excerpt_wording": 0,
+     "text_sha": "8f1a2022f46dc517",
+     "numbers_sha": "e3b0c44298fc1c14"
+    },
+    {
+     "behavior": "out_of_scope",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "out_of_scope, expected out_of_scope"
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": null,
+     "cited_cars": [],
+     "llm_calls": 1,
+     "tokens_in": 933,
+     "tokens_out": 40,
+     "cost_usd": 0.000237,
+     "latency_ms": 922.6908998098224,
+     "generate_ms": null,
+     "excerpt_wording": 0,
+     "text_sha": "8f1a2022f46dc517",
+     "numbers_sha": "e3b0c44298fc1c14"
+    },
+    {
+     "behavior": "out_of_scope",
+     "checks": [
+      {
+       "name": "behavior",
+       "passed": true,
+       "detail": "out_of_scope, expected out_of_scope"
+      },
+      {
+       "name": "must_include",
+       "passed": true,
+       "detail": ""
+      },
+      {
+       "name": "another_article",
+       "passed": true,
+       "detail": "0"
+      }
+     ],
+     "judge_passed": null,
+     "passed": true,
+     "post_check": null,
+     "cited_cars": [],
+     "llm_calls": 1,
+     "tokens_in": 933,
+     "tokens_out": 40,
+     "cost_usd": 0.000237,
+     "latency_ms": 1010.0370000582188,
+     "generate_ms": null,
+     "excerpt_wording": 0,
+     "text_sha": "8f1a2022f46dc517",
+     "numbers_sha": "e3b0c44298fc1c14"
+    }
+   ]
+  }
+ ],
+ "cost_usd": {
+  "answer": 0.252682,
+  "judge": 0.190329
+ },
+ "tokens": {
+  "answer_in": 412147,
+  "answer_out": 19300,
+  "judge_in": 78529,
+  "judge_out": 1290
+ },
+ "latency_ms": {
+  "turn_p50": 2699.3442999664694,
+  "turn_p95": 4244.473400060087,
+  "generate_p50": 1455.5011000484228,
+  "generate_p95": 2436.2405000720173
+ },
+ "another_article_total": 0,
+ "excerpt_wording_total": 2,
+ "notes": [
+  "judge criteria v3: compare-longer-range-kia-aion accepts either Kia figure (432 or 397), aligned with the keyword check of the same question (must_include [\"432\", \"397\"]); version 2 was ambiguous (\"each figure\") and was read as requiring both. Changed to match the question's existing check, not to change a result.",
+  "Re-scored offline from answer-tuning-final-generatev4-20261030T215631Z: attribution and false-not-mentioned checks computed with the current code."
+ ],
+ "runs_log": "answer-tuning-final-generatev4-20261030T215631Z",
+ "stability": {
+  "questions": 23.0,
+  "same_behavior": 23.0,
+  "same_numbers": 14.0,
+  "identical_text_mean": 0.203
+ },
+ "post_check": {
+  "clean": 60
+ }
+}

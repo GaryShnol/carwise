@@ -57,6 +57,15 @@ class EmbeddingsConfig(_Strict):
 class ChunkingConfig(_Strict):
     min_chars: int
     max_chars: int
+    embed_section_chars: int  # section label length in the embedded header (CW-303)
+    spec_header: bool  # CW-303 option A: list a chunk's table labels in its embedded header
+
+
+class LexicalConfig(_Strict):
+    enabled: bool
+    rrf_k: int
+    bm25_k1: float
+    bm25_b: float
 
 
 class RetrievalConfig(_Strict):
@@ -65,6 +74,8 @@ class RetrievalConfig(_Strict):
     cross_car_top_k: int
     cross_car_per_car_cap: int
     relevance_threshold: float
+    lexical: LexicalConfig
+    force_spec_box: bool  # CW-303 option B: comparisons get each named car's spec box
 
 
 class GuardrailsConfig(_Strict):
@@ -95,6 +106,14 @@ class FetchConfig(_Strict):
     retries: int
 
 
+class EvalConfig(_Strict):
+    # Each eval run gets its own client, so its cap replaces llm.max_cost_usd for that run.
+    record_max_cost_usd: float
+    answer_max_cost_usd: float
+    judge_max_cost_usd: float
+    judge_model: str
+
+
 class PathsConfig(_Strict):
     raw_dir: str
     index_dir: str
@@ -114,6 +133,7 @@ class Settings(_Strict):
     guardrails: GuardrailsConfig
     display: DisplayConfig
     fetch: FetchConfig
+    eval: EvalConfig
     paths: PathsConfig
 
     def profile(self, name: str | None = None) -> ProfileConfig:

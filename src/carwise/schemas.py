@@ -34,6 +34,9 @@ class Chunk(BaseModel):
     published: date | None
     text: str = Field(min_length=1)
     embed_text: str = Field(min_length=1)
+    # Labels of the article's own table rows in this chunk ("מחיר", "0 ל-100 קמ"ש (שניות)").
+    # The chunk with the most of them is the car's spec box (CW-303).
+    table_labels: list[str] = Field(default_factory=list)
 
 
 class RetrievedChunk(BaseModel):

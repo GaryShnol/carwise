@@ -20,7 +20,7 @@ test:
 lint:
 	uv run ruff check .
 	uv run ruff format --check .
-	uv run mypy src app
+	uv run mypy src app eval
 
 docker:
 	@echo "Dockerfile arrives with CW-402."; exit 1

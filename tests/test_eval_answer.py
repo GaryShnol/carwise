@@ -1,0 +1,519 @@
+"""Answer level of the eval (CW-302): checks, attribution, judge and the run, all offline.
+
+Synthetic chunk text only (the repository is public); car ids and names come from the
+registry because the pipeline resolves names through it. The LLM is the fake client.
+"""
+
+from __future__ import annotations
+
+import json
+from datetime import date
+from pathlib import Path
+
+from carwise.config import load_settings
+from carwise.llm.base import BudgetExceededError
+from carwise.llm.fake import FakeLLMClient
+from carwise.pipeline import Pipeline
+from carwise.registry import load_registry
+from carwise.retrieval.embedder import FakeEmbedder, Vector
+from carwise.retrieval.retriever import Retriever
+from carwise.schemas import (
+    Chunk,
+    Generation,
+    Intent,
+    Preference,
+    Preferences,
+    RetrievedChunk,
+    Understanding,
+)
+from eval.answer import (
+    another_article_count,
+    attribution_problems,
+    checks_for,
+    play,
+    preference_checks,
+)
+from eval.answer_report import markdown, run_answer_eval
+from eval.judge import Verdict, criteria_version, judge, judge_input
+from eval.questions import Behavior, Category, Expect, Question, Source
+
+REGISTRY = load_registry()
+LOADED = load_settings()
+SETTINGS = LOADED.model_copy(  # the hashing embedder scores on another scale: no threshold
+    update={"retrieval": LOADED.retrieval.model_copy(update={"relevance_threshold": 0.0})}
+)
+SECRET = "טקסט המבחן הסודי"  # stands in for article text: never in a committed report
+
+
+def _chunk(car_id: str, index: int, text: str, section: str = "מחיר") -> Chunk:
+    car = REGISTRY.get(car_id)
+    return Chunk(
+        chunk_id=f"{car_id}:{index:03d}",
+        car=car_id,
+        car_name=car.display_name,
+        section=section,
+        source_url=car.url,
+        published=date(2026, 1, 1),
+        text=text,
+        embed_text=text,
+    )
+
+
+CHUNKS = [
+    _chunk("mg_s6", 0, f"המחיר 168,888 שקלים. {SECRET}"),
+    _chunk("aion_ht", 0, "המחיר 179,990 שקלים"),
+]
+HITS = [RetrievedChunk(chunk=c, score=0.9) for c in CHUNKS]
+
+
+# ---------------------------------------------------------------- attribution
+def test_numbers_with_their_own_car_pass() -> None:
+    answer = (
+        "MG S6 עולה 168,888 שקלים (MG S6, מחיר), ואילו איון HT עולה 179,990 שקלים "
+        "(GAC איון HT, מחיר)."
+    )
+    assert attribution_problems(answer, HITS, [], REGISTRY) == []
+
+
+def test_a_swapped_price_is_caught_by_the_citation_that_follows_it() -> None:
+    answer = "MG S6 עולה 179,990 שקלים (MG S6, מחיר). איון HT עולה 168,888 (GAC איון HT, מחיר)."
+    found = attribution_problems(answer, HITS, [], REGISTRY)
+    assert [(p.number, p.placed_with, p.backed_by) for p in found] == [
+        ("179,990", "mg_s6", ["aion_ht"]),
+        ("168,888", "aion_ht", ["mg_s6"]),
+    ]
+
+
+def test_without_citations_the_car_in_the_numbers_clause_owns_it() -> None:
+    answer = "ל-MG S6 המחיר 179,990 ולאיון HT המחיר 168,888."
+    found = attribution_problems(answer, HITS, [], REGISTRY)
+    assert {(p.number, p.placed_with) for p in found} == {
+        ("179,990", "mg_s6"),
+        ("168,888", "aion_ht"),
+    }
+
+
+def test_numbers_the_user_stated_or_one_car_only_are_not_attribution_problems() -> None:
+    answer = "MG S6 עולה 179,990 (MG S6, מחיר)."
+    assert attribution_problems(answer, HITS, ["האם 179,990 זה המחיר?"], REGISTRY) == []
+    assert attribution_problems(answer, HITS[:1], [], REGISTRY) == []  # one car retrieved
+
+
+FAMILY_HITS = [
+    RetrievedChunk(chunk=_chunk("mg_s6", 0, "מרחב ראוי לנוסעים"), score=0.9),
+    RetrievedChunk(chunk=_chunk("hyundai_elantra_n", 0, "תיבה של 5 הילוכים"), score=0.9),
+]
+FAMILY_ANSWER = "MG S6 מתאים למשפחה של 5 (MG S6, מרחב)."
+
+
+def test_a_number_the_user_wrote_as_a_word_is_the_users() -> None:
+    assert (
+        attribution_problems(FAMILY_ANSWER, FAMILY_HITS, ["אנחנו משפחה של חמישה"], REGISTRY) == []
+    )
+    assert attribution_problems(FAMILY_ANSWER, FAMILY_HITS, ["ולחמישה נוסעים"], REGISTRY) == []
+
+
+def test_a_number_word_the_user_did_not_write_does_not_cover_the_number() -> None:
+    found = attribution_problems(FAMILY_ANSWER, FAMILY_HITS, ["אנחנו משפחה של ארבעה"], REGISTRY)
+    assert [(p.number, p.placed_with, p.backed_by) for p in found] == [
+        ("5", "mg_s6", ["hyundai_elantra_n"])
+    ]
+
+
+RANGE_HITS = [
+    RetrievedChunk(chunk=_chunk("kia_ev9", 0, 'טווח ממוצע מצטבר: 397 ק"מ', "טבלה"), score=0.9),
+    RetrievedChunk(
+        chunk=_chunk("aion_ht", 0, 'טווח נסיעה בפועל: 370 ק"מ', "הרכב הנבחן"), score=0.9
+    ),
+]
+SPRINT_HITS = [
+    RetrievedChunk(chunk=_chunk("audi_rs3", 0, "0 ל-100 ב-3.8 שניות", "הרכב הנבחן"), score=0.9),
+    RetrievedChunk(
+        chunk=_chunk("hyundai_elantra_n", 0, "מנוע 2.0 ליטר, 0 ל-100 ב-5.8 שניות"), score=0.9
+    ),
+]
+
+
+def test_a_car_named_after_its_number_owns_it() -> None:
+    """Hebrew order: the figure first, then the car ("370 ק"מ באיון HT")."""
+    answer = (
+        "טווח ממוצע מצטבר ב-EV9 הוא 397 ק״מ, לעומת טווח בפועל של 370 ק״מ באיון HT "
+        "(קיה EV9, טבלה; GAC איון HT, הרכב הנבחן)."
+    )
+    assert attribution_problems(answer, RANGE_HITS, [], REGISTRY) == []
+
+
+def test_a_swap_in_the_hebrew_order_is_still_caught() -> None:
+    answer = (
+        "טווח ממוצע ב-EV9 הוא 370 ק״מ, לעומת 397 ק״מ באיון HT "
+        "(קיה EV9, טבלה; GAC איון HT, הרכב הנבחן)."
+    )
+    found = attribution_problems(answer, RANGE_HITS, [], REGISTRY)
+    assert {(p.number, p.placed_with) for p in found} == {("370", "kia_ev9"), ("397", "aion_ht")}
+
+
+def test_a_car_after_the_conjunction_starts_a_new_clause() -> None:
+    # "ולאיון" right after 179,990 is the next clause's car, not this number's.
+    answer = "ל-MG S6 המחיר 168,888 ולאיון HT המחיר 179,990."
+    assert attribution_problems(answer, HITS, [], REGISTRY) == []
+
+
+def test_a_difference_of_two_stated_numbers_is_not_attributed() -> None:
+    """5.8 - 3.8 = 2.0, which also happens to be the Elantra's engine size."""
+    answer = (
+        "אלנטרה N מגיעה ל-100 ב-5.8 שניות (יונדאי אלנטרה N, פרק). אודי RS3 מגיעה ב-3.8 "
+        "שניות (אודי RS3, הרכב הנבחן). לכן האודי RS3 מהירה יותר בפער של 2.0 שניות "
+        "(אודי RS3, הרכב הנבחן; יונדאי אלנטרה N, פרק)."
+    )
+    assert attribution_problems(answer, SPRINT_HITS, [], REGISTRY) == []
+
+
+def test_another_article_phrasings_are_counted() -> None:
+    assert another_article_count("לפי הנתונים בכתבה אחרת, ובמאמר אחר") == 2
+    assert another_article_count("בכתבה על MG S6") == 0
+
+
+# ---------------------------------------------------------------- preferences
+def test_preference_checks_parse_numbers_words_and_hint_words() -> None:
+    profile = Preferences(
+        budget=Preference(value="עד 190 אלף שקל", source="m"),
+        powertrain=Preference(value="חשמלי", source="m"),
+        passengers=Preference(value="חמישה נוסעים", source="m"),
+    )
+    want = {"powertrain": "electric", "budget_max_nis": 190000, "passengers": 5}
+    assert all(c.passed for c in preference_checks(want, profile, SETTINGS))
+    empty = preference_checks(want, Preferences(), SETTINGS)
+    assert [c.passed for c in empty] == [False, False, False]
+
+
+# ---------------------------------------------------------------- checks through the pipeline
+class InMemoryStore:
+    def __init__(self) -> None:
+        self.embedder = FakeEmbedder()
+        vectors = self.embedder.embed_documents([c.embed_text for c in CHUNKS])
+        self.rows = list(zip(CHUNKS, vectors, strict=True))
+
+    def candidates(self, vector: Vector, car_ids: list[str] | None) -> list[tuple[Chunk, float]]:
+        return [
+            (chunk, round(sum(a * b for a, b in zip(vector, row, strict=True)), 6))
+            for chunk, row in self.rows
+            if car_ids is None or chunk.car in car_ids
+        ]
+
+
+STORE = InMemoryStore()
+RETRIEVER = Retriever(STORE, STORE.embedder, SETTINGS.retrieval)
+COMPARE = Question(
+    id="compare-cheaper",
+    category=Category.COMPARISON,
+    turns=["מה זול יותר, MG S6 או איון HT?"],
+    expect=Expect(
+        behavior=Behavior.ANSWER,
+        sources=[Source(car="mg_s6", section="מחיר"), Source(car="aion_ht", section="מחיר")],
+        must_include=[["168,888"], ["179,990"]],
+        must_not_include=["187,000"],
+    ),
+    why="test",
+)
+PLAN = Understanding(
+    intent=Intent.COMPARE,
+    cars=["mg_s6", "aion_ht"],
+    unrecognized_cars=[],
+    standalone_question="מה זול יותר, MG S6 או איון HT?",
+    preference_updates=[],
+)
+GOOD = Generation(
+    answer="MG S6 זולה יותר: 168,888 שקלים (MG S6, מחיר) מול 179,990 (GAC איון HT, מחיר).",
+    used_chunk_ids=["mg_s6:000", "aion_ht:000"],
+)
+
+
+def _pipeline(llm: FakeLLMClient) -> Pipeline:
+    return Pipeline(SETTINGS, REGISTRY, RETRIEVER, llm)
+
+
+def test_a_good_comparison_passes_every_check() -> None:
+    played = play(COMPARE, _pipeline(FakeLLMClient([PLAN, GOOD])), 6)
+    checks = {c.name: c for c in checks_for(COMPARE, played, SETTINGS, REGISTRY)}
+    assert set(checks) == {
+        "behavior", "sources_cited", "must_include", "must_not_include",
+        "post_check", "another_article", "attribution", "false_not_mentioned",
+    }  # fmt: skip
+    assert all(c.passed for c in checks.values()), checks
+
+
+def test_missing_citation_and_keyword_are_reported_by_name() -> None:
+    thin = Generation(answer="MG S6 זולה יותר (MG S6, מחיר).", used_chunk_ids=["mg_s6:000"])
+    played = play(COMPARE, _pipeline(FakeLLMClient([PLAN, thin])), 6)
+    failed = {
+        c.name: c.detail for c in checks_for(COMPARE, played, SETTINGS, REGISTRY) if not c.passed
+    }
+    assert failed["sources_cited"] == "aion_ht"
+    assert "must_include" in failed
+
+
+# ---------------------------------------------------------------- judge
+def test_judge_returns_the_verdict_and_its_cost() -> None:
+    played = play(COMPARE, _pipeline(FakeLLMClient([PLAN, GOOD])), 6)
+    client = FakeLLMClient([Verdict(passed=True, reason="MG S6 is cheaper.")])
+    verdict = judge(client, "gpt-5.4", "MG S6 is cheaper.", COMPARE.turns, played.last)
+    assert verdict.passed is True
+    message = client.calls[0].messages[0]["content"]
+    assert "Criterion:" in message and "<excerpt car=" in message
+
+
+def test_judge_that_cannot_answer_yields_no_verdict() -> None:
+    played = play(COMPARE, _pipeline(FakeLLMClient([PLAN, GOOD])), 6)
+    client = FakeLLMClient([BudgetExceededError("cap reached")])
+    verdict = judge(client, "gpt-5.4", "criterion", COMPARE.turns, played.last)
+    assert verdict.passed is None and "not judged" in verdict.reason
+    assert "<answer>" in judge_input("c", COMPARE.turns, played.last.text, played.last.retrieved)
+
+
+# ---------------------------------------------------------------- the run and its reports
+def test_run_keeps_answers_out_of_the_committed_report(tmp_path: Path) -> None:
+    llm = FakeLLMClient([PLAN, GOOD])
+    report = run_answer_eval(
+        [COMPARE],
+        lambda: _pipeline(llm),
+        None,
+        SETTINGS,
+        REGISTRY,
+        profile="dev",
+        models={"understand": "m", "generate": "m", "judge": "j"},
+        runs=1,
+        question_set="tuning",
+        runs_dir=tmp_path / "runs",
+    )
+    assert report.complete and report.questions[0].passed_runs == 1
+    assert report.prompts["judge_criteria"] == criteria_version() == "v3"
+    assert "aligned with the keyword check" in report.notes[0]
+    committed = markdown(report) + report.model_dump_json()
+    assert SECRET not in committed and "זולה יותר" not in committed
+    logged = (tmp_path / "runs" / "answers.jsonl").read_text(encoding="utf-8")
+    assert json.loads(logged)["turns"][0]["answer"] == GOOD.answer  # kept locally, gitignored
+
+
+def test_excerpt_wording_is_counted() -> None:
+    from eval.answer import excerpt_wording_count
+
+    assert excerpt_wording_count("בקטעים שסופקו לא מופיע טווח") >= 1
+    assert excerpt_wording_count("הנתון לא מוזכר בכתבה") == 0
+
+
+def test_answer_diff_marks_fixed_and_regressed_questions() -> None:
+    from eval.answer_diff import diff_markdown
+    from eval.answer_report import AnswerQuestion, AnswerReport, QuestionRun
+
+    def report(passes: dict[str, bool], generate: str) -> AnswerReport:
+        def run(ok: bool) -> QuestionRun:
+            return QuestionRun(
+                behavior="answer", checks=[], judge_passed=None if ok else False, passed=ok,
+                post_check="clean", cited_cars=[], llm_calls=2, tokens_in=1, tokens_out=1,
+                cost_usd=0.001, latency_ms=10.0, generate_ms=5.0,
+            )  # fmt: skip
+
+        return AnswerReport(
+            created="x", question_set="tuning", profile="dev", models={},
+            prompts={"generate": generate}, runs_per_question=1, complete=True,
+            questions=[
+                AnswerQuestion(id=q, category=Category.COMPARISON, expected=Behavior.ANSWER,
+                               judged=True, runs=[run(ok)])
+                for q, ok in passes.items()
+            ],
+            cost_usd={"answer": 0.0, "judge": 0.0}, tokens={},
+            latency_ms={"turn_p50": 1.0, "turn_p95": 2.0}, another_article_total=0, post_check={},
+        )  # fmt: skip
+
+    text = diff_markdown(
+        report({"a": False, "b": True}, "v3"), report({"a": True, "b": False}, "v4")
+    )
+    assert "| a | comparison | 0/1 | 1/1 | fixed | judge | - |" in text
+    assert "| b | comparison | 1/1 | 0/1 | REGRESSED | - | judge |" in text
+    assert "generate v3 -> v4" in text
+
+
+def test_number_words_handle_one_and_two_letter_words() -> None:
+    from eval.answer import number_words
+
+    assert number_words("ו ב של לי חמישה") == {5}
+    assert number_words("") == set()
+
+
+def test_rescore_recomputes_attribution_from_the_logged_answer(tmp_path: Path) -> None:
+    from eval.answer import Check
+    from eval.rescore import rescore
+
+    llm = FakeLLMClient([PLAN, GOOD])
+    report = run_answer_eval(
+        [COMPARE], lambda: _pipeline(llm), None, SETTINGS, REGISTRY, profile="dev",
+        models={"understand": "m", "generate": "m", "judge": "j"}, runs=1,
+        question_set="tuning", runs_dir=tmp_path / "runs",
+    )  # fmt: skip
+    assert report.runs_log == "runs"
+    # Pretend an older check had flagged it.
+    run = report.questions[0].runs[0]
+    stale = [Check(name="attribution", passed=False, detail="old") if c.name == "attribution"
+             else c for c in run.checks]  # fmt: skip
+    stale_run = run.model_copy(update={"checks": stale, "passed": False})
+    stale_question = report.questions[0].model_copy(update={"runs": [stale_run]})
+    old = report.model_copy(update={"questions": [stale_question]})
+    entries = [
+        json.loads(line) for line in (tmp_path / "runs" / "answers.jsonl").open(encoding="utf-8")
+    ]
+    fixed = rescore(old, entries, {c.chunk_id: c for c in CHUNKS}, REGISTRY, rejudge=set(),
+                    judge_client=None, judge_model="j", source="runs")  # fmt: skip
+    assert old.questions[0].passed_runs == 0 and fixed.questions[0].passed_runs == 1
+    assert "Re-scored offline from runs" in fixed.notes[-1]
+
+
+def test_stated_numbers_skip_car_names_and_ignore_formatting() -> None:
+    from eval.answer import stated_numbers
+
+    assert stated_numbers("ל-MG S6 טווח 430 ק״מ ומחיר 168,888", REGISTRY) == ["168888", "430"]
+    assert stated_numbers("לינק אנד קו 01 מאיצה ב-7.7", REGISTRY) == ["7.7"]
+
+
+def test_stability_counts_behavior_numbers_and_identical_pairs() -> None:
+    from eval.answer_report import AnswerQuestion, QuestionRun, stability_of
+
+    def run(behavior: str, text: str, nums: str) -> QuestionRun:
+        return QuestionRun(
+            behavior=behavior, checks=[], judge_passed=None, passed=True, post_check=None,
+            cited_cars=[], llm_calls=1, tokens_in=1, tokens_out=1, cost_usd=0.0,
+            latency_ms=1.0, generate_ms=None, text_sha=text, numbers_sha=nums,
+        )  # fmt: skip
+
+    steady = AnswerQuestion(
+        id="a", category=Category.SINGLE_FACT, expected=Behavior.ANSWER, judged=False,
+        runs=[run("answer", "t1", "n"), run("answer", "t1", "n"), run("answer", "t2", "n")],
+    )  # fmt: skip
+    shaky = steady.model_copy(
+        update={"id": "b", "runs": [run("answer", "t1", "n1"), run("refusal", "t2", "n2")]}
+    )
+    assert (steady.same_behavior, steady.same_numbers) == (True, True)
+    assert steady.identical_text_share == 1 / 3  # one identical pair of three
+    assert (shaky.same_behavior, shaky.same_numbers, shaky.identical_text_share) == (
+        False, False, 0.0,
+    )  # fmt: skip
+    assert stability_of([steady, shaky]) == {
+        "questions": 2, "same_behavior": 1, "same_numbers": 1, "identical_text_mean": 0.167,
+    }  # fmt: skip
+
+
+def test_pipeline_can_use_an_older_generate_prompt() -> None:
+    from carwise.prompts import generate_system
+
+    llm = FakeLLMClient([PLAN, GOOD])
+    pipeline = Pipeline(SETTINGS, REGISTRY, RETRIEVER, llm, generate_version="v1")
+    pipeline.ask("מה זול יותר, MG S6 או איון HT?", [])
+    assert llm.calls[1].system == generate_system("v1") != generate_system()
+
+
+def test_a_question_mark_inside_a_citation_does_not_end_the_sentence() -> None:
+    """Seen on the final profile: "מה התחדש?" is a section name inside the citation."""
+    hits = [
+        RetrievedChunk(chunk=_chunk("hyundai_elantra_n", 0, "מחיר: 224,900"), score=0.9),
+        RetrievedChunk(chunk=_chunk("link_and_co_01", 0, "מחיר: 198,900, 199,000"), score=0.9),
+    ]
+    answer = (
+        "יונדאי אלנטרה N יקרה יותר: המחיר שלה 224,900 שקלים, בעוד שלינק אנד קו 01 מוצע "
+        "ב-198,900–199,000 שקלים (יונדאי אלנטרה N, הרכב הנבחן; לינק אנד קו 01, מה התחדש? "
+        "/ הרכב הנבחן)."
+    )
+    assert attribution_problems(answer, hits, [], REGISTRY) == []
+
+
+def test_nested_parentheses_are_one_citation_and_sentences_split_outside_them() -> None:
+    from eval.answer import citation_spans, sentences
+
+    text = "טווח 397 (קיה EV9, אוטו ארוך־טווח (דוח מס' 4)). שאלה? (סעיף: מה התחדש? כן) סוף"
+    assert [text[a:b] for a, b in citation_spans(text)] == [
+        "(קיה EV9, אוטו ארוך־טווח (דוח מס' 4))",
+        "(סעיף: מה התחדש? כן)",
+    ]
+    assert sentences(text) == [
+        "טווח 397 (קיה EV9, אוטו ארוך־טווח (דוח מס' 4)).",
+        " שאלה?",
+        " (סעיף: מה התחדש? כן) סוף",
+    ]
+
+
+# ---------------------------------------------------------------- false "not mentioned"
+SPEC_HITS = [
+    RetrievedChunk(
+        chunk=_chunk("citroen_c3", 0, 'מחיר: ₪114,990\n0 ל-100 קמ"ש (שניות): 9.5', "הרכב הנבחן"),
+        score=0.9,
+    ),
+    RetrievedChunk(chunk=_chunk("kia_ev9", 0, "צריכת החשמל הממוצעת לאורך החודש"), score=0.9),
+]
+
+
+def test_a_figure_the_cars_spec_box_states_is_a_false_not_mentioned() -> None:
+    from eval.answer import false_not_mentioned
+
+    answer = "לגבי סיטרואן C3, נתון ה-0 ל-100 לא מוזכר בכתבה."
+    found = false_not_mentioned(answer, SPEC_HITS, [], REGISTRY)
+    assert [(f.car, f.quantity, f.chunk_id) for f in found] == [
+        ("citroen_c3", "zero_to_100", "citroen_c3:000")
+    ]
+
+
+def test_a_true_not_mentioned_and_other_quantities_are_left_alone() -> None:
+    from eval.answer import false_not_mentioned_check
+
+    kia_price = "המחיר של קיה EV9 לא מוזכר בכתבה."
+    c3_power = "כוח הסוס של סיטרואן C3 אינו מצוין."
+    assert false_not_mentioned_check(kia_price, SPEC_HITS, [], REGISTRY).passed
+    assert false_not_mentioned_check(c3_power, SPEC_HITS, [], REGISTRY).passed
+
+
+def test_a_sentence_naming_its_car_only_in_a_citation_is_skipped() -> None:
+    from eval.answer import false_not_mentioned
+
+    answer = "המחיר לא מוזכר (סיטרואן C3, הרכב הנבחן)."
+    assert false_not_mentioned(answer, SPEC_HITS, [], REGISTRY) == []  # a known, documented limit
+
+
+# The flagged cases of the final runs, as synthetic sentences (CW-302).
+FLEET = [
+    RetrievedChunk(chunk=_chunk(car, 0, text, "הרכב הנבחן"), score=0.9)
+    for car, text in [
+        ("citroen_c3", '0 ל-100 קמ"ש (שניות): 9.5'),
+        ("mg_s6", '0 ל-100 קמ"ש (שניות): 7.3\nטווח נסיעה בפועל (ק"מ): 430'),
+        ("kia_ev9", 'טווח ממוצע מצטבר: 397 ק"מ'),
+    ]
+]
+
+
+def test_a_listed_cars_generic_figure_takes_the_users_quantity() -> None:
+    from eval.answer import false_not_mentioned
+
+    answer = (
+        "לגבי סיטרואן C3, קיה EV9 ו-MG S6 — הנתון לא מוזכר בכתבות שלהם, "
+        "אבל כן מופיעים בהן נתוני 0 ל-100 של דגמים אחרים."
+    )  # as in the final run: the user asked about "0 ל-100" too
+    found = false_not_mentioned(answer, FLEET, ["איזה רכב הכי מהיר מ-0 ל-100?"], REGISTRY)
+    assert {(f.car, f.quantity) for f in found} == {
+        ("citroen_c3", "zero_to_100"),
+        ("mg_s6", "zero_to_100"),
+    }  # the Kia states no 0-100, so saying so is right
+
+
+def test_only_the_car_of_the_not_mentioned_clause_is_checked() -> None:
+    from eval.answer import false_not_mentioned
+
+    answer = "סיטרואן C3 עם 9.5, ו-MG S6 עם 7.3, וקיה EV9 לא מציינת נתון 0 ל-100."
+    assert false_not_mentioned(answer, FLEET, ["מי הכי מהיר?"], REGISTRY) == []
+
+
+def test_label_caveats_premises_and_other_clauses_are_not_false_claims() -> None:
+    from eval.answer import false_not_mentioned
+
+    caveat = 'בקיה EV9 לא מופיע נתון של טווח בפועל, אבל מצוין טווח ממוצע של 397 ק"מ.'
+    premise = 'הטווח של MG S6 עם סוללה של 72.7 קוט"ש לא מוזכר בכתבות.'
+    other_clause = "לגבי קיה EV9, לא מופיע מחיר, אבל הוא נדיב בטווח."
+    user = ['מה הטווח של MG S6 עם סוללה של 72.7 קוט"ש?']
+    assert false_not_mentioned(caveat, FLEET, [], REGISTRY) == []
+    assert false_not_mentioned(premise, FLEET, user, REGISTRY) == []
+    assert false_not_mentioned(other_clause, FLEET, [], REGISTRY) == []

@@ -8,8 +8,15 @@
 #   must_not_*   facts that would prove the bot mixed cars or invented something
 # Facts were checked against the cleaned article text by tests/test_eval_questions.py.
 # Keywords are plain digits and short Hebrew words so that formatting variants still match.
+#
+# Version 2 (2026-10-30) only adds the direction-of-comparison block, after the first
+# retrieval baseline and before any tuning; no version-1 question was changed.
+#
+# Version 3 (2026-10-30) adds the hold-out block at the end (`holdout: true`), written after
+# CW-303 froze every retrieval setting and never used to choose one. Its numbers are reported
+# separately; everything above it is the tuning set.
 
-version: 1
+version: 3
 
 shared:
   missing_phrases: &missing
@@ -95,6 +102,73 @@ questions:
         - ["5.8", "5,8"]
         - ["3.8", "3,8"]
     why: Both numbers must land on the right car; the numbers are close enough to be swapped.
+
+  # ---------------------------------------------------------------- direction of comparison
+  # ADDED IN VERSION 2, after the first retrieval baseline (see the header). A wrong
+  # "cheaper" was seen once in CW-203; these ask which car is more or less, for pairs
+  # where the articles give both numbers and every trim price in the articles points the
+  # same way. Keywords check the numbers; the direction itself is graded by the judge.
+  - id: compare-cheaper-mg-aion
+    category: comparison
+    turns: ["מה זול יותר, MG S6 או איון HT?"]
+    expect:
+      behavior: answer
+      sources:
+        - {car: mg_s6, section: "הרכב הנבחן"}
+        - {car: aion_ht, section: "הרכב הנבחן"}
+      must_include:
+        - ["168,888", "178,888", "168888", "178888"]
+        - ["179,990", "187,000", "179990", "187000"]
+    why: >
+      The MG S6 is cheaper under every price the articles give (168,888 or 178,888 against
+      179,990 or 187,000). The pair where the CW-203 run called the Aion HT cheaper.
+
+  - id: compare-pricier-elantra-link
+    category: comparison
+    turns: ["איזו יקרה יותר, יונדאי אלנטרה N או לינק אנד קו 01?"]
+    expect:
+      behavior: answer
+      sources:
+        - {car: hyundai_elantra_n, section: "הרכב הנבחן"}
+        - {car: link_and_co_01, section: "הרכב הנבחן"}
+      must_include:
+        - ["224,900", "225,000", "224900", "225000"]
+        - ["198,900", "199,000", "180,000", "198900", "199000", "180000"]
+    why: >
+      The Elantra N (224,900 or 225,000) is more expensive than either Link & Co 01 trim
+      (180,000 or 199,000). Asks "more expensive", the opposite word of the MG/Aion question.
+
+  - id: compare-faster-genesis-link
+    category: comparison
+    turns: ["מי מאיצה מהר יותר ל-100 קמ\"ש, ג'נסיס GV80 או לינק אנד קו 01?"]
+    expect:
+      behavior: answer
+      sources:
+        - {car: genesis_gv80, section: "הרכב הנבחן"}
+        - {car: link_and_co_01, section: "הרכב הנבחן"}
+      must_include:
+        - ["6.2", "6,2"]
+        - ["7.7", "7,7"]
+    why: >
+      The heavy luxury SUV is the quicker one (6.2 s against 7.7 s), against the intuition
+      a model might bring from outside the articles.
+
+  - id: compare-longer-range-kia-aion
+    category: comparison
+    turns: ["למי יש טווח ארוך יותר בפועל, לקיה EV9 או לאיון HT?"]
+    expect:
+      behavior: answer
+      sources:
+        - {car: kia_ev9, section: "קיה EV9"}
+      sources_any:
+        - {car: aion_ht, section: "הרכב הנבחן"}
+        - {car: aion_ht, section: "הטווח בפועל"}
+      must_include:
+        - ["432", "397"]
+        - ["370"]
+    why: >
+      Two kinds of figure: the Kia report measures a monthly and a cumulative average (432,
+      397), the Aion review states one real-world range (370). The Kia is longer either way.
 
   # ---------------------------------------------------------------- recommendations
   - id: rec-manual-sport
@@ -279,3 +353,88 @@ questions:
       must_include:
         - ["רכב", "מכוני"]
     why: Off-topic request; no retrieval, and the reply restates what the bot can do.
+
+  # ---------------------------------------------------------------- hold-out (version 3)
+  # ADDED AFTER TUNING (CW-303 step 5): written once the chunking, spec-box, k, cap and
+  # threshold settings were frozen; run once, reported apart from the tuning set above.
+  - id: holdout-fact-c3-power
+    category: single_fact
+    holdout: true
+    turns: ["כמה כוח סוס יש לסיטרואן C3 החדשה?"]
+    expect:
+      behavior: answer
+      sources:
+        - {car: citroen_c3, section: "הרכב הנבחן"}
+      must_include:
+        - ["110"]
+    why: The total power of the mild hybrid; the article also gives the electric motor's 22 hp.
+
+  - id: holdout-fact-link-trunk
+    category: single_fact
+    holdout: true
+    turns: ["מה נפח תא המטען של לינק אנד קו 01?"]
+    expect:
+      behavior: answer
+      sources_any:
+        - {car: link_and_co_01, section: "מה נותר כשהיה"}
+        - {car: link_and_co_01, section: "סביבת נהג, נוסעים"}
+      must_include:
+        - ["509"]
+    why: A prose fact stated twice; the article also gives the previous model's 466 litres.
+
+  - id: holdout-fact-elantra-power
+    category: single_fact
+    holdout: true
+    turns: ["כמה כוח סוס מפיק המנוע של יונדאי אלנטרה N הידנית?"]
+    expect:
+      behavior: answer
+      sources_any:
+        - {car: hyundai_elantra_n, section: "מבחן דרכים"}
+        - {car: hyundai_elantra_n, section: "איזה מנוע וביצועים"}
+      must_include:
+        - ["276"]
+    why: Power is in the prose only, not in the spec box.
+
+  - id: holdout-compare-topspeed-mg-aion
+    category: comparison
+    holdout: true
+    turns: ["למי יש מהירות מרבית גבוהה יותר, ל-MG S6 או לאיון HT?"]
+    expect:
+      behavior: answer
+      sources:
+        - {car: mg_s6, section: "מה הממדים והביצועים"}
+        - {car: aion_ht, section: "איזה נתונים עושים את HT"}
+      must_include:
+        - ["200"]
+        - ["183"]
+    why: Top speed is in the prose of both articles, not in the spec boxes the forced inclusion adds.
+
+  - id: holdout-compare-economy-c3-elantra
+    category: comparison
+    holdout: true
+    turns: ["איזו חסכונית יותר בדלק, סיטרואן C3 או יונדאי אלנטרה N?"]
+    expect:
+      behavior: answer
+      sources:
+        - {car: citroen_c3, section: "הרכב הנבחן"}
+        - {car: hyundai_elantra_n, section: "הרכב הנבחן"}
+      must_include:
+        - ["20"]
+        - ["10.3", "10,3"]
+    why: Both figures are in the spec boxes (km per litre); higher is more economical.
+
+  - id: holdout-rank-most-expensive
+    category: ranking
+    holdout: true
+    turns: ["מה הרכב הכי יקר מבין הרכבים שנבחנו?"]
+    expect:
+      behavior: answer
+      sources:
+        - {car: genesis_gv80, section: "הרכב הנבחן"}
+      must_include:
+        - ["ג'נסיס", "GV80"]
+        - ["575", "645"]
+        - *eight
+    why: >
+      The Genesis GV80 (575,990; 645,000 for the luxury trim) is above every Audi RS3 price in
+      its article (at most 571,000). A ranking must cover only the eight reviewed cars.

@@ -1,0 +1,68 @@
+# LLM-judge criteria (CW-302), only for what code cannot decide: the direction of a
+# comparison, a corrected premise, and whether a recommendation fits the stated
+# preferences. Keyed by question id; the questions themselves are not edited.
+# Criteria are in English and state the expected outcome as the articles give it; the
+# judge grades against the excerpts the answer was given, never its own knowledge.
+
+version: 3
+
+# Why each version changed; reports print the entry of the version they used.
+changes:
+  2: >
+    trap-mixing-specs requires the premise correction (MG S6 77 kWh), as the question
+    itself does; version 1 also passed an answer that only avoided the mix-up.
+  3: >
+    compare-longer-range-kia-aion accepts either Kia figure (432 or 397), aligned with
+    the keyword check of the same question (must_include ["432", "397"]); version 2 was
+    ambiguous ("each figure") and was read as requiring both. Changed to match the
+    question's existing check, not to change a result.
+
+criteria:
+  compare-elantra-rs3-acceleration: >
+    The user asks which is quicker to 100 km/h, the manual Hyundai Elantra N or the Audi
+    RS3, and how many seconds each takes. Per the excerpts the Audi RS3 is quicker (3.8 s)
+    than the manual Elantra N (5.8 s). Pass if the answer says the Audi RS3 is quicker and
+    gives each time with the right car. Fail if it says the Elantra N is quicker, swaps the
+    times, or gives no direction.
+
+  compare-cheaper-mg-aion: >
+    The user asks which is cheaper, the MG S6 or the Aion HT. Under every price the
+    excerpts give, the MG S6 is cheaper (168,888 or 178,888 against 179,990 or 187,000).
+    Pass if the answer says the MG S6 is cheaper and puts each price with the right car.
+    Fail if it says the Aion HT is cheaper, swaps prices, or gives no direction.
+
+  compare-pricier-elantra-link: >
+    The user asks which is more expensive, the Hyundai Elantra N or the Link & Co 01. The
+    Elantra N (224,900 or 225,000) is more expensive than either Link & Co 01 price in the
+    excerpts (180,000, 198,900 or 199,000). Pass if the answer says the Elantra N is more
+    expensive and puts each price with the right car. Fail otherwise.
+
+  compare-faster-genesis-link: >
+    The user asks which accelerates faster to 100 km/h, the Genesis GV80 or the Link & Co
+    01. The GV80 is faster (6.2 s) than the Link & Co 01 (7.7 s). Pass if the answer says
+    the GV80 is faster and puts each time with the right car. Fail otherwise.
+
+  compare-longer-range-kia-aion: >
+    The user asks which has the longer real-world range, the Kia EV9 or the Aion HT. The
+    Kia EV9 report measures 432 km (monthly average) and 397 km (cumulative average); the
+    Aion HT review states 370 km in practice. Pass if the answer says the Kia EV9 has the
+    longer range, gives at least one Kia figure (432 or 397; either is enough) and the Aion
+    HT's 370, each with the right car; noting that the figures are measured differently is
+    fine. Fail if it says the Aion HT is longer, swaps figures, or gives no direction.
+
+  trap-mixing-specs: >
+    The question attributes a 72.7 kWh battery to the MG S6. In the excerpts 72.7 kWh is
+    the Aion HT battery; the MG S6 battery is 77 kWh. Pass only if the answer corrects the
+    premise: it states that the MG S6 battery is 77 kWh (saying that 72.7 kWh belongs to the
+    Aion HT is a plus, not required), and gives MG S6 figures only for its own battery. Fail
+    if it does not state the MG S6's 77 kWh battery, states an MG S6 range for a 72.7 kWh
+    battery, accepts the premise, or attributes Aion HT figures to the MG S6.
+
+  rec-family-electric-scenario: >
+    Over four turns the user said: an electric car, a budget up to 190,000 NIS, a family of
+    five with two small children, so plenty of space. In the excerpts only the MG S6 and
+    the Aion HT are electric and priced under 190,000. Pass if the answer recommends the
+    MG S6 and/or the Aion HT, links the choice to the stated preferences, presents no car
+    that breaks them (over budget or not electric) as a fit, and says it covers only the
+    eight reviewed cars. Fail otherwise. Mentioning another car only to say it does not fit
+    is fine.

@@ -114,6 +114,22 @@ def mentioned(text: str, names: Iterable[str]) -> list[str]:
     return [name for name in names if _name_pattern(name).search(haystack)]
 
 
+def car_mentions(text: str, registry: Registry) -> list[tuple[int, int, str]]:
+    """Every car name in an already normalized text: (start, end, car id), in text order.
+
+    Where two names overlap ("GAC איון HT" and "איון HT"), the longer one wins.
+    """
+    found: list[tuple[int, int, str]] = []
+    for car in registry.cars:
+        for name in (car.display_name, *car.aliases):
+            found += [(m.start(), m.end(), car.id) for m in _name_pattern(name).finditer(text)]
+    kept: list[tuple[int, int, str]] = []
+    for start, end, car_id in sorted(found, key=lambda item: (item[0], -item[1])):
+        if not kept or start >= kept[-1][1]:
+            kept.append((start, end, car_id))
+    return kept
+
+
 def cars_in_text(text: str, registry: Registry) -> list[str]:
     """Registry car ids named in the text by any alias, in registry order."""
     return [car.id for car in registry.cars if mentioned(text, car.aliases)]
@@ -201,7 +217,7 @@ def unsupported_numbers(
         number.text
         for number in found
         if not _backed(number, from_chunks | from_user | allowed)
-        and not _derived(number, [other for other in operands if other is not number])
+        and not derived(number, [other for other in operands if other is not number])
     ]
     return list(dict.fromkeys(problems))
 
@@ -210,7 +226,7 @@ def _backed(number: numbers.Number, values: set[Decimal]) -> bool:
     return any(reading.backed_by(value) for reading in number.readings for value in values)
 
 
-def _derived(number: numbers.Number, operands: list[numbers.Number]) -> bool:
+def derived(number: numbers.Number, operands: list[numbers.Number]) -> bool:
     """True when the number is the sum or difference of two other numbers in the answer."""
     for first, second in combinations(operands, 2):
         for a, b, n in product(first.readings, second.readings, number.readings):

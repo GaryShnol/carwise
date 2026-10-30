@@ -12,8 +12,8 @@ FIXTURE = Path(__file__).parent / "fixtures" / "article.html"
 
 
 def test_pending_commands_report_their_ticket(capsys: pytest.CaptureFixture[str]) -> None:
-    assert main(["eval"]) == 2
-    assert PENDING["eval"] in capsys.readouterr().out
+    assert main(["ui"]) == 2
+    assert PENDING["ui"] in capsys.readouterr().out
 
 
 def test_unknown_command_is_rejected() -> None:

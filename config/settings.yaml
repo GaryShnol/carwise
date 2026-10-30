@@ -34,26 +34,38 @@ llm:
 prices:
   gpt-5.4-nano: { input: 0.20, cached_input: 0.02, output: 1.25 }
   gpt-5.4-mini: { input: 0.75, cached_input: 0.075, output: 4.50 }
+  # The eval judge (CW-302); verified on the official pricing page 2026-10-30, Standard, <272K context.
+  gpt-5.4: { input: 2.50, cached_input: 0.25, output: 15.00 }
 
 embeddings:
   provider: sentence_transformers        # or "fake": hash-based, no download (tests, offline CI)
-  model: intfloat/multilingual-e5-base   # provisional, chosen by data in CW-305
-  revision: d128750597153bb5987e10b1c3493a34e5a4502a   # Hugging Face commit, pinned in CW-103
-  query_prefix: "query: "                # e5 models are trained with these prefixes;
-  passage_prefix: "passage: "            # other candidates in CW-305 may use none
+  model: intfloat/multilingual-e5-large  # chosen in CW-305, see docs/decisions/0002
+  revision: 3d7cfbdacd47fdda877c5cd8a79fbcc4f2a574f3   # Hugging Face commit, pinned in CW-305
+  query_prefix: "query: "                # e5 models are trained with these prefixes
+  passage_prefix: "passage: "
   device: cpu
   batch_size: 16
 
 chunking:              # provisional, tuned in CW-303
   min_chars: 300
-  max_chars: 1500
+  max_chars: 1400     # CW-303: largest value with no chunk over e5's 512 tokens (was 1500)
+  # CW-303: the embedded header carries the section as the same short label users see
+  # (merged headings ran to 150+ characters and pushed 5 chunks past e5's 512 tokens).
+  embed_section_chars: 60
+  spec_header: false   # CW-303 option A (measured, not chosen): table labels in the embedded header
 
 retrieval:             # provisional, tuned in CW-303
   top_k: 5               # single-car questions
   per_car_cap: 3         # comparisons: chunks per named car
   cross_car_top_k: 12    # recommendation and ranking questions across all cars...
   cross_car_per_car_cap: 2   # ...with at most this many chunks per car, so most cars appear
-  relevance_threshold: 0.0   # cosine; 0 disables it until CW-303 tunes it on the eval
+  relevance_threshold: 0.80  # CW-303: a backstop below every answerable score (min 0.846), see ADR 0003
+  lexical:                   # CW-305: BM25 fused with the dense ranking (reciprocal rank fusion)
+    enabled: false           # the order changes; scores stay cosine, so the gate is unaffected
+    rrf_k: 60                # the usual RRF constant (Cormack et al. 2009), not tuned
+    bm25_k1: 1.5             # the usual Okapi BM25 defaults, not tuned
+    bm25_b: 0.75
+  force_spec_box: true       # CW-303 option B (chosen): each named car's spec box for comparisons
 
 input:
   max_message_chars: 500       # the current message; longer is refused politely
@@ -160,6 +172,12 @@ fetch:                 # polite download of the eight articles (CW-101)
   delay_s: 3.0         # between requests; robots.txt Crawl-delay wins if larger
   timeout_s: 20
   retries: 1           # network errors and 5xx only, never a 4xx
+
+eval:                  # CW-302: every real-model eval run prints its cost and stops at its cap
+  record_max_cost_usd: 0.10   # recording the understand outputs (about 30 nano calls)
+  answer_max_cost_usd: 0.50   # one answer-eval run (every turn of every question)
+  judge_max_cost_usd: 0.30    # the judge's calls in one run (3 runs on final: about $0.21)
+  judge_model: gpt-5.4        # larger than the generators; price verified (see prices)
 
 paths:
   raw_dir: data/raw

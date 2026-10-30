@@ -100,6 +100,25 @@ class SentenceTransformerEmbedder:
     def embed_query(self, text: str) -> Vector:
         return self._encode([self._config.query_prefix + text])[0]
 
+    def passage_token_lengths(self, texts: list[str]) -> tuple[list[int], int]:
+        """Real token counts of passages (prefix included) and the model's window.
+
+        For the embedding comparison (CW-305): a passage longer than the window is
+        silently truncated by the model, so its tail never reaches the vector.
+        """
+        model = self._load()
+        encoded = model.tokenizer(
+            [self._config.passage_prefix + text for text in texts], truncation=False, verbose=False
+        )
+        window = model.max_seq_length
+        if window is None:
+            raise ValueError(f"{self._config.model} declares no max_seq_length")
+        return [len(ids) for ids in encoded["input_ids"]], window
+
+    def weight_bytes(self) -> int:
+        """Bytes the model's parameters take in memory (CW-305 resource report)."""
+        return sum(p.numel() * p.element_size() for p in self._load().parameters())
+
 
 class FakeEmbedder:
     """Deterministic hashed bag of words: texts sharing words score higher.

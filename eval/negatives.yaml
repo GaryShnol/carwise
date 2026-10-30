@@ -1,0 +1,114 @@
+# Negative probes: questions no article answers. Kept apart from questions.yaml, which
+# is the hold-out set reported on, never tuned on.
+#
+# Two purposes:
+#   behavior   off-topic questions with no car. The understand step classifies them as
+#              out of scope, so they never reach retrieval and give no score. They check
+#              the refusal via intent and nothing else.
+#   threshold  a topic no article covers, about one of the eight cars, so the understand
+#              step sends it to retrieval. Their best scores, and only theirs, are the
+#              "no answer here" sample CW-303 tunes the relevance threshold against.
+#
+# Every threshold probe lists `absent` patterns, checked against the named car's cleaned
+# article by tests/test_eval_questions.py. The comment above each probe records the
+# corpus-wide text search of 2026-10-30 (all 75 chunks of the eight articles), including
+# the false positives that were looked at and dismissed.
+
+version: 2
+
+probes:
+  # ---------------------------------------------------------------- behavior (version 1)
+  - id: neg-insurance
+    purpose: behavior
+    turns: ["כמה עולה ביטוח מקיף לרכב חדש?"]
+    why: Insurance cost; no article discusses insurance.
+
+  - id: neg-change-tyre
+    purpose: behavior
+    turns: ["איך מחליפים גלגל בצד הדרך?"]
+    why: A how-to about tyres; the articles mention tyres only as specs.
+
+  - id: neg-driving-lessons
+    purpose: behavior
+    turns: ["כמה שיעורי נהיגה צריך לעשות לפני הטסט?"]
+    why: Driving school; car words without any car facts.
+
+  - id: neg-license-fee
+    purpose: behavior
+    turns: ["כמה עולה אגרת הרישוי השנתית לרכב?"]
+    why: An annual licence fee; prices in the articles are list prices, not fees.
+
+  - id: neg-dead-battery
+    purpose: behavior
+    turns: ["מה עושים כשהמצבר מת בבוקר קר?"]
+    why: Roadside help; "battery" appears in every EV review in another sense.
+
+  - id: neg-sell-used-car
+    purpose: behavior
+    turns: ["איך מוכרים רכב יד שנייה במחיר טוב?"]
+    why: Selling a used car; the articles review new cars only.
+
+  # ---------------------------------------------------------------- threshold (version 2)
+  # Search: ביטוח|פרמיה. No hit in any article. One "פרמיה" in the Kia EV9 report means
+  # a price premium, not insurance.
+  - id: thr-insurance-genesis
+    purpose: threshold
+    turns: ["כמה עולה ביטוח מקיף לג'נסיס GV80?"]
+    absent: ["ביטוח"]
+    why: Insurance cost of a car the corpus covers; the GV80 article gives only prices.
+
+  # Search: אחריות. Covered for the Citroën C3, MG S6 and Aion HT, so this probe names
+  # a car whose article has no warranty text. No hit in the Elantra N article.
+  - id: thr-warranty-elantra
+    purpose: threshold
+    turns: ["כמה שנות אחריות יש על יונדאי אלנטרה N?"]
+    absent: ["אחריות"]
+    why: >
+      Warranty is a near miss: three other articles state it, so the best score can come
+      from a real warranty chunk of another car if retrieval ever leaves the named car.
+
+  # Search: טיפול תקופתי|טיפולים|עלות טיפול|תחזוקה|אחזקה|מוסך. No hit in any article.
+  - id: thr-service-cost-link
+    purpose: threshold
+    turns: ["כמה עולה טיפול תקופתי ללינק אנד קו 01?"]
+    absent: ["טיפול תקופתי", "טיפולים", "עלות טיפול", "תחזוקה", "אחזקה", "מוסך"]
+    why: Running costs; the article gives fuel and electricity use, not service cost.
+
+  # Search: ערך שארית|ירידת ערך|פיחות|יד שנייה|יד 2|משומש|שווי. No real hit: every
+  # "שווי" match is inside another word (עכשווי, שוויץ, משווים).
+  - id: thr-resale-audi
+    purpose: threshold
+    turns: ["כמה ערך יאבד אודי RS3 אחרי שלוש שנים?"]
+    absent: ["ערך שארית", "ירידת ערך", "פיחות", "יד שנייה", "יד 2", "משומש"]
+    why: Resale value; the article discusses the price when new only.
+
+  # Search: גרירה|גרור|גורר|לגרור. No hit in any article.
+  - id: thr-towing-kia
+    purpose: threshold
+    turns: ["כמה משקל יכולה קיה EV9 לגרור?"]
+    absent: ["גרירה", "גרור", "גורר"]
+    why: Towing capacity of the large SUV; the long-term report never mentions it.
+
+  # Search: אספקה|המתנה|מסירה|מסירת|ממתינים. No hit in any article.
+  - id: thr-delivery-mg
+    purpose: threshold
+    turns: ["כמה זמן מחכים לאספקה של MG S6 אחרי ההזמנה?"]
+    absent: ["אספקה", "המתנה", "מסירה", "מסירת", "ממתינים"]
+    why: Delivery time after ordering; not a road-test topic.
+
+  # Search: מוסכ|מרכז שירות|מרכזי שירות|רשת שירות|סניפ. No hit in any article.
+  - id: thr-dealer-citroen
+    purpose: threshold
+    turns: ["איפה יש מוסכי שירות מורשים של סיטרואן C3?"]
+    absent: ["מוסכ", "מרכז שירות", "מרכזי שירות", "רשת שירות", "סניפ"]
+    why: The service network; not a road-test topic, and the article does not touch it.
+
+  # Search: גניב|גנב|מיגון|אימובילייזר. No real hit: one "מגניבים" in the C3 article
+  # means "cool".
+  - id: thr-theft-aion
+    purpose: threshold
+    turns: ["יש לאיון HT מערכת מיגון נגד גניבה?"]
+    absent: ["מיגון", "גניבה", "אימובילייזר"]
+    why: >
+      Anti-theft equipment; the article lists safety and comfort equipment at length, so
+      equipment chunks will score high without answering.

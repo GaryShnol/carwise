@@ -52,6 +52,7 @@ def fingerprint(chunks: list[Chunk], embedder: Embedder, limits: ChunkingConfig)
         "embedder": embedder.identity,
         "chunking": limits.model_dump(),
         "chunk_ids": [c.chunk_id for c in chunks],
+        "table_labels": [c.table_labels for c in chunks],
         "text_sha256": text_hash.hexdigest(),
     }
     return hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()
@@ -73,6 +74,7 @@ def _metadata(chunk: Chunk) -> dict[str, str]:
         "section": chunk.section,
         "source_url": chunk.source_url,
         "embed_text": chunk.embed_text,
+        "table_labels": json.dumps(chunk.table_labels, ensure_ascii=False),  # no lists in Chroma
     }
     if chunk.published:
         meta["published"] = chunk.published.isoformat()
@@ -90,6 +92,7 @@ def _chunk(text: str, meta: dict[str, Any]) -> Chunk:
         published=date.fromisoformat(str(published)) if published else None,
         text=text,
         embed_text=str(meta["embed_text"]),
+        table_labels=json.loads(str(meta.get("table_labels", "[]"))),
     )
 
 
@@ -153,6 +156,14 @@ class ChunkStore:
 
     def count(self) -> int:
         return self._collection.count()
+
+    def chunks(self) -> list[Chunk]:
+        """Every stored chunk, in id order: the corpus the lexical index is built on."""
+        result = self._collection.get(include=["documents", "metadatas"])
+        documents = result["documents"] or []
+        metadatas = result["metadatas"] or []
+        pairs = zip(documents, metadatas, strict=True)
+        return sorted((_chunk(t, dict(m)) for t, m in pairs), key=lambda c: c.chunk_id)
 
     def candidates(self, vector: Vector, car_ids: list[str] | None) -> list[tuple[Chunk, float]]:
         """Every chunk (of the given cars), with cosine similarity, unsorted.

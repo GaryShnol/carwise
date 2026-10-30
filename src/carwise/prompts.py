@@ -20,17 +20,29 @@ PROMPT_DIR = Path(__file__).parent / "llm" / "prompts"
 # generate v2 (CW-202): excerpts are one set of articles, no "in another article".
 # generate v3 (CW-203): how to use the "User preferences" block for recommendations.
 # regenerate v2 (CW-206): numbers exactly as the excerpts give them; show both operands.
+# generate v4 (CW-302): compare figures under different labels and say so; correct a
+# premise with the asked car's own figure; call the sources "the articles". Measured on the
+# final profile and NOT adopted: 60/69 against 64/69 for v3, and on gpt-5.4-mini it named
+# the wrong winner in a comparison (docs/decisions/0004). Kept for the record.
 PROMPT_VERSIONS = {"understand": "v1", "generate": "v3", "regenerate": "v2"}
 
 
-def _load(name: str) -> str:
-    path = PROMPT_DIR / f"{name}.{PROMPT_VERSIONS[name]}.txt"
+def _load(name: str, version: str | None = None) -> str:
+    path = PROMPT_DIR / f"{name}.{version or PROMPT_VERSIONS[name]}.txt"
     return path.read_text(encoding="utf-8").strip()
+
+
+def generate_system(version: str | None = None) -> str:
+    """The generate prompt of a given version; the configured one by default.
+
+    The eval compares versions side by side (CW-302), so an older file stays loadable.
+    """
+    return _load("generate", version)
 
 
 # string.Template ($name) rather than str.format: prompt text may contain braces.
 UNDERSTAND_SYSTEM_TEMPLATE = Template(_load("understand"))
-GENERATE_SYSTEM = _load("generate")
+GENERATE_SYSTEM = generate_system()
 REGENERATE_TEMPLATE = Template(_load("regenerate"))
 
 

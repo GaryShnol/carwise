@@ -3,7 +3,13 @@ from pathlib import Path
 
 import pytest
 
-from carwise.config import ChunkingConfig, EmbeddingsConfig, RetrievalConfig, load_settings
+from carwise.config import (
+    ChunkingConfig,
+    EmbeddingsConfig,
+    LexicalConfig,
+    RetrievalConfig,
+    load_settings,
+)
 from carwise.retrieval.embedder import FakeEmbedder, SentenceTransformerEmbedder, make_embedder
 from carwise.retrieval.retriever import Retriever
 from carwise.retrieval.store import (
@@ -16,9 +22,16 @@ from carwise.retrieval.store import (
 from carwise.schemas import Chunk
 
 # Synthetic chunks only; the repository is public.
-LIMITS = ChunkingConfig(min_chars=10, max_chars=500)
+LIMITS = ChunkingConfig(min_chars=10, max_chars=500, embed_section_chars=60, spec_header=False)
+LEXICAL_OFF = LexicalConfig(enabled=False, rrf_k=60, bm25_k1=1.5, bm25_b=0.75)
 CONFIG = RetrievalConfig(
-    top_k=3, per_car_cap=2, cross_car_top_k=6, cross_car_per_car_cap=2, relevance_threshold=0.0
+    top_k=3,
+    per_car_cap=2,
+    cross_car_top_k=6,
+    cross_car_per_car_cap=2,
+    relevance_threshold=0.0,
+    lexical=LEXICAL_OFF,
+    force_spec_box=False,
 )
 TOPICS = ["מנוע טורבו כוח סוס", "טווח סוללה טעינה", "מחיר אבזור גרסה", "נוחות מושבים שקט"]
 
@@ -126,6 +139,11 @@ def test_chunk_round_trips_through_the_store(retriever: Retriever) -> None:
     assert by_id == {chunk.chunk_id: chunk for chunk in _corpus()}  # incl. a missing date
 
 
+def test_store_lists_every_chunk_in_id_order(retriever: Retriever, tmp_path: Path) -> None:
+    chunks = ChunkStore(tmp_path).chunks()
+    assert chunks == sorted(_corpus(), key=lambda chunk: chunk.chunk_id)
+
+
 def test_build_is_skipped_when_nothing_changed(tmp_path: Path) -> None:
     embedder, chunks = FakeEmbedder(), _corpus()
     assert build_index(chunks, embedder, LIMITS, tmp_path).rebuilt
@@ -138,7 +156,9 @@ def test_build_reruns_when_the_fingerprint_changes(tmp_path: Path, change: str) 
     embedder, chunks, limits = FakeEmbedder(), _corpus(), LIMITS
     build_index(chunks, embedder, limits, tmp_path)
     if change == "limits":
-        limits = ChunkingConfig(min_chars=20, max_chars=500)
+        limits = ChunkingConfig(
+            min_chars=20, max_chars=500, embed_section_chars=60, spec_header=False
+        )
     elif change == "text":
         chunks = [chunks[0].model_copy(update={"embed_text": "שונה"}), *chunks[1:]]
     elif change == "ids":

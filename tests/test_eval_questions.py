@@ -14,9 +14,17 @@ from pathlib import Path
 
 import pytest
 
+from carwise import guardrails
 from carwise.ingest.clean import BlockKind, Document, clean_html
 from carwise.registry import load_registry
-from eval.questions import Behavior, Category, Question, load_questions
+from eval.questions import (
+    Behavior,
+    Category,
+    ProbePurpose,
+    Question,
+    load_negatives,
+    load_questions,
+)
 
 RAW_DIR = Path("data/raw")
 MIN_TRAPS = 4
@@ -45,6 +53,30 @@ def test_there_is_a_multi_turn_preference_scenario() -> None:
     scenarios = [q for q in load_questions().questions if q.expect.preferences]
     assert scenarios
     assert all(len(q.turns) >= 3 for q in scenarios)
+
+
+def test_negative_probes_load_and_never_share_an_id_with_a_question() -> None:
+    # The recording keys questions and probes in one map, so a shared id would overwrite one.
+    probes = load_negatives().probes
+    assert probes
+    question_ids = {question.id for question in load_questions().questions}
+    assert not question_ids & {probe.id for probe in probes}
+
+
+def test_behavior_probes_name_no_car_and_threshold_probes_name_one() -> None:
+    # A behavior probe that named a car would test the registry gate; a threshold probe
+    # must name exactly one car so the understand step sends it to that car's chunks.
+    registry = load_registry()
+    for probe in load_negatives().probes:
+        cars = {car for turn in probe.turns for car in guardrails.cars_in_text(turn, registry)}
+        expected = 0 if probe.purpose is ProbePurpose.BEHAVIOR else 1
+        assert len(cars) == expected, probe.id
+
+
+def test_absent_patterns_compile() -> None:
+    for probe in load_negatives().probes:
+        for pattern in probe.absent:
+            re.compile(pattern)
 
 
 def test_trap_set_covers_the_required_kinds() -> None:
@@ -189,3 +221,17 @@ def test_trap_premises_hold() -> None:
     assert "אינו מציע אפשרות לטעינה מהירה" in corpus["link_and_co_01"]
     assert "X5" in corpus["genesis_gv80"]  # named as a rival, with no price of its own
     assert "טסלה מודל 3" in corpus["aion_ht"]  # rival mentioned only by name
+
+
+def test_threshold_probes_ask_about_something_their_car_article_lacks() -> None:
+    """The absence each threshold probe claims is checked against the cleaned article."""
+    docs = _documents()
+    registry = load_registry()
+    present = []
+    for probe in load_negatives().probes:
+        if probe.purpose is not ProbePurpose.THRESHOLD:
+            continue
+        (car,) = {c for turn in probe.turns for c in guardrails.cars_in_text(turn, registry)}
+        text = _all_text(docs[car])
+        present += [probe.id for pattern in probe.absent if re.search(pattern, text)]
+    assert present == []

@@ -32,6 +32,7 @@ from carwise.preferences import Session, prompt_block
 from carwise.preferences import merge as merge_preferences
 from carwise.prompts import (
     GENERATE_SYSTEM,
+    generate_system,
     generation_input,
     regenerate_instruction,
     understand_system,
@@ -141,8 +142,13 @@ class Pipeline:
         *,
         profile: str | None = None,
         logger: TurnLogger | None = None,
+        generate_version: str | None = None,
     ) -> None:
         self._settings = settings
+        # The configured generate prompt unless the eval asks for another version.
+        self._generate_system = (
+            generate_system(generate_version) if generate_version else GENERATE_SYSTEM
+        )
         self._registry = registry
         self._retriever = retriever
         self._llm = llm
@@ -361,15 +367,38 @@ class Pipeline:
         return _Plan(intent, cars, not_covered, question, message)
 
     def _retrieve(self, plan: _Plan) -> list[RetrievedChunk]:
-        """One car: filter on it. Several: each car separately. None: all cars, capped."""
+        """One car: filter on it. Several: each car separately. None: all cars, capped.
+
+        A recommendation (or ranking) always searches all cars (CW-306): the cars the
+        plan names, often carried over from earlier answers, are only a hint, so a
+        car the user never mentioned can still be the best match.
+        """
         config = self._settings.retrieval
+        if plan.intent is Intent.RECOMMEND:
+            hits = self._retriever.search_all(
+                plan.question, config.cross_car_top_k, config.cross_car_per_car_cap
+            )
+            # The hint: each named car's spec box joins the candidates, never filters them.
+            return self._with_spec_boxes(plan, hits) if plan.cars else hits
         if len(plan.cars) > 1:
-            return self._retriever.search_per_car(plan.question, plan.cars, config.per_car_cap)
-        if plan.cars:
-            return self._retriever.search(plan.question, plan.cars, config.top_k)
-        return self._retriever.search_all(
-            plan.question, config.cross_car_top_k, config.cross_car_per_car_cap
-        )
+            hits = self._retriever.search_per_car(plan.question, plan.cars, config.per_car_cap)
+        elif plan.cars:
+            hits = self._retriever.search(plan.question, plan.cars, config.top_k)
+        else:
+            return self._retriever.search_all(
+                plan.question, config.cross_car_top_k, config.cross_car_per_car_cap
+            )
+        if config.force_spec_box and plan.intent is Intent.COMPARE:
+            # Option B: comparisons need each car's price and figures, which sit in its
+            # spec box, whatever its similarity to the wording of the question.
+            hits = self._with_spec_boxes(plan, hits)
+        return hits
+
+    def _with_spec_boxes(self, plan: _Plan, hits: list[RetrievedChunk]) -> list[RetrievedChunk]:
+        """The hits, then each named car's spec box that is not among them yet."""
+        have = {hit.chunk.chunk_id for hit in hits}
+        extra = self._retriever.spec_boxes(plan.question, plan.cars)
+        return hits + [hit for hit in extra if hit.chunk.chunk_id not in have]
 
     def _suggest(
         self, message: str, history: list[Message], hits: list[RetrievedChunk]
@@ -415,7 +444,7 @@ class Pipeline:
         started = time.perf_counter()
         try:
             result = self._llm.complete_json(
-                GENERATE_SYSTEM, messages, Generation, model=self._models.generate_model
+                self._generate_system, messages, Generation, model=self._models.generate_model
             )
             return turn.charge(result, stage)
         finally:

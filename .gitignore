@@ -224,3 +224,7 @@ data/raw/
 data/index/
 logs/
 .env
+# eval answer text quotes the articles: kept local, never committed (CW-302)
+eval/runs/
+# CW-305 candidate indexes (generated)
+data/candidates/

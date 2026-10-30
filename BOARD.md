@@ -2,9 +2,9 @@
 
 Living task board for the project, kept in the repository like a lightweight Jira. It is the single source of truth for scope and progress. Rules for updating it are in `CLAUDE.md`, section 19.
 
-**Last updated:** 2026-10-30
+**Last updated:** 2026-10-31
 **Release target:** `v1.0`
-**Effort budget:** the assignment suggests 3 to 5 hours, and the owner accepts more time in exchange for a solid result. Target: all P1 and P2 tickets (36 points, about 6 to 7 hours with Claude Code assistance); P3 only if time allows. Points: S = 1, M = 2, L = 3.
+**Effort budget:** the assignment suggests 3 to 5 hours, and the owner accepts more time in exchange for a solid result. Target: all P1 and P2 tickets (37 points, about 6 to 7 hours with Claude Code assistance); P3 only if time allows. Points: S = 1, M = 2, L = 3.
 
 ## How to use this board
 
@@ -26,7 +26,7 @@ The assignment estimates 3 to 5 hours and asks for clarity and decisions rather 
 
 | Tier | Meaning | Tickets | Points |
 |---|---|---|---|
-| P1 | Everything the assignment asks for, plus the evidence for it | 16 | 27 |
+| P1 | Everything the assignment asks for, plus the evidence for it | 17 | 28 |
 | P2 | Role signals: telemetry, injection hygiene, numeric check, embedding comparison, tuning, Docker, CI, GitHub setup | 8 | 9 |
 | P3 | Nice to have: nothing at present | 0 | 0 |
 
@@ -57,7 +57,7 @@ Items outside the code that must not be forgotten. Update the status as each is 
 |---|---|---|---|
 | D1 | Interviewer questions (language, no-answer behavior, preference memory) | Answered by email on 2026-10-29: Hebrew only; do what is best for the user without outside information; preferences for one conversation only | DECIDED |
 | D2 | LLM provider | Decided: OpenAI only. `dev` profile: `gpt-5.4-nano` for both calls; `final` profile: `gpt-5.4-nano` for understanding and `gpt-5.4-mini` for generation (confirmed by the answer eval). Ollama stays an optional offline runtime via `base_url`. `OPENAI_API_KEY` provided by the owner in a local `.env` (gitignored). Prices verified on the official pricing page in CW-104 (no difference) | DECIDED |
-| D3 | Default embedding model | Local multilingual sentence-transformers model, confirmed by CW-305 | OPEN |
+| D3 | Default embedding model | Decided in CW-305: `intfloat/multilingual-e5-large`, pinned revision, e5 prefixes; BM25 fusion available behind `retrieval.lexical.enabled`, off. See `docs/decisions/0002-embedding-model.md` | DECIDED |
 | D4 | Repository visibility | Public (decided); raw articles never committed | DECIDED |
 | D5 | Fetch fallback | Script download; private archive sent to the interviewer | DECIDED |
 | D6 | Submission format (repository link, short cover email) | Link plus a three-line email | OPEN |
@@ -69,10 +69,10 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E0 Scaffold and source check | none | 3 | 3 | 3 | DONE |
 | E1 Thin vertical slice | `v0.1` | 6 | 6 | 11 | DONE |
 | E2 Reliability and guardrails | none | 6 | 6 | 9 | DONE |
-| E3 Measurement | none | 3 | 0 | 5 | TODO |
+| E3 Measurement | none | 4 | 4 | 6 | DONE (pull request not opened yet) |
 | E4 Interface and packaging | none | 3 | 0 | 4 | TODO |
 | E5 Documentation and release | `v1.0` | 3 | 0 | 4 | TODO |
-| **Total** |  | **24** | **15** | **36** |  |
+| **Total** |  | **25** | **19** | **37** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -124,9 +124,10 @@ Branch: `epic/e3-measurement` | Tag: none
 
 | ID | Ticket | Type | Size | Pri | Status | Depends on |
 |---|---|---|---|---|---|---|
-| CW-302 | Eval runner and per-category report | `feat` | M | P1 | TODO | CW-201, CW-202, CW-106 |
-| CW-305 | Embedding model comparison on the retrieval eval | `feat` | M | P2 | TODO | CW-302 |
-| CW-303 | Tune relevance threshold, top-k and chunk size | `fix` | S | P2 | TODO | CW-302, CW-305 |
+| CW-306 | Recommend intent searches all cars; named cars are a hint | `fix` | S | P1 | DONE | CW-303 |
+| CW-302 | Eval runner and per-category report | `feat` | M | P1 | DONE | CW-201, CW-202, CW-106 |
+| CW-305 | Embedding model comparison on the retrieval eval | `feat` | M | P2 | DONE | CW-302 |
+| CW-303 | Tune relevance threshold, top-k and chunk size | `fix` | S | P2 | DONE | CW-302, CW-305 |
 
 ## Epic E4: Interface and packaging
 
@@ -281,21 +282,38 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [x] Live (`final`): a forced unsupported price was flagged and regenerated away ($0.0039, 3 calls). 10 real answers (46 numbers): 1 flagged, "545,000" where the Audi RS3 article itself prints "545,00" (a publisher typo). Limit: numbers written as words are not checked.
 - [x] Known source case (decided, not a bug): `audi_rs3:002` prints the sedan price as "545,00". It is parsed as the decimal 545.00 like any decimal comma; no special rule. An answer that corrects it to 545,000 is flagged, the one regeneration drops that number, and the answer stays correct (it states only what the articles support).
 
+### CW-306 Recommend intent searches all cars
+- [x] For intent `recommend`, retrieval runs across all cars with the existing cross-car caps; cars named in the plan (including those carried over from the history) are only a hint: their spec boxes are always included, but they do not restrict the search.
+- [x] Small and deterministic; unit tests include the follow-up case where the plan names Kia EV9, Link & Co 01 and Genesis GV80 while MG S6 and Aion HT must be reachable.
+- [x] Retrieval eval re-run on the same recording: before and after for `rec-family-electric-scenario`, and no other question regresses. Result: the scenario passes (Aion HT spec box retrieved, first within its car); tuning set 23/23, 26/26, MRR 0.631 (was 22/23); no question regressed; recommend questions now send 12 to 19 chunks instead of 24 to 27; hold-out unchanged at 5/6.
+
 ### CW-302 Eval runner and per-category report
-- [ ] Retrieval eval (no LLM, deterministic, free): expected car and section among retrieved chunks.
-- [ ] Answer eval: required keywords, refusal detected, no car outside the retrieved set.
-- [ ] Each question runs several times; report shows stability and pass rate per category, plus tokens and cost of the run.
-- [ ] The report records the profile and model name; the retrieval eval is provider-independent and runs locally for free.
-- [ ] The answer eval runs on the local profile during development and once or twice on the `final` profile near the end; the `final` run supplies the published numbers.
+- [x] Retrieval eval (no LLM, deterministic, free): expected car and section among retrieved chunks.
+- [x] Answer eval: required keywords, refusal detected, no car outside the retrieved set. Done: `--level answer`; cars outside the retrieved set are the CW-202 post-check outcome, recorded per answer.
+- [x] Each question runs several times; report shows stability and pass rate per category, plus tokens and cost of the run. Done: `--runs 3`, k/N per question, per-category pass rate, tokens and cost per run.
+- [x] The report records the profile and model name; the retrieval eval is provider-independent and runs locally for free. Done: profile, models, prompt versions and judge-criteria version (with the reason it changed).
+- [x] The answer eval runs on the local profile during development and once or twice on the `final` profile near the end; the `final` run supplies the published numbers. Done: dev runs for development (nano), three `final` runs for the published numbers (generate v3, v4, v5; ADR 0004).
+- [x] Plan (agreed 2026-10-30): `python -m app eval --level retrieval|answer --runs N`. The real understand outputs are recorded once (`--record`, nano, about 30 calls including follow-up turns and the negative probes) into `eval/recorded/`, so the retrieval eval replays them through the real pipeline code and is free and repeatable. A recording that no longer matches the questions, the understand prompt or the model is refused.
+- [x] Retrieval level reports per question: behavior from the gates, every expected source (hit, rank in the retrieved list, rank within its car), MRR, best score; per category hit rate.
+- [x] Answer level, deterministic checks: behavior (from the refusal type), sources, `must_include`, `must_not_include`, `must_not_match`, the CW-202/CW-206 post-check outcome, "in another article" phrasings, the preference scenario (numbers parsed plus powertrain hint words), and car-number attribution for comparisons (a number next to car A must come from A's chunks). Direction-of-comparison questions are added to the eval because a wrong "cheaper" was seen once (CW-203). Done, plus an eval-only "false not mentioned" check (price, 0-100, range).
+- [x] An LLM judge runs only where code cannot decide (mixing trap, the preference scenario, directional comparisons). It is not the generation model: a larger model with a verified price in config, or mini with the self-grading limitation stated. Done: gpt-5.4, price verified 2026-10-30; criteria in `eval/judge.yaml` (v3).
+- [x] Caps: `eval.answer_max_cost_usd` 0.50 and `eval.judge_max_cost_usd` 0.20 (`llm.max_cost_usd` unchanged); every run prints its cost and stops at its cap, including on the `budget_exceeded` refusal. The judge cap was raised to 0.30 (owner decision) so a 3-run `final` eval fits; every run stayed inside its caps.
+- [x] Report: pass/fail per question (k/N over runs), tokens, cost, p50/p95 latency, profile and models. Committed reports hold metrics only (ids, scores, matched keywords, tokens, cost, latency); answer text goes to the gitignored `eval/runs/`. Done; answers and judge reasons are in `eval/runs/` only.
+- [x] Published numbers: 3 runs per question on `final`; stability as identical behavior, identical numbers, and the share of identical text. Done: v3 64/69, same behavior 23/23, same numbers 15/23, identical text 28% (ADR 0004).
+- [x] Hold-out: `eval/questions.yaml` is reported on, not tuned on; threshold negatives live in `eval/negatives.yaml`. Revised in CW-303: the original questions became the tuning set; the hold-out is the version-3 block written after tuning (`holdout: true`), reported separately (final, v3: 15/18).
 
 ### CW-305 Embedding model comparison
-- [ ] At least two multilingual candidates that support Hebrew are compared on the retrieval eval.
-- [ ] Result table (hit rate per category) and the chosen model are recorded for the README.
-- [ ] The model name and version are pinned in config.
+- [x] At least two multilingual candidates that support Hebrew are compared on the retrieval eval.
+- [x] Result table (hit rate per category) and the chosen model are recorded for the README.
+- [x] The model name and version are pinned in config.
+- [x] Plan: `intfloat/multilingual-e5-base` (current), `intfloat/multilingual-e5-large` and `BAAI/bge-m3` on the recorded plans: hit rate per category, recall per expected source, MRR, CPU indexing time and query latency. If results are close, the smaller model wins (Docker image size, warm-up time).
 
 ### CW-303 Tune relevance threshold, top-k and chunk size
-- [ ] Values chosen from eval results (retrieval-based tuning locally; a confirmation run on the `final` profile); before and after numbers in the commit message and in the E3 pull request description.
-- [ ] Chosen values and the reasoning recorded for the README.
+- [x] Values chosen from eval results (retrieval-based tuning locally; a confirmation run on the `final` profile); before and after numbers in the commit message and in the E3 pull request description. Retrieval tuning done (ADR 0003); the `final` confirmation run is part of the CW-302 answer eval.
+- [x] Chosen values and the reasoning recorded for the README (`docs/decisions/0003-retrieval-tuning.md`).
+- [x] Plan: first the embedding window fix (measured with the real tokenizer: 5 chunks over 512 tokens, max 647, mostly from the section header in `embed_text`): shorten the header to the 60-character label, and lower `max_chars` only if chunks still overflow. Then `top_k` and the per-car caps on the retrieval eval; then `relevance_threshold` from the score distributions of answerable questions against `eval/negatives.yaml`.
+- [x] Measured here, not fixed: long merged section names in inline citations of cross-car answers. Moved to the CW-302 answer eval, where citations exist; the embedded header now uses the 60-character label.
+- [x] Known weakness, accepted: a figure that only the prose states can rank just below `per_car_cap` (hold-out: MG S6 top speed, fourth within its car against a cap of 3). The cap stays 3 so the hold-out stays a hold-out; hold-out 5/6 reported separately as a small sanity check.
 
 ### CW-401 Streamlit UI
 - [ ] Chat window, side panel with the live preference profile.
@@ -345,18 +363,22 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Idea | Why it is not in scope | Promote when |
 |---|---|---|
-| Hybrid search (keywords plus embeddings) | Adds complexity without evidence of need | Eval shows model names or numbers are missed |
+| Hybrid search (keywords plus embeddings) | Measured in CW-305: BM25 fusion did not fix the spec-box misses (a vocabulary gap); kept in the code behind `retrieval.lexical.enabled`, off | Eval shows model names or exact codes are missed |
 | Reranker | Corpus is small | Right car is retrieved but ranked too low |
 | LLM judge for groundedness | Imperfect and costs tokens | Keyword checks prove too coarse |
 | Second LLM provider (for example Bedrock) | One provider is enough | Provider switching becomes a requirement |
 | Cross-session memory | Out of scope for a proof of concept | Persistent users are required |
 | Agent loop with tools | Flow is linear | Live prices or external tools are needed |
+| False "not mentioned" check in the pipeline's post-check (CW-302) | Eval-only for now: 1 case in 207 final answers, and a first version had 8 false positives in 9, so its precision needs more data before it can trigger a regenerate | A longer eval run shows it precise, or a demo shows such a claim |
+| Preference grounding accepts digits for number words; log rejected values (CW-302) | Diagnosis only: the CW-203 check drops "5 נוסעים" when the user wrote "חמישה" (2 of 3 v3 runs of the family scenario); the recommendation still passed the judge | The preference panel (CW-401) shows a missing passenger count, or the scenario fails on it |
+| Remove the remaining "excerpts" wording (8 of 69 v3 answers) | v4 and v5 removed it but cost accuracy or brought back "another article" (ADR 0004) | A wording that names only the articles is measured on `final` without losing pass rate or stability |
 | Make SDK-level retries visible (`retries_taken`) and revisit `llm.timeout_s` | The SDK retries a timed-out request silently, so a 30 s timeout can cost about 60 s while `attempts` stays 1 (seen once in CW-206) | More than an occasional turn exceeds 10 s in the eval or the demo |
 
 ## Change log
 
 | Date | Change |
 |---|---|
+| 2026-10-31 | E3 done (CW-302, CW-303, CW-305, CW-306). Answer level on `final` (3 runs): generate v3 64/69, kept as default over v4 (60/69) and v5 (63/69, less stable); hold-out 15/18. Judge gpt-5.4, cap raised to $0.30. Eval-only false "not mentioned" check added; three Backlog items. ADRs 0002 to 0004. Process slip: commit 288307c went in with a failing test (fixed in 70757be). |
 | 2026-10-28 | Board created with 22 tickets across 6 epics. |
 | 2026-10-28 | Added CW-003, CW-206, CW-305, CW-404 (26 tickets, 38 points). Raw articles are no longer committed: download script plus private archive. |
 | 2026-10-28 | Branching simplified: one branch per epic (E1 to E5), E0 on `main`, one commit series per ticket, one pull request per epic. The Branch and PR columns were replaced by a commit Type column. |
@@ -377,4 +399,9 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 | 2026-10-30 | CW-202 done: car-name post-check with one stricter regeneration, then a code-built fallback; per-prompt versions, generate v2. CW-201 fix: hint words come only from the user's own messages. |
 | 2026-10-30 | CW-201 done: refusals suggest the closest of the eight cars (hint words from the user's message, else best-scoring chunks, else all eight grouped by powertrain and body type) and invite a follow-up; similarity threshold stays configurable at 0 until CW-303. |
 | 2026-10-29 | CW-101 done: `config/cars.yaml` plus `registry.py`, `fetch.py` (the CW-002 probe folded in and deleted), `clean.py` on beautifulsoup4 with `html.parser`, and `python -m app ingest` printing a per-article report. Each registry body type and powertrain carries the article words behind it; the Elantra article never states the Elantra's body type, so that value is null. Cleaner findings: the spec table uses `role=row` markup inside `<li>` and is kept as one line per row; "סיכום AI" is a script-loaded widget and is skipped; the Elantra sections are numbered `<h3>` questions; the Kia report has no subheadings and ends with four label/value stats. |
+| 2026-10-30 | CW-306 done: a recommendation searches all cars and named cars only add their spec boxes; the family scenario passes, tuning set 23/23; the Backlog item it came from is removed. |
+| 2026-10-30 | CW-303 done (ADR 0003): every chunk fits the window (`max_chars` 1400, 60-character header label), each named car's spec box forced into comparisons, k and caps unchanged, threshold 0.80 as an off-topic backstop. Tuning set 22/23 (was 21/23); hold-out 5/6, reported separately. Known weakness: prose-only figures in comparisons. CW-306 added (P1) before the answer level. |
+| 2026-10-30 | CW-305 done: e5-large chosen (21/23 vs 17/23 for e5-base on the retrieval eval, no regression); BM25 fusion did not fix the spec-box comparisons and stays off; score separation is weak for every candidate, so the registry gate stays the main refusal mechanism. ADR 0002 accepted. |
+| 2026-10-30 | CW-302 retrieval level done (answer level, judge and attribution check still open). Question set v2 adds four direction-of-comparison questions after the first baseline. Negatives v2: the six off-topic probes only check the out-of-scope reply; eight threshold probes, each naming one car and a topic its article lacks (checked by text search), are the only threshold sample. Baseline before tuning: 17/23, MRR 0.553. |
+| 2026-10-30 | E3 started on `epic/e3-measurement`; E3 plan written into CW-302, CW-305 and CW-303. |
 | 2026-10-30 | E2 done (CW-201 to CW-206). CW-206 decision: "545,00" in the Audi RS3 article stays a decimal (known source case). CW-205 bounds the whole turn input with `input.max_turn_input_chars`; user messages in the history obey `max_message_chars`. Backlog: SDK-level retries. |
