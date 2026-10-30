@@ -405,9 +405,9 @@ def test_pipeline_can_use_an_older_generate_prompt() -> None:
     from carwise.prompts import generate_system
 
     llm = FakeLLMClient([PLAN, GOOD])
-    pipeline = Pipeline(SETTINGS, REGISTRY, RETRIEVER, llm, generate_version="v3")
+    pipeline = Pipeline(SETTINGS, REGISTRY, RETRIEVER, llm, generate_version="v1")
     pipeline.ask("מה זול יותר, MG S6 או איון HT?", [])
-    assert llm.calls[1].system == generate_system("v3") != generate_system()
+    assert llm.calls[1].system == generate_system("v1") != generate_system()
 
 
 def test_a_question_mark_inside_a_citation_does_not_end_the_sentence() -> None:
