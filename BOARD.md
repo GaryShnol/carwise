@@ -67,7 +67,7 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | Epic | Milestone / tag | Tickets | Done | Points | Status |
 |---|---|---|---|---|---|
 | E0 Scaffold and source check | none | 3 | 3 | 3 | DONE |
-| E1 Thin vertical slice | `v0.1` | 6 | 1 | 11 | IN PROGRESS |
+| E1 Thin vertical slice | `v0.1` | 6 | 2 | 11 | IN PROGRESS |
 | E2 Reliability and guardrails | none | 6 | 0 | 9 | TODO |
 | E3 Measurement | none | 3 | 0 | 5 | TODO |
 | E4 Interface and packaging | none | 3 | 0 | 4 | TODO |
@@ -95,7 +95,7 @@ Branch: `epic/e1-vertical-slice` | Tag: `v0.1`
 | ID | Ticket | Type | Size | Pri | Status | Depends on |
 |---|---|---|---|---|---|---|
 | CW-101 | Download script, cache and clean the eight articles | `feat` | S | P1 | DONE | CW-002 |
-| CW-102 | Structure-aware chunking with metadata | `feat` | M | P1 | IN PROGRESS | CW-101 |
+| CW-102 | Structure-aware chunking with metadata | `feat` | M | P1 | DONE | CW-101 |
 | CW-103 | Embeddings, Chroma index, per-car retrieval | `feat` | M | P1 | TODO | CW-102 |
 | CW-104 | `LLMClient` interface and one implementation | `feat` | S | P1 | TODO | CW-001 |
 | CW-105 | Basic pipeline (understand, generate) and CLI | `feat` | L | P1 | TODO | CW-103, CW-104 |
@@ -186,10 +186,12 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [x] The Kia EV9 long-term report has almost no section headings (unlike the road tests, which have about 10 question-style headings), so its chunks fall back to paragraph structure, with the report title as the section.
 
 ### CW-102 Structure-aware chunking with metadata
-- [ ] Splits on headings and paragraphs; merges too-short and splits too-long chunks per config.
-- [ ] Handles both article formats among the eight (road tests and the Kia EV9 long-term report); publication date is stored as metadata when the page shows it.
-- [ ] Every chunk has `car` (a canonical id from the registry), `section`, `source_url`, `chunk_id`.
-- [ ] Unit tests: structure preserved, metadata present, no empty chunks.
+- [x] Splits on headings and paragraphs; merges too-short and splits too-long chunks per config.
+- [x] Handles both article formats among the eight (road tests and the Kia EV9 long-term report); publication date is stored as metadata when the page shows it.
+- [x] Every chunk has `car` (a canonical id from the registry), `section`, `source_url`, `chunk_id`.
+- [x] Unit tests: structure preserved, metadata present, no empty chunks.
+- [x] Size rule as built: no chunk exceeds `max_chars`; a chunk is below `min_chars` only when merging it with either neighbor would exceed `max_chars` (none today: 75 chunks, 317 to 1464 characters). Oversize sections split evenly at block boundaries so no tiny remainder is left.
+- [x] Heading lines stay in the chunk text, so merged sections (pros and cons, several FAQ questions) keep their boundaries; `embed_text` adds the car name and section in front.
 
 ### CW-103 Embeddings, Chroma index, per-car retrieval
 - [ ] Multilingual embedding model with Hebrew support; version pinned in config.

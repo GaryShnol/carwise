@@ -47,6 +47,9 @@ def test_ingest_reports_counts_from_the_cache_without_body_text(
     assert "פסקת פתיחה" not in out  # paragraph text never reaches the report
     assert "יתרון ראשון" not in out
     assert f"cleaned {len(cars)} of {len(cars)} articles" in out
+    assert "chunks per car (length in chars: min / median / max)" in out
+    assert all(f"  {car.id} " in out for car in cars)
+    assert "  total " in out
 
 
 def test_ingest_prints_manual_placement_message_when_articles_are_missing(

@@ -1,4 +1,4 @@
-"""`python -m app ingest`: fetch, clean and report on the eight articles.
+"""`python -m app ingest`: fetch, clean, chunk and report on the eight articles.
 
 Why the report shows counts and headings only: the repository and its CI logs
 are public, and the article body belongs to the publisher.
@@ -7,9 +7,11 @@ are public, and the article body belongs to the publisher.
 from __future__ import annotations
 
 from collections import Counter
+from statistics import median
 
 from carwise.ingest.clean import BlockKind, Document
 from carwise.ingest.run import IngestResult, ingest
+from carwise.schemas import Chunk
 
 HEADINGS_SHOWN = 3
 
@@ -31,15 +33,38 @@ def format_document(doc: Document) -> str:
     )
 
 
+def _length_stats(chunks: list[Chunk]) -> str:
+    sizes = [len(chunk.text) for chunk in chunks]
+    return f"{min(sizes):>5} / {median(sizes):>7.1f} / {max(sizes):>5}"
+
+
+def format_chunk_stats(chunks: list[Chunk]) -> str:
+    """Chunk count and length spread per car: enough to spot a bad split, no article text."""
+    if not chunks:
+        return "chunks: none"
+    by_car: dict[str, list[Chunk]] = {}
+    for chunk in chunks:
+        by_car.setdefault(chunk.car, []).append(chunk)
+    width = max(len(car) for car in by_car)
+    lines = ["chunks per car (length in chars: min / median / max)"]
+    lines += [
+        f"  {car:<{width}}  {len(group):>3} chunks  {_length_stats(group)}"
+        for car, group in by_car.items()
+    ]
+    lines.append(f"  {'total':<{width}}  {len(chunks):>3} chunks  {_length_stats(chunks)}")
+    return "\n".join(lines)
+
+
 def format_report(result: IngestResult) -> str:
     statuses = Counter(fetch.status.value for fetch in result.fetches)
     summary = ", ".join(f"{count} {status}" for status, count in sorted(statuses.items()))
     lines = [f"fetch: {summary}", ""]
     lines += [format_document(doc) + "\n" for doc in result.documents]
-    lines += [f"[{car_id}] could not be cleaned: {why}" for car_id, why in result.errors.items()]
+    lines += [f"[{car_id}] could not be processed: {why}" for car_id, why in result.errors.items()]
     if result.fallback:
         lines += ["", result.fallback]
     lines.append(f"cleaned {len(result.documents)} of {len(result.fetches)} articles")
+    lines += ["", format_chunk_stats(result.chunks)]
     return "\n".join(lines)
 
 
