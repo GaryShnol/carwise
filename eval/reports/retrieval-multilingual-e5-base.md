@@ -1,8 +1,8 @@
 # Retrieval eval: intfloat/multilingual-e5-base
 
-Created 2026-10-30T19:46:47+00:00. 3 run(s) per question; no LLM calls (understand outputs replayed from a recording by gpt-5.4-nano, prompt v1, recorded 2026-10-30T19:44:51+00:00).
+Created 2026-10-30T20:25:58+00:00. 3 run(s) per question; no LLM calls (understand outputs replayed from a recording by gpt-5.4-nano, prompt v1, recorded 2026-10-30T19:44:51+00:00).
 
-Settings: top_k 5, per_car_cap 3, cross_car_top_k 12, cross_car_per_car_cap 2, relevance_threshold 0.0, min_chars 300, max_chars 1500.
+Settings: top_k 5, per_car_cap 3, cross_car_top_k 12, cross_car_per_car_cap 2, relevance_threshold 0.0, min_chars 300, max_chars 1500, lexical off.
 
 ## Summary
 
@@ -16,7 +16,7 @@ Settings: top_k 5, per_car_cap 3, cross_car_top_k 12, cross_car_per_car_cap 2, r
 | trap | 7/7 | 4/4 | 0.633 |
 | **total** | 17/23 | 20/26 | 0.553 |
 
-Retrieve stage latency: p50 80 ms, p95 310 ms (query embedding plus scoring, CPU). Model warm-up 86.3 s.
+Retrieve stage latency: p50 49 ms, p95 108 ms (query embedding plus scoring, CPU). Model warm-up 9.7 s.
 
 ## Score distribution
 
