@@ -99,6 +99,27 @@ def test_numbers_the_user_stated_or_one_car_only_are_not_attribution_problems() 
     assert attribution_problems(answer, HITS[:1], [], REGISTRY) == []  # one car retrieved
 
 
+FAMILY_HITS = [
+    RetrievedChunk(chunk=_chunk("mg_s6", 0, "מרחב ראוי לנוסעים"), score=0.9),
+    RetrievedChunk(chunk=_chunk("hyundai_elantra_n", 0, "תיבה של 5 הילוכים"), score=0.9),
+]
+FAMILY_ANSWER = "MG S6 מתאים למשפחה של 5 (MG S6, מרחב)."
+
+
+def test_a_number_the_user_wrote_as_a_word_is_the_users() -> None:
+    assert (
+        attribution_problems(FAMILY_ANSWER, FAMILY_HITS, ["אנחנו משפחה של חמישה"], REGISTRY) == []
+    )
+    assert attribution_problems(FAMILY_ANSWER, FAMILY_HITS, ["ולחמישה נוסעים"], REGISTRY) == []
+
+
+def test_a_number_word_the_user_did_not_write_does_not_cover_the_number() -> None:
+    found = attribution_problems(FAMILY_ANSWER, FAMILY_HITS, ["אנחנו משפחה של ארבעה"], REGISTRY)
+    assert [(p.number, p.placed_with, p.backed_by) for p in found] == [
+        ("5", "mg_s6", ["hyundai_elantra_n"])
+    ]
+
+
 def test_another_article_phrasings_are_counted() -> None:
     assert another_article_count("לפי הנתונים בכתבה אחרת, ובמאמר אחר") == 2
     assert another_article_count("בכתבה על MG S6") == 0

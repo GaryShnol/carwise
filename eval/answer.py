@@ -154,7 +154,11 @@ def attribution_problems(
     by_car = _car_values(hits)
     if len(by_car) < 2:
         return []
-    from_user = numbers.source_values(user_texts)
+    user_texts = list(user_texts)
+    # The user's own numbers, in digits or as words ("משפחה של חמישה" makes "5" theirs).
+    from_user = numbers.source_values(user_texts) | {
+        Decimal(value) for text in user_texts for value in number_words(text)
+    }
     problems: list[Attribution] = []
     normalized = "\n".join(guardrails.normalize(line) for line in answer.splitlines())
     for sentence in _SENTENCE_END.split(normalized):
@@ -184,10 +188,22 @@ def attribution_problems(
     return problems
 
 
+def number_words(text: str) -> set[int]:
+    """Small numbers written as Hebrew words ("חמישה", "לחמישה", "ושניים")."""
+    found = set()
+    for word in re.findall(r"[א-ת]+", text):
+        for cut in range(3):  # up to two one-letter prefixes, as in "ולחמישה"
+            if cut and word[cut - 1] not in guardrails.HEBREW_PREFIXES:
+                break
+            if word[cut:] in _NUMBER_WORDS:
+                found.add(_NUMBER_WORDS[word[cut:]])
+                break
+    return found
+
+
 def _small_numbers(text: str) -> set[int]:
     found = {int(r.value) for n in numbers.find_numbers(text) for r in n.readings if r.unit == 1}
-    words = re.findall(r"[א-ת]+", text)
-    return found | {_NUMBER_WORDS[w] for w in words if w in _NUMBER_WORDS}
+    return found | number_words(text)
 
 
 def preference_checks(
