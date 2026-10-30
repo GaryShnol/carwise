@@ -24,7 +24,7 @@ from carwise.llm.base import LLMClient
 from carwise.llm.openai_client import OpenAIClient
 from carwise.registry import Registry, load_registry
 from carwise.schemas import Chunk, RetrievedChunk
-from eval.answer import Check, attribution_problems
+from eval.answer import Check, attribution_problems, false_not_mentioned_check
 from eval.answer_report import AnswerReport, write
 from eval.candidates import cached_chunks
 from eval.judge import criteria_version, judge_text, load_criteria
@@ -64,7 +64,13 @@ def rescore(
             checks = [
                 _attribution(entry, chunks, registry) if c.name == "attribution" else c
                 for c in run.checks
+                if c.name != "false_not_mentioned"
             ]
+            if run.behavior == "answer":  # added in CW-302; reports before it lack the check
+                hits = [RetrievedChunk(chunk=chunks[cid], score=0.0) for cid in entry["retrieved"]]
+                answer_text = entry["turns"][-1]["answer"]
+                users = [turn["user"] for turn in entry["turns"]]
+                checks.append(false_not_mentioned_check(answer_text, hits, users, registry))
             judged = run.judge_passed
             if question.id in rejudge:
                 if judge_client is None:
@@ -88,7 +94,8 @@ def rescore(
             )
         questions.append(question.model_copy(update={"runs": runs}))
     note = (
-        f"Re-scored offline from {source}: attribution check recomputed with the current code"
+        f"Re-scored offline from {source}: attribution and false-not-mentioned checks "
+        "computed with the current code"
         + (
             f"; re-judged with criteria {criteria_version()}: {', '.join(sorted(rejudge))} "
             f"(${spent:.4f})"
@@ -144,7 +151,8 @@ def main() -> int:
     )
     out = args.out_dir
     out.mkdir(parents=True, exist_ok=True)
-    rescored = rescored.model_copy(update={"question_set": f"{report.question_set}-rescored"})
+    base = report.question_set.removesuffix("-rescored")
+    rescored = rescored.model_copy(update={"question_set": f"{base}-rescored"})
     paths = write(rescored, out)
     before = sum(q.passed_runs for q in report.questions)
     after = sum(q.passed_runs for q in rescored.questions)

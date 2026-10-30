@@ -237,7 +237,7 @@ def test_a_good_comparison_passes_every_check() -> None:
     checks = {c.name: c for c in checks_for(COMPARE, played, SETTINGS, REGISTRY)}
     assert set(checks) == {
         "behavior", "sources_cited", "must_include", "must_not_include",
-        "post_check", "another_article", "attribution",
+        "post_check", "another_article", "attribution", "false_not_mentioned",
     }  # fmt: skip
     assert all(c.passed for c in checks.values()), checks
 
@@ -437,3 +437,83 @@ def test_nested_parentheses_are_one_citation_and_sentences_split_outside_them() 
         " שאלה?",
         " (סעיף: מה התחדש? כן) סוף",
     ]
+
+
+# ---------------------------------------------------------------- false "not mentioned"
+SPEC_HITS = [
+    RetrievedChunk(
+        chunk=_chunk("citroen_c3", 0, 'מחיר: ₪114,990\n0 ל-100 קמ"ש (שניות): 9.5', "הרכב הנבחן"),
+        score=0.9,
+    ),
+    RetrievedChunk(chunk=_chunk("kia_ev9", 0, "צריכת החשמל הממוצעת לאורך החודש"), score=0.9),
+]
+
+
+def test_a_figure_the_cars_spec_box_states_is_a_false_not_mentioned() -> None:
+    from eval.answer import false_not_mentioned
+
+    answer = "לגבי סיטרואן C3, נתון ה-0 ל-100 לא מוזכר בכתבה."
+    found = false_not_mentioned(answer, SPEC_HITS, [], REGISTRY)
+    assert [(f.car, f.quantity, f.chunk_id) for f in found] == [
+        ("citroen_c3", "zero_to_100", "citroen_c3:000")
+    ]
+
+
+def test_a_true_not_mentioned_and_other_quantities_are_left_alone() -> None:
+    from eval.answer import false_not_mentioned_check
+
+    kia_price = "המחיר של קיה EV9 לא מוזכר בכתבה."
+    c3_power = "כוח הסוס של סיטרואן C3 אינו מצוין."
+    assert false_not_mentioned_check(kia_price, SPEC_HITS, [], REGISTRY).passed
+    assert false_not_mentioned_check(c3_power, SPEC_HITS, [], REGISTRY).passed
+
+
+def test_a_sentence_naming_its_car_only_in_a_citation_is_skipped() -> None:
+    from eval.answer import false_not_mentioned
+
+    answer = "המחיר לא מוזכר (סיטרואן C3, הרכב הנבחן)."
+    assert false_not_mentioned(answer, SPEC_HITS, [], REGISTRY) == []  # a known, documented limit
+
+
+# The flagged cases of the final runs, as synthetic sentences (CW-302).
+FLEET = [
+    RetrievedChunk(chunk=_chunk(car, 0, text, "הרכב הנבחן"), score=0.9)
+    for car, text in [
+        ("citroen_c3", '0 ל-100 קמ"ש (שניות): 9.5'),
+        ("mg_s6", '0 ל-100 קמ"ש (שניות): 7.3\nטווח נסיעה בפועל (ק"מ): 430'),
+        ("kia_ev9", 'טווח ממוצע מצטבר: 397 ק"מ'),
+    ]
+]
+
+
+def test_a_listed_cars_generic_figure_takes_the_users_quantity() -> None:
+    from eval.answer import false_not_mentioned
+
+    answer = (
+        "לגבי סיטרואן C3, קיה EV9 ו-MG S6 — הנתון לא מוזכר בכתבות שלהם, "
+        "אבל כן מופיעים בהן נתוני 0 ל-100 של דגמים אחרים."
+    )  # as in the final run: the user asked about "0 ל-100" too
+    found = false_not_mentioned(answer, FLEET, ["איזה רכב הכי מהיר מ-0 ל-100?"], REGISTRY)
+    assert {(f.car, f.quantity) for f in found} == {
+        ("citroen_c3", "zero_to_100"),
+        ("mg_s6", "zero_to_100"),
+    }  # the Kia states no 0-100, so saying so is right
+
+
+def test_only_the_car_of_the_not_mentioned_clause_is_checked() -> None:
+    from eval.answer import false_not_mentioned
+
+    answer = "סיטרואן C3 עם 9.5, ו-MG S6 עם 7.3, וקיה EV9 לא מציינת נתון 0 ל-100."
+    assert false_not_mentioned(answer, FLEET, ["מי הכי מהיר?"], REGISTRY) == []
+
+
+def test_label_caveats_premises_and_other_clauses_are_not_false_claims() -> None:
+    from eval.answer import false_not_mentioned
+
+    caveat = 'בקיה EV9 לא מופיע נתון של טווח בפועל, אבל מצוין טווח ממוצע של 397 ק"מ.'
+    premise = 'הטווח של MG S6 עם סוללה של 72.7 קוט"ש לא מוזכר בכתבות.'
+    other_clause = "לגבי קיה EV9, לא מופיע מחיר, אבל הוא נדיב בטווח."
+    user = ['מה הטווח של MG S6 עם סוללה של 72.7 קוט"ש?']
+    assert false_not_mentioned(caveat, FLEET, [], REGISTRY) == []
+    assert false_not_mentioned(premise, FLEET, user, REGISTRY) == []
+    assert false_not_mentioned(other_clause, FLEET, [], REGISTRY) == []

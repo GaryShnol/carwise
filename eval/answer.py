@@ -201,6 +201,23 @@ def _without_car_names(text: str, registry: Registry) -> str:
     return _blank(text, [(start, end) for start, end, _ in guardrails.car_mentions(text, registry)])
 
 
+def clause_bounds(sentence: str, start: int, end: int) -> tuple[int, int]:
+    """The clause around [start, end): the nearest clause ends on each side (exclusive).
+
+    A clause ends at , ; : or a dash; a comma between digits ("168,888") does not count.
+    """
+
+    def ends_clause(i: int) -> bool:
+        if sentence[i] not in _CLAUSE_END:
+            return False
+        between_digits = 0 < i < len(sentence) - 1 and sentence[i - 1 : i + 2 : 2].isdigit()
+        return not (sentence[i] == "," and between_digits)
+
+    left = max((i for i in range(start) if ends_clause(i)), default=-1)
+    right = next((i for i in range(end, len(sentence)) if ends_clause(i)), len(sentence))
+    return left, right
+
+
 def _nearest(
     sentence: str, mentions: list[tuple[int, int, str]], start: int, end: int
 ) -> str | None:
@@ -212,15 +229,7 @@ def _nearest(
     ("MG S6 המחיר 179,990 ולאיון HT ..."). A tie goes to the car before. With no car in
     the clause, the nearest car named before the number in the sentence owns it.
     """
-
-    def ends_clause(i: int) -> bool:
-        if sentence[i] not in _CLAUSE_END:
-            return False
-        between_digits = 0 < i < len(sentence) - 1 and sentence[i - 1 : i + 2 : 2].isdigit()
-        return not (sentence[i] == "," and between_digits)  # "168,888" is one number
-
-    left = max((i for i in range(start) if ends_clause(i)), default=-1)
-    right = next((i for i in range(end, len(sentence)) if ends_clause(i)), len(sentence))
+    left, right = clause_bounds(sentence, start, end)
     best: tuple[int, int, str] | None = None
     for m_start, m_end, car in mentions:
         before = m_end <= start
@@ -398,6 +407,133 @@ def checks_for(
                 ),
             )
         )
+        checks.append(
+            false_not_mentioned_check(answer.text, answer.retrieved, played.user_turns, registry)
+        )
     if expect.preferences:
         checks += preference_checks(expect.preferences, played.preferences, settings)
     return checks
+
+
+# ---------------------------------------------------------------- false "not mentioned"
+# Eval-only (CW-302), deliberately narrow: three quantities whose figures the articles state
+# as label and number, so code can tell whether a retrieved chunk states one.
+_NOT_MENTIONED = re.compile(
+    r"(?:לא|אינו|אינה|אין)\s+(?:\S+\s+)?(?:מוזכר|מצוינ|מצוין|מופיע|נמסר|נתון|מידע)"
+)
+_QUOTE = '["״”]'
+QUANTITIES: dict[str, tuple[re.Pattern[str], re.Pattern[str]]] = {
+    # quantity: (how an answer names it, how a chunk states a figure for it)
+    "price": (
+        re.compile(r"מחיר|עולה|עלות"),
+        re.compile(r"מחיר\S*\s*:?\s*₪?\s*\d{2,3},\d{3}|\d{2,3},\d{3}\s*(?:שקלים|₪)"),
+    ),
+    "zero_to_100": (
+        re.compile(r"0\s*(?:ל-?|-|–)\s*100|תאוצה|האצה|ל-?100"),
+        re.compile(
+            rf"0 ל-100 קמ{_QUOTE}ש \(שניות\):\s*\d"
+            rf"|ל-?100 קמ{_QUOTE}ש[^.\n]{{0,40}}?\d+(?:\.\d+)?\s*(?:שניות|ש')"
+            r"|\d+(?:\.\d+)?\s*שניות ל-?100"
+        ),
+    ),
+    "range": (
+        re.compile(r"טווח"),
+        re.compile(
+            rf"טווח[^.\n:]{{0,40}}:?\s*\d{{3}}\s*(?:ק{_QUOTE}מ)?|\d{{3}}\s*ק{_QUOTE}מ[^.\n]{{0,25}}טווח"
+        ),
+    ),
+}
+
+
+# The answer itself gives a figure for the quantity (then "not mentioned" is a label caveat).
+_ANSWER_STATES = {
+    "price": re.compile(r"\d{2,3},\d{3}|\d{3}\s*אלף"),
+    "zero_to_100": re.compile(r"\d+(?:\.\d+)?\s*(?:שניות|ש')"),
+    "range": re.compile(rf"\d{{3}}\s*ק{_QUOTE}?מ"),
+}
+_GENERIC_FIGURE = re.compile(r"(?<![א-ת])ה?נתון(?![א-ת])")
+_ZERO_TO_100 = re.compile(r"0\s*(?:ל-?|-|–)\s*100")
+
+
+class FalseNotMentioned(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    car: str
+    quantity: str
+    chunk_id: str  # a retrieved chunk of that car that states the figure
+
+
+def false_not_mentioned(
+    answer: str,
+    hits: Sequence[RetrievedChunk],
+    user_texts: Sequence[str],
+    registry: Registry,
+) -> list[FalseNotMentioned]:
+    """Places where the answer says a car's price, 0-100 or range is not mentioned while a
+    retrieved chunk of that car states it.
+
+    Each "not mentioned" is read in its own clause: the quantity is the one named in that
+    clause, or, when the clause only says "the figure" (הנתון), the one the user asked
+    about; the cars are those named in the clause, or else those named before it in the
+    sentence (a list like "for the C3, the Kia and the MG S6, the figure is not mentioned").
+    Skipped: a sentence that itself states a figure for the quantity (a label caveat such as
+    "no range in practice, but an average of 397 km"), and one that repeats a number the
+    user wrote (a statement about the user's premise). Limits: citations are not read for
+    cars, and a sentence naming no car is skipped.
+    """
+    # "0 ל-100" names a quantity; its 0 and 100 are not figures the user stated.
+    from_user = numbers.source_values(_ZERO_TO_100.sub(" ", t) for t in user_texts)
+    asked_by_user = [
+        q for q, (asked, _) in QUANTITIES.items() if user_texts and asked.search(user_texts[-1])
+    ]
+    found: list[FalseNotMentioned] = []
+    normalized = "\n".join(guardrails.normalize(line) for line in answer.splitlines())
+    for sentence in sentences(normalized):
+        outside = _blank(sentence, citation_spans(sentence))
+        if not _NOT_MENTIONED.search(outside):
+            continue
+        stated = numbers.find_numbers(_ZERO_TO_100.sub(" ", outside))
+        if any(_backed(n, from_user) for n in stated):
+            continue  # about the user's own premise ("with a 72.7 kWh battery")
+        mentions = guardrails.car_mentions(outside, registry)
+        for match in _NOT_MENTIONED.finditer(outside):
+            left, right = clause_bounds(outside, match.start(), match.end())
+            clause = outside[left + 1 : right]
+            quantities = [q for q, (asked, _) in QUANTITIES.items() if asked.search(clause)]
+            if not quantities and _GENERIC_FIGURE.search(clause):
+                quantities = asked_by_user
+            cars = [car for start, _, car in mentions if left < start < right]
+            if not cars:
+                cars = [car for start, _, car in mentions if start < match.start()]
+            for quantity in quantities:
+                if _ANSWER_STATES[quantity].search(outside):
+                    continue  # the sentence gives a figure for it: a label caveat
+                found += _stated_by(hits, dict.fromkeys(cars), quantity)
+    unique = {(f.car, f.quantity): f for f in found}
+    return list(unique.values())
+
+
+def _stated_by(
+    hits: Sequence[RetrievedChunk], cars: Iterable[str], quantity: str
+) -> list[FalseNotMentioned]:
+    stated = QUANTITIES[quantity][1]
+    found = []
+    for car in cars:
+        chunk_id = next(
+            (h.chunk.chunk_id for h in hits if h.chunk.car == car and stated.search(h.chunk.text)),
+            None,
+        )
+        if chunk_id:
+            found.append(FalseNotMentioned(car=car, quantity=quantity, chunk_id=chunk_id))
+    return found
+
+
+def false_not_mentioned_check(
+    answer: str, hits: Sequence[RetrievedChunk], user_texts: Sequence[str], registry: Registry
+) -> Check:
+    wrong = false_not_mentioned(answer, hits, user_texts, registry)
+    return Check(
+        name="false_not_mentioned",
+        passed=not wrong,
+        detail="; ".join(f"{w.car} {w.quantity} <- {w.chunk_id}" for w in wrong),
+    )
