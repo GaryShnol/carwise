@@ -93,14 +93,34 @@ class QuestionSet(BaseModel):
         return self
 
 
+class ProbePurpose(StrEnum):
+    BEHAVIOR = "behavior"  # off-topic: understand must send it to the out-of-scope reply
+    THRESHOLD = "threshold"  # names a car and reaches retrieval: a "no answer here" score
+
+
 class Negative(BaseModel):
-    """A question no article answers: a sample of the scores the threshold must reject."""
+    """A question no article answers.
+
+    Behavior probes check the refusal via intent. Threshold probes name a car, so the
+    understand step sends them to retrieval, and their best scores are the sample the
+    relevance threshold must reject (CW-303).
+    """
 
     model_config = ConfigDict(extra="forbid")
 
     id: str
+    purpose: ProbePurpose
     turns: list[str] = Field(min_length=1)
+    # Threshold probes: patterns that must not match the named car's article, so the
+    # claim "the article does not cover this" is checked against the text, not assumed.
+    absent: list[str] = Field(default_factory=list)
     why: str
+
+    @model_validator(mode="after")
+    def _absence_is_checked(self) -> Negative:
+        if (self.purpose is ProbePurpose.THRESHOLD) != bool(self.absent):
+            raise ValueError(f"{self.id}: threshold probes, and only they, list absent patterns")
+        return self
 
 
 class NegativeSet(BaseModel):
