@@ -1,6 +1,6 @@
 # ADR 0003: Retrieval tuning (chunk window, spec boxes, k and caps, threshold)
 
-- **Status:** Proposed (all five steps measured; awaiting owner review)
+- **Status:** Accepted (2026-10-30)
 - **Date:** 2026-10-30
 - **Ticket:** CW-303
 - **Evidence:** `eval/reports/cw303/step<N>/`; every number below is on the same recorded
@@ -165,6 +165,15 @@ refused.
 
 Six questions is a very small hold-out (one question is 17 points). It is a sanity check that the
 tuned settings did not only fit the tuning set, not a precise estimate.
+
+## Known weakness (accepted)
+
+Comparisons can miss a figure that only the prose states. The forced spec box covers price,
+0-100, range and consumption, but not, for example, top speed, which several articles give
+only in the text. In the hold-out, the MG S6 top speed ranks fourth within its car against
+`per_car_cap` 3, so it is not retrieved. The cap stays 3: raising it on the strength of the
+hold-out result would make the hold-out a tuning set. The hold-out result (5/6) is reported
+separately, as a small sanity check, never folded into the tuning numbers.
 
 ## Summary: before and after CW-303
 

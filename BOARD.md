@@ -124,9 +124,10 @@ Branch: `epic/e3-measurement` | Tag: none
 
 | ID | Ticket | Type | Size | Pri | Status | Depends on |
 |---|---|---|---|---|---|---|
+| CW-306 | Recommend intent searches all cars; named cars are a hint | `fix` | S | P1 | TODO | CW-303 |
 | CW-302 | Eval runner and per-category report | `feat` | M | P1 | IN PROGRESS | CW-201, CW-202, CW-106 |
 | CW-305 | Embedding model comparison on the retrieval eval | `feat` | M | P2 | DONE | CW-302 |
-| CW-303 | Tune relevance threshold, top-k and chunk size | `fix` | S | P2 | IN PROGRESS | CW-302, CW-305 |
+| CW-303 | Tune relevance threshold, top-k and chunk size | `fix` | S | P2 | DONE | CW-302, CW-305 |
 
 ## Epic E4: Interface and packaging
 
@@ -281,6 +282,11 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [x] Live (`final`): a forced unsupported price was flagged and regenerated away ($0.0039, 3 calls). 10 real answers (46 numbers): 1 flagged, "545,000" where the Audi RS3 article itself prints "545,00" (a publisher typo). Limit: numbers written as words are not checked.
 - [x] Known source case (decided, not a bug): `audi_rs3:002` prints the sedan price as "545,00". It is parsed as the decimal 545.00 like any decimal comma; no special rule. An answer that corrects it to 545,000 is flagged, the one regeneration drops that number, and the answer stays correct (it states only what the articles support).
 
+### CW-306 Recommend intent searches all cars
+- [ ] For intent `recommend`, retrieval runs across all cars with the existing cross-car caps; cars named in the plan (including those carried over from the history) are only a hint: their spec boxes are always included, but they do not restrict the search.
+- [ ] Small and deterministic; unit tests include the follow-up case where the plan names Kia EV9, Link & Co 01 and Genesis GV80 while MG S6 and Aion HT must be reachable.
+- [ ] Retrieval eval re-run on the same recording: before and after for `rec-family-electric-scenario`, and no other question regresses.
+
 ### CW-302 Eval runner and per-category report
 - [x] Retrieval eval (no LLM, deterministic, free): expected car and section among retrieved chunks.
 - [ ] Answer eval: required keywords, refusal detected, no car outside the retrieved set.
@@ -303,10 +309,11 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [x] Plan: `intfloat/multilingual-e5-base` (current), `intfloat/multilingual-e5-large` and `BAAI/bge-m3` on the recorded plans: hit rate per category, recall per expected source, MRR, CPU indexing time and query latency. If results are close, the smaller model wins (Docker image size, warm-up time).
 
 ### CW-303 Tune relevance threshold, top-k and chunk size
-- [ ] Values chosen from eval results (retrieval-based tuning locally; a confirmation run on the `final` profile); before and after numbers in the commit message and in the E3 pull request description.
-- [ ] Chosen values and the reasoning recorded for the README.
-- [ ] Plan: first the embedding window fix (measured with the real tokenizer: 5 chunks over 512 tokens, max 647, mostly from the section header in `embed_text`): shorten the header to the 60-character label, and lower `max_chars` only if chunks still overflow. Then `top_k` and the per-car caps on the retrieval eval; then `relevance_threshold` from the score distributions of answerable questions against `eval/negatives.yaml`.
-- [ ] Measured here, not fixed: long merged section names in inline citations of cross-car answers.
+- [x] Values chosen from eval results (retrieval-based tuning locally; a confirmation run on the `final` profile); before and after numbers in the commit message and in the E3 pull request description. Retrieval tuning done (ADR 0003); the `final` confirmation run is part of the CW-302 answer eval.
+- [x] Chosen values and the reasoning recorded for the README (`docs/decisions/0003-retrieval-tuning.md`).
+- [x] Plan: first the embedding window fix (measured with the real tokenizer: 5 chunks over 512 tokens, max 647, mostly from the section header in `embed_text`): shorten the header to the 60-character label, and lower `max_chars` only if chunks still overflow. Then `top_k` and the per-car caps on the retrieval eval; then `relevance_threshold` from the score distributions of answerable questions against `eval/negatives.yaml`.
+- [x] Measured here, not fixed: long merged section names in inline citations of cross-car answers. Moved to the CW-302 answer eval, where citations exist; the embedded header now uses the 60-character label.
+- [x] Known weakness, accepted: a figure that only the prose states can rank just below `per_car_cap` (hold-out: MG S6 top speed, fourth within its car against a cap of 3). The cap stays 3 so the hold-out stays a hold-out; hold-out 5/6 reported separately as a small sanity check.
 
 ### CW-401 Streamlit UI
 - [ ] Chat window, side panel with the live preference profile.
@@ -389,6 +396,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 | 2026-10-30 | CW-202 done: car-name post-check with one stricter regeneration, then a code-built fallback; per-prompt versions, generate v2. CW-201 fix: hint words come only from the user's own messages. |
 | 2026-10-30 | CW-201 done: refusals suggest the closest of the eight cars (hint words from the user's message, else best-scoring chunks, else all eight grouped by powertrain and body type) and invite a follow-up; similarity threshold stays configurable at 0 until CW-303. |
 | 2026-10-29 | CW-101 done: `config/cars.yaml` plus `registry.py`, `fetch.py` (the CW-002 probe folded in and deleted), `clean.py` on beautifulsoup4 with `html.parser`, and `python -m app ingest` printing a per-article report. Each registry body type and powertrain carries the article words behind it; the Elantra article never states the Elantra's body type, so that value is null. Cleaner findings: the spec table uses `role=row` markup inside `<li>` and is kept as one line per row; "סיכום AI" is a script-loaded widget and is skipped; the Elantra sections are numbered `<h3>` questions; the Kia report has no subheadings and ends with four label/value stats. |
+| 2026-10-30 | CW-303 done (ADR 0003): every chunk fits the window (`max_chars` 1400, 60-character header label), each named car's spec box forced into comparisons, k and caps unchanged, threshold 0.80 as an off-topic backstop. Tuning set 22/23 (was 21/23); hold-out 5/6, reported separately. Known weakness: prose-only figures in comparisons. CW-306 added (P1) before the answer level. |
 | 2026-10-30 | CW-305 done: e5-large chosen (21/23 vs 17/23 for e5-base on the retrieval eval, no regression); BM25 fusion did not fix the spec-box comparisons and stays off; score separation is weak for every candidate, so the registry gate stays the main refusal mechanism. ADR 0002 accepted. |
 | 2026-10-30 | CW-302 retrieval level done (answer level, judge and attribution check still open). Question set v2 adds four direction-of-comparison questions after the first baseline. Negatives v2: the six off-topic probes only check the out-of-scope reply; eight threshold probes, each naming one car and a topic its article lacks (checked by text search), are the only threshold sample. Baseline before tuning: 17/23, MRR 0.553. |
 | 2026-10-30 | E3 started on `epic/e3-measurement`; E3 plan written into CW-302, CW-305 and CW-303. |
