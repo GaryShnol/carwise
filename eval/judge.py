@@ -13,6 +13,7 @@ prices), verified on the official pricing page; its spend has its own cap.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
@@ -21,7 +22,7 @@ from pydantic import BaseModel, ConfigDict
 
 from carwise.guardrails import escape_attribute, escape_text
 from carwise.llm.base import LLMClient, LLMError
-from carwise.schemas import Answer
+from carwise.schemas import Answer, RetrievedChunk
 
 CRITERIA_PATH = Path(__file__).with_name("judge.yaml")
 PROMPT_VERSION = "v1"
@@ -64,19 +65,21 @@ def criteria_change(path: Path = CRITERIA_PATH) -> str:
     return " ".join(str(raw.get("changes", {}).get(raw["version"], "")).split())
 
 
-def judge_input(criterion: str, user_turns: list[str], answer: Answer) -> str:
+def judge_input(
+    criterion: str, user_turns: list[str], text: str, hits: Sequence[RetrievedChunk]
+) -> str:
     """The judge's user message: the criterion, the conversation, the answer, the excerpts."""
     turns = "\n".join(f"{i}. {escape_text(turn)}" for i, turn in enumerate(user_turns, 1))
     excerpts = "\n".join(
         f'<excerpt car="{escape_attribute(hit.chunk.car_name)}" '
         f'section="{escape_attribute(hit.chunk.section)}">\n'
         f"{escape_text(hit.chunk.text)}\n</excerpt>"
-        for hit in answer.retrieved
+        for hit in hits
     )
     return (
         f"Criterion:\n{criterion}\n\n"
         f"User messages, in order:\n{turns}\n\n"
-        f"The chatbot's final answer:\n<answer>\n{escape_text(answer.text)}\n</answer>\n\n"
+        f"The chatbot's final answer:\n<answer>\n{escape_text(text)}\n</answer>\n\n"
         f"Excerpts the chatbot was given:\n{excerpts}"
     )
 
@@ -84,7 +87,19 @@ def judge_input(criterion: str, user_turns: list[str], answer: Answer) -> str:
 def judge(
     client: LLMClient, model: str, criterion: str, user_turns: list[str], answer: Answer
 ) -> Judged:
-    message = judge_input(criterion, user_turns, answer)
+    return judge_text(client, model, criterion, user_turns, answer.text, answer.retrieved)
+
+
+def judge_text(
+    client: LLMClient,
+    model: str,
+    criterion: str,
+    user_turns: list[str],
+    text: str,
+    hits: Sequence[RetrievedChunk],
+) -> Judged:
+    """Judge an answer given as text and retrieved chunks (also a logged one, when re-scoring)."""
+    message = judge_input(criterion, user_turns, text, hits)
     try:
         result = client.complete_json(
             SYSTEM, [{"role": "user", "content": message}], Verdict, model=model

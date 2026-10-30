@@ -79,6 +79,7 @@ class AnswerReport(BaseModel):
     another_article_total: int
     excerpt_wording_total: int | None = None  # None: a report from before the metric existed
     notes: list[str] = []  # why the judge criteria changed, re-scoring provenance, ...
+    runs_log: str | None = None  # the eval/runs/ folder holding this run's answers
     post_check: dict[str, int]  # outcome -> count over graded turns
 
 
@@ -217,6 +218,7 @@ def run_answer_eval(
         ),
         post_check=outcomes,
         excerpt_wording_total=sum(run.excerpt_wording for run in every),
+        runs_log=runs_dir.name,
         notes=[f"judge criteria {criteria_version()}: {criteria_change()}"]
         if criteria_change()
         else [],

@@ -267,7 +267,7 @@ def test_judge_that_cannot_answer_yields_no_verdict() -> None:
     client = FakeLLMClient([BudgetExceededError("cap reached")])
     verdict = judge(client, "gpt-5.4", "criterion", COMPARE.turns, played.last)
     assert verdict.passed is None and "not judged" in verdict.reason
-    assert "<answer>" in judge_input("c", COMPARE.turns, played.last)
+    assert "<answer>" in judge_input("c", COMPARE.turns, played.last.text, played.last.retrieved)
 
 
 # ---------------------------------------------------------------- the run and its reports
@@ -338,3 +338,30 @@ def test_number_words_handle_one_and_two_letter_words() -> None:
 
     assert number_words("ו ב של לי חמישה") == {5}
     assert number_words("") == set()
+
+
+def test_rescore_recomputes_attribution_from_the_logged_answer(tmp_path: Path) -> None:
+    from eval.answer import Check
+    from eval.rescore import rescore
+
+    llm = FakeLLMClient([PLAN, GOOD])
+    report = run_answer_eval(
+        [COMPARE], lambda: _pipeline(llm), None, SETTINGS, REGISTRY, profile="dev",
+        models={"understand": "m", "generate": "m", "judge": "j"}, runs=1,
+        question_set="tuning", runs_dir=tmp_path / "runs",
+    )  # fmt: skip
+    assert report.runs_log == "runs"
+    # Pretend an older check had flagged it.
+    run = report.questions[0].runs[0]
+    stale = [Check(name="attribution", passed=False, detail="old") if c.name == "attribution"
+             else c for c in run.checks]  # fmt: skip
+    stale_run = run.model_copy(update={"checks": stale, "passed": False})
+    stale_question = report.questions[0].model_copy(update={"runs": [stale_run]})
+    old = report.model_copy(update={"questions": [stale_question]})
+    entries = [
+        json.loads(line) for line in (tmp_path / "runs" / "answers.jsonl").open(encoding="utf-8")
+    ]
+    fixed = rescore(old, entries, {c.chunk_id: c for c in CHUNKS}, REGISTRY, rejudge=set(),
+                    judge_client=None, judge_model="j", source="runs")  # fmt: skip
+    assert old.questions[0].passed_runs == 0 and fixed.questions[0].passed_runs == 1
+    assert "Re-scored offline from runs" in fixed.notes[-1]
