@@ -14,6 +14,7 @@ import sys
 from collections.abc import Callable, Sequence
 
 from app import chat, ingest, search
+from eval import cli as eval_cli
 
 Command = Callable[[argparse.Namespace], int]
 # Command -> (handler, adds its arguments to the subparser, help line).
@@ -21,10 +22,10 @@ COMMANDS: dict[str, tuple[Command, Callable[[argparse.ArgumentParser], None] | N
     "ingest": (ingest.run, None, "fetch, clean, chunk and index the articles"),
     "search": (search.run, search.add_arguments, "show retrieved chunks for a query (dev)"),
     "chat": (chat.run, chat.add_arguments, "chat in Hebrew about the eight reviewed cars"),
+    "eval": (eval_cli.run, eval_cli.add_arguments, "run the eval (retrieval level is free)"),
 }
 # Command -> board ticket that implements it. Moved to COMMANDS as they land.
 PENDING = {
-    "eval": "CW-302",
     "ui": "CW-401",
 }
 
