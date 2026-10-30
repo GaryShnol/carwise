@@ -69,7 +69,7 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E0 Scaffold and source check | none | 3 | 3 | 3 | DONE |
 | E1 Thin vertical slice | `v0.1` | 6 | 6 | 11 | DONE |
 | E2 Reliability and guardrails | none | 6 | 6 | 9 | DONE |
-| E3 Measurement | none | 3 | 0 | 5 | TODO |
+| E3 Measurement | none | 3 | 0 | 5 | IN PROGRESS |
 | E4 Interface and packaging | none | 3 | 0 | 4 | TODO |
 | E5 Documentation and release | `v1.0` | 3 | 0 | 4 | TODO |
 | **Total** |  | **24** | **15** | **36** |  |
@@ -124,7 +124,7 @@ Branch: `epic/e3-measurement` | Tag: none
 
 | ID | Ticket | Type | Size | Pri | Status | Depends on |
 |---|---|---|---|---|---|---|
-| CW-302 | Eval runner and per-category report | `feat` | M | P1 | TODO | CW-201, CW-202, CW-106 |
+| CW-302 | Eval runner and per-category report | `feat` | M | P1 | IN PROGRESS | CW-201, CW-202, CW-106 |
 | CW-305 | Embedding model comparison on the retrieval eval | `feat` | M | P2 | TODO | CW-302 |
 | CW-303 | Tune relevance threshold, top-k and chunk size | `fix` | S | P2 | TODO | CW-302, CW-305 |
 
@@ -287,15 +287,26 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [ ] Each question runs several times; report shows stability and pass rate per category, plus tokens and cost of the run.
 - [ ] The report records the profile and model name; the retrieval eval is provider-independent and runs locally for free.
 - [ ] The answer eval runs on the local profile during development and once or twice on the `final` profile near the end; the `final` run supplies the published numbers.
+- [ ] Plan (agreed 2026-10-30): `python -m app eval --level retrieval|answer --runs N`. The real understand outputs are recorded once (`--record`, nano, about 30 calls including follow-up turns and the negative probes) into `eval/recorded/`, so the retrieval eval replays them through the real pipeline code and is free and repeatable. A recording that no longer matches the questions, the understand prompt or the model is refused.
+- [ ] Retrieval level reports per question: behavior from the gates, every expected source (hit, rank in the retrieved list, rank within its car), MRR, best score; per category hit rate.
+- [ ] Answer level, deterministic checks: behavior (from the refusal type), sources, `must_include`, `must_not_include`, `must_not_match`, the CW-202/CW-206 post-check outcome, "in another article" phrasings, the preference scenario (numbers parsed plus powertrain hint words), and car-number attribution for comparisons (a number next to car A must come from A's chunks). Direction-of-comparison questions are added to the eval because a wrong "cheaper" was seen once (CW-203).
+- [ ] An LLM judge runs only where code cannot decide (mixing trap, the preference scenario, directional comparisons). It is not the generation model: a larger model with a verified price in config, or mini with the self-grading limitation stated.
+- [ ] Caps: `eval.answer_max_cost_usd` 0.50 and `eval.judge_max_cost_usd` 0.20 (`llm.max_cost_usd` unchanged); every run prints its cost and stops at its cap, including on the `budget_exceeded` refusal.
+- [ ] Report: pass/fail per question (k/N over runs), tokens, cost, p50/p95 latency, profile and models. Committed reports hold metrics only (ids, scores, matched keywords, tokens, cost, latency); answer text goes to the gitignored `eval/runs/`.
+- [ ] Published numbers: 3 runs per question on `final`; stability as identical behavior, identical numbers, and the share of identical text.
+- [ ] Hold-out: `eval/questions.yaml` is reported on, not tuned on; threshold negatives live in `eval/negatives.yaml`.
 
 ### CW-305 Embedding model comparison
 - [ ] At least two multilingual candidates that support Hebrew are compared on the retrieval eval.
 - [ ] Result table (hit rate per category) and the chosen model are recorded for the README.
 - [ ] The model name and version are pinned in config.
+- [ ] Plan: `intfloat/multilingual-e5-base` (current), `intfloat/multilingual-e5-large` and `BAAI/bge-m3` on the recorded plans: hit rate per category, recall per expected source, MRR, CPU indexing time and query latency. If results are close, the smaller model wins (Docker image size, warm-up time).
 
 ### CW-303 Tune relevance threshold, top-k and chunk size
 - [ ] Values chosen from eval results (retrieval-based tuning locally; a confirmation run on the `final` profile); before and after numbers in the commit message and in the E3 pull request description.
 - [ ] Chosen values and the reasoning recorded for the README.
+- [ ] Plan: first the embedding window fix (measured with the real tokenizer: 5 chunks over 512 tokens, max 647, mostly from the section header in `embed_text`): shorten the header to the 60-character label, and lower `max_chars` only if chunks still overflow. Then `top_k` and the per-car caps on the retrieval eval; then `relevance_threshold` from the score distributions of answerable questions against `eval/negatives.yaml`.
+- [ ] Measured here, not fixed: long merged section names in inline citations of cross-car answers.
 
 ### CW-401 Streamlit UI
 - [ ] Chat window, side panel with the live preference profile.
@@ -377,4 +388,5 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 | 2026-10-30 | CW-202 done: car-name post-check with one stricter regeneration, then a code-built fallback; per-prompt versions, generate v2. CW-201 fix: hint words come only from the user's own messages. |
 | 2026-10-30 | CW-201 done: refusals suggest the closest of the eight cars (hint words from the user's message, else best-scoring chunks, else all eight grouped by powertrain and body type) and invite a follow-up; similarity threshold stays configurable at 0 until CW-303. |
 | 2026-10-29 | CW-101 done: `config/cars.yaml` plus `registry.py`, `fetch.py` (the CW-002 probe folded in and deleted), `clean.py` on beautifulsoup4 with `html.parser`, and `python -m app ingest` printing a per-article report. Each registry body type and powertrain carries the article words behind it; the Elantra article never states the Elantra's body type, so that value is null. Cleaner findings: the spec table uses `role=row` markup inside `<li>` and is kept as one line per row; "סיכום AI" is a script-loaded widget and is skipped; the Elantra sections are numbered `<h3>` questions; the Kia report has no subheadings and ends with four label/value stats. |
+| 2026-10-30 | E3 started on `epic/e3-measurement`; E3 plan written into CW-302, CW-305 and CW-303. |
 | 2026-10-30 | E2 done (CW-201 to CW-206). CW-206 decision: "545,00" in the Audi RS3 article stays a decimal (known source case). CW-205 bounds the whole turn input with `input.max_turn_input_chars`; user messages in the history obey `max_message_chars`. Backlog: SDK-level retries. |
