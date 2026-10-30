@@ -2,7 +2,7 @@
 
 Living task board for the project, kept in the repository like a lightweight Jira. It is the single source of truth for scope and progress. Rules for updating it are in `CLAUDE.md`, section 19.
 
-**Last updated:** 2026-10-29
+**Last updated:** 2026-10-30
 **Release target:** `v1.0`
 **Effort budget:** the assignment suggests 3 to 5 hours, and the owner accepts more time in exchange for a solid result. Target: all P1 and P2 tickets (36 points, about 6 to 7 hours with Claude Code assistance); P3 only if time allows. Points: S = 1, M = 2, L = 3.
 
@@ -67,7 +67,7 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | Epic | Milestone / tag | Tickets | Done | Points | Status |
 |---|---|---|---|---|---|
 | E0 Scaffold and source check | none | 3 | 3 | 3 | DONE |
-| E1 Thin vertical slice | `v0.1` | 6 | 6 | 11 | IN PROGRESS |
+| E1 Thin vertical slice | `v0.1` | 6 | 6 | 11 | DONE |
 | E2 Reliability and guardrails | none | 6 | 0 | 9 | TODO |
 | E3 Measurement | none | 3 | 0 | 5 | TODO |
 | E4 Interface and packaging | none | 3 | 0 | 4 | TODO |
