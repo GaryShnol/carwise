@@ -21,6 +21,7 @@ from carwise.prompts import understand_system
 from carwise.registry import load_registry
 from carwise.retrieval.retriever import ChunkRetriever, open_retriever
 from carwise.retrieval.store import IndexNotReadyError
+from eval import candidates
 from eval.questions import Negative, Question, load_negatives, load_questions
 from eval.recording import (
     Recording,
@@ -30,7 +31,15 @@ from eval.recording import (
     save_recording,
     stale_reasons,
 )
-from eval.report import REPORTS_DIR, RetrievalReport, spread_rows, summary_rows, write_report
+from eval.report import (
+    REPORTS_DIR,
+    RetrievalReport,
+    comparison_markdown,
+    load_report,
+    spread_rows,
+    summary_rows,
+    write_report,
+)
 from eval.retrieval import (
     by_category,
     grade,
@@ -53,6 +62,15 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
         help="record the understand outputs with the real model (costs money, needs a key)",
     )
     parser.add_argument("--out", type=Path, default=REPORTS_DIR, help="report directory")
+    parser.add_argument(
+        "--candidate",
+        help="CW-305: run the retrieval level with a candidate from eval/candidates.yaml",
+    )
+    parser.add_argument(
+        "--compare",
+        action="store_true",
+        help="CW-305: write the side-by-side table of the candidate reports",
+    )
 
 
 def with_cost_cap(settings: Settings, cap: float) -> Settings:
@@ -67,8 +85,18 @@ def run(args: argparse.Namespace) -> int:
     profile_name = getattr(args, "profile", None)
     model = settings.profile(profile_name).understand_model
     registry = load_registry()
+    if args.compare:
+        return _compare(args.out)
+    prepared: candidates.Prepared | None = None
+    if args.candidate:
+        if args.candidate not in candidates.load_candidates():
+            print(f"unknown candidate {args.candidate!r}; see eval/candidates.yaml")
+            return 2
+        print(f"preparing candidate {args.candidate} (model load, fresh index)...", flush=True)
+        prepared = candidates.prepare(settings, registry, args.candidate)
+        settings = prepared.settings
     try:
-        retriever = open_retriever(settings)
+        retriever = prepared.retriever if prepared else open_retriever(settings)
     except IndexNotReadyError as error:
         print(error)
         return 1
@@ -106,6 +134,12 @@ def run(args: argparse.Namespace) -> int:
         settings, retriever, make_pipeline, recording, questions, probes, args.runs
     )
     report = report.model_copy(update={"warm_up_s": round(warm_up_s, 2)})
+    if prepared:  # the model was loaded (and timed) while preparing the candidate
+        resources = {**prepared.resources, "peak_rss_mb": candidates.peak_memory_mb()}
+        load_s = prepared.resources["model_load_s"]
+        report = report.model_copy(
+            update={"warm_up_s": float(load_s or 0.0), "resources": resources}
+        )
     paths = write_report(report, args.out)
     print("\n".join(summary_rows(report.summary)))
     failed = [q for q in report.questions if not q.passed]
@@ -215,4 +249,20 @@ def _record(
     )
     if fallbacks:
         print(f"understand fell back (invalid output twice) in: {', '.join(fallbacks)}")
+    return 0
+
+
+def _compare(out_dir: Path) -> int:
+    """Side-by-side table of every candidate that has a report, in candidates.yaml order."""
+    reports = {}
+    for name in candidates.load_candidates():
+        path = out_dir / f"retrieval-{name}.json"
+        if path.exists():
+            reports[name] = load_report(path)
+    if not reports:
+        print("no candidate reports yet; run `python -m app eval --candidate NAME` first")
+        return 1
+    path = out_dir / "candidates.md"
+    path.write_text(comparison_markdown(reports), encoding="utf-8", newline="\n")
+    print(f"compared {', '.join(reports)}: {path}")
     return 0

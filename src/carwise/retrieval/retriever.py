@@ -96,13 +96,15 @@ class Retriever:
         return _capped(self._ranked(query, None), cap, _default(top_k, self._config.top_k))
 
 
-def open_retriever(settings: Settings) -> Retriever:
+def open_retriever(settings: Settings, embedder: Embedder | None = None) -> Retriever:
     """Retriever over the index in paths.index_dir, using the configured embedder.
 
-    Raises IndexNotReadyError when the index is missing or was built with
-    other embedding settings, because mixing models silently ruins scores.
+    An already loaded embedder can be passed in (the CW-305 comparison builds the
+    index with it first), so the model is not loaded twice. Raises
+    IndexNotReadyError when the index is missing or was built with other embedding
+    settings, because mixing models silently ruins scores.
     """
-    embedder = make_embedder(settings.embeddings)
+    embedder = embedder or make_embedder(settings.embeddings)
     store = ChunkStore(Path(settings.paths.index_dir), embedder)
     config = settings.retrieval
     lexical = LexicalIndex(store.chunks(), config.lexical) if config.lexical.enabled else None

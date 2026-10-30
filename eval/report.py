@@ -40,10 +40,14 @@ class RetrievalReport(BaseModel):
     scores: dict[str, ScoreSpread]  # best score: answerable questions vs threshold probes
     questions: list[QuestionResult]
     probes: list[ProbeResult]
+    # CW-305 candidate runs: index build, token window, size and memory (empty otherwise).
+    resources: dict[str, float | int | str | None] = {}
 
 
 def report_name(report: RetrievalReport) -> str:
-    """One file per embedding model, so the CW-305 candidates sit side by side."""
+    """One file per candidate (or embedding model), so the CW-305 runs sit side by side."""
+    if report.resources.get("candidate"):
+        return f"retrieval-{report.resources['candidate']}"
     model = str(report.embedder.get("model") or report.embedder.get("provider"))
     return f"retrieval-{model.rsplit('/', 1)[-1]}"
 
@@ -162,3 +166,93 @@ def markdown(report: RetrievalReport) -> str:
             f"{_num(p.best_score)} | {_pass(p.passed)} |"
         )
     return "\n".join(lines) + "\n"
+
+
+# ---------------------------------------------------------------- CW-305 comparison
+def _share_above(values: list[float], bar: float | None) -> str:
+    if bar is None or not values:
+        return "-"
+    return f"{sum(value > bar for value in values)}/{len(values)}"
+
+
+def _cell(row: CategorySummary) -> str:
+    return f"{row.passed}/{row.questions} · {row.sources_hit}/{row.sources} · {_num(row.mrr)}"
+
+
+def _five(s: ScoreSpread) -> str:
+    return " / ".join(_num(v) for v in (s.min, s.q1, s.median, s.q3, s.max))
+
+
+def comparison_markdown(reports: dict[str, RetrievalReport]) -> str:
+    """Side-by-side tables of the candidate reports, in the order given."""
+    names = list(reports)
+    categories = [row.category for row in next(iter(reports.values())).summary]
+    lines = [
+        "# Retrieval candidates (CW-305)",
+        "",
+        "Same recorded understand outputs for every candidate; untuned settings. Cells: "
+        "questions passed · expected sources hit · MRR.",
+        "",
+        "| " + " | ".join(["Category", *names]) + " |",
+        "|" + "---|" * (len(names) + 1),
+    ]
+    for category in categories:
+        cells = [
+            _cell(next(r for r in report.summary if r.category == category))
+            for report in reports.values()
+        ]
+        label = f"**{category}**" if category == "total" else category
+        lines.append("| " + " | ".join([label, *cells]) + " |")
+
+    lines += ["", "## Misses (rank within the car)", "", "| Candidate | Question | Failure |"]
+    lines.append("|---|---|---|")
+    for name, report in reports.items():
+        for q in report.questions:
+            lines += [f"| {name} | {q.id} | {failure} |" for failure in q.failures]
+
+    lines += [
+        "",
+        "## Score separation: answerable questions vs threshold probes",
+        "",
+        "Best cosine score per case. Overlap: threshold probes scoring above the answerable",
+        "median (0 is ideal). Gap: answerable median minus probe median.",
+        "",
+        "| Candidate | Answerable min / Q1 / median / Q3 / max | "
+        "Probes min / Q1 / median / Q3 / max | Probes above answerable median | Gap |",
+        "|---|---|---|---|---|",
+    ]
+    for name, report in reports.items():
+        good, bad = report.scores["answerable"], report.scores["threshold_probes"]
+        probe_scores = [
+            p.best_score
+            for p in report.probes
+            if p.purpose == "threshold" and p.best_score is not None
+        ]
+        gap = None if good.median is None or bad.median is None else good.median - bad.median
+        lines.append(
+            f"| {name} | {_five(good)} | {_five(bad)} | "
+            f"{_share_above(probe_scores, good.median)} | {_num(gap)} |"
+        )
+
+    lines += [
+        "",
+        "## Cost and size (CPU)",
+        "",
+        "| Candidate | Token window | Chunks over window (max tokens) | Model load s | "
+        "Index build s (75 chunks) | Query p50 / p95 ms | Disk MB | Weights MB | Peak RSS MB |",
+        "|---|---|---|---|---|---|---|---|---|",
+    ]
+    for name, report in reports.items():
+        res = report.resources
+        lines.append(
+            f"| {name} | {res.get('token_window')} | "
+            f"{res.get('chunks_over_window')} ({res.get('max_chunk_tokens')}) | "
+            f"{res.get('model_load_s')} | {res.get('index_build_s')} | "
+            f"{_num(report.latency_ms['p50'], 0)} / {_num(report.latency_ms['p95'], 0)} | "
+            f"{res.get('disk_mb')} | {res.get('weights_mb')} | {res.get('peak_rss_mb')} |"
+        )
+    return "\n".join(lines) + "\n"
+
+
+def load_report(path: Path) -> RetrievalReport:
+    return RetrievalReport.model_validate_json(path.read_text(encoding="utf-8"))

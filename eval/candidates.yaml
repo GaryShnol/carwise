@@ -1,0 +1,39 @@
+# Retrieval candidates compared in CW-305, all on the same recorded understand outputs.
+# Each entry overrides `embeddings` (and optionally `retrieval.lexical`) in
+# config/settings.yaml; nothing else changes, so the comparison is untuned (k, caps and
+# threshold are the CW-302 baseline values). Each candidate gets its own index under
+# data/candidates/<name>/ (generated, not committed).
+#
+# Revisions are Hugging Face commit hashes, pinned on 2026-10-30. Prefix rules follow
+# each model card: e5 models are trained with "query: " / "passage: "; bge-m3 dense
+# retrieval needs no instruction on either side.
+
+candidates:
+  e5-base:
+    embeddings:
+      model: intfloat/multilingual-e5-base
+      revision: d128750597153bb5987e10b1c3493a34e5a4502a
+      query_prefix: "query: "
+      passage_prefix: "passage: "
+
+  e5-large:
+    embeddings:
+      model: intfloat/multilingual-e5-large
+      revision: 3d7cfbdacd47fdda877c5cd8a79fbcc4f2a574f3
+      query_prefix: "query: "
+      passage_prefix: "passage: "
+
+  bge-m3:  # dense output only (CLS pooling, normalized); the sparse and ColBERT heads are not used
+    embeddings:
+      model: BAAI/bge-m3
+      revision: 5617a9f61b028005a4858fdac845db406aefb181
+      query_prefix: ""
+      passage_prefix: ""
+
+  e5-base-lexical:  # the e5-base vectors, with BM25 fused by reciprocal rank fusion
+    embeddings:
+      model: intfloat/multilingual-e5-base
+      revision: d128750597153bb5987e10b1c3493a34e5a4502a
+      query_prefix: "query: "
+      passage_prefix: "passage: "
+    lexical: true
