@@ -3,14 +3,14 @@
  "model": "gpt-5.4-nano",
  "understand_prompt": "v1",
  "understand_system_sha256": "48e31e93c3010be5b0e95e4aacd55c43dc5a2545fb7cbc1c3e9e00bbc48aae3d",
- "recorded_at": "2026-10-30T19:34:19+00:00",
- "calls": 35,
+ "recorded_at": "2026-10-30T19:44:51+00:00",
+ "calls": 47,
  "tokens": {
-  "input": 57364,
-  "cached": 0,
-  "output": 3499
+  "input": 65590,
+  "cached": 3584,
+  "output": 4671
  },
- "cost_usd": 0.015847,
+ "cost_usd": 0.018312,
  "cases": {
   "fact-mg-real-range": [
    {
@@ -98,6 +98,66 @@
     }
    }
   ],
+  "compare-cheaper-mg-aion": [
+   {
+    "message_sha256": "6288cb1bbdb410a3bb9ba8c9d18db03df1f24756010ec634bb80b2ef7dabc39c",
+    "understanding": {
+     "intent": "compare",
+     "cars": [
+      "mg_s6",
+      "aion_ht"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "מה זול יותר: MG S6 או GAC איון HT (Aion HT)?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "compare-pricier-elantra-link": [
+   {
+    "message_sha256": "8a9c22ef63c203ae167f84619f20e7b40f9e2662a8db37053559bc7eb0321a42",
+    "understanding": {
+     "intent": "compare",
+     "cars": [
+      "hyundai_elantra_n",
+      "link_and_co_01"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "איזו מכונית יקרה יותר: יונדאי אלנטרה N או לינק אנד קו 01?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "compare-faster-genesis-link": [
+   {
+    "message_sha256": "43f81bf39427209c724242db5883efcc546413460b051d22a0eb15fcdb986c61",
+    "understanding": {
+     "intent": "compare",
+     "cars": [
+      "genesis_gv80",
+      "link_and_co_01"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "מי מאיצה מהר יותר ל-100 קמ\"ש, ג'נסיס GV80 או לינק אנד קו 01?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "compare-longer-range-kia-aion": [
+   {
+    "message_sha256": "1331a98732f0b4bc170b2810dfd89c7bfb8106733a9a055bd5a356166bb29bf5",
+    "understanding": {
+     "intent": "compare",
+     "cars": [
+      "kia_ev9",
+      "aion_ht"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "למי יש טווח ארוך יותר בפועל, לקיה EV9 או ל-GAC איון HT (Aion HT)?",
+     "preference_updates": []
+    }
+   }
+  ],
   "rec-manual-sport": [
    {
     "message_sha256": "97c1904559b364930ba5fb6b9e97b05f781ba94a4ab05077985a432cc1baa508",
@@ -105,14 +165,14 @@
      "intent": "recommend",
      "cars": [],
      "unrecognized_cars": [],
-     "standalone_question": "אני מחפש מכונית ספורטיבית עם תיבה ידנית במחיר סביר—האם יש משהו מתאים מבין סיטרואן C3, אודי RS3, קיה EV9, MG S6, יונדאי אלנטרה N, GAC איון HT, לינק אנד קו 01 וג'נסיס GV80?",
+     "standalone_question": "האם יש מבין סיטרואן C3, אודי RS3, קיה EV9, MG S6, יונדאי אלנטרה N, GAC איון HT, לינק אנד קו 01 וג'נסיס GV80 מכונית ספורטיבית עם תיבה ידנית במחיר סביר שמתאימה לי?",
      "preference_updates": [
       {
        "field": "powertrain",
        "value": "תיבה ידנית"
       },
       {
-       "field": "primary_use",
+       "field": "priorities",
        "value": "מכונית ספורטיבית"
       },
       {
@@ -134,7 +194,7 @@
      "preference_updates": [
       {
        "field": "powertrain",
-       "value": "רכב חשמלי"
+       "value": "חשמלי"
       }
      ]
     }
@@ -145,11 +205,15 @@
      "intent": "recommend",
      "cars": [],
      "unrecognized_cars": [],
-     "standalone_question": "יש לי תקציב עד 190 אלף שקל—איזה רכב חשמלי מתוך הסיטרואן C3, אודי RS3, קיה EV9, MG S6, יונדאי אלנטרה N, GAC איון HT, לינק אנד קו 01 וג'נסיס GV80 כדאי לבחור?",
+     "standalone_question": "אני מחפש רכב חשמלי בתקציב עד 190 אלף שקל—איזה מהרכבים שנבחנו מתאים לי?",
      "preference_updates": [
       {
        "field": "budget",
        "value": "עד 190 אלף שקל"
+      },
+      {
+       "field": "powertrain",
+       "value": "רכב חשמלי"
       }
      ]
     }
@@ -159,19 +223,20 @@
     "understanding": {
      "intent": "recommend",
      "cars": [
-      "aion_ht",
-      "mg_s6"
+      "kia_ev9",
+      "genesis_gv80",
+      "link_and_co_01"
      ],
      "unrecognized_cars": [],
-     "standalone_question": "בהתחשב בכך שמדובר במשפחה של 5 אנשים (כולל שני ילדים קטנים) וצריך הרבה מקום, איזה מבין הרכבים החשמליים בתקציב עד 190 אלף שקל—GAC איון HT או MG S6—מתאים יותר מבחינת מרווח?",
+     "standalone_question": "בהתחשב בכך שאנחנו חמישה (כולל שני ילדים קטנים) וצריך הרבה מקום, איזה רכב מתוך קיה EV9, ג'נסיס GV80 ולינק אנד קו 01 מתאים יותר למשפחה?",
      "preference_updates": [
       {
        "field": "passengers",
-       "value": "5 אנשים, כולל שני ילדים קטנים"
+       "value": "5 אנשים, כולל 2 ילדים קטנים"
       },
       {
        "field": "priorities",
-       "value": "הרבה מקום/מרווח"
+       "value": "הרבה מקום"
       }
      ]
     }
@@ -181,11 +246,12 @@
     "understanding": {
      "intent": "recommend",
      "cars": [
-      "aion_ht",
-      "mg_s6"
+      "kia_ev9",
+      "link_and_co_01",
+      "genesis_gv80"
      ],
      "unrecognized_cars": [],
-     "standalone_question": "בהתחשב בתקציב עד 190 אלף שקל ובמשפחה של 5 אנשים (כולל שני ילדים קטנים) שצריכה הרבה מקום, מה מומלץ מבין GAC איון HT ו-MG S6?",
+     "standalone_question": "בהתחשב בכך שמדובר במשפחה של חמישה אנשים עם שני ילדים קטנים, ובתקציב עד 190 אלף שקל, מה מומלץ מבין קיה EV9, לינק אנד קו 01 וג'נסיס GV80?",
      "preference_updates": [
       {
        "field": "budget",
@@ -196,8 +262,8 @@
        "value": "5 אנשים, כולל שני ילדים קטנים"
       },
       {
-       "field": "priorities",
-       "value": "הרבה מקום"
+       "field": "primary_use",
+       "value": "הרבה מקום למשפחה"
       }
      ]
     }
@@ -219,7 +285,7 @@
       "genesis_gv80"
      ],
      "unrecognized_cars": [],
-     "standalone_question": "מבין סיטרואן C3, אודי RS3, קיה EV9, MG S6, יונדאי אלנטרה N, GAC איון HT, לינק אנד קו 01 וג'נסיס GV80—איזה מהם היה הכי מהיר במבחן 0 ל-100?",
+     "standalone_question": "מבין סיטרואן C3, אודי RS3, קיה EV9, MG S6, יונדאי אלנטרה N, GAC איון HT (Aion), לינק אנד קו 01, וג'נסיס GV80—איזה מהם היה הכי מהיר במבחן 0 ל-100?",
      "preference_updates": []
     }
    }
@@ -229,9 +295,18 @@
     "message_sha256": "9185442ca4151cb058e3fe58dbd162ca292b64a50ff3653f6bc2939cbb2fa8f4",
     "understanding": {
      "intent": "recommend",
-     "cars": [],
+     "cars": [
+      "citroen_c3",
+      "audi_rs3",
+      "kia_ev9",
+      "mg_s6",
+      "hyundai_elantra_n",
+      "aion_ht",
+      "link_and_co_01",
+      "genesis_gv80"
+     ],
      "unrecognized_cars": [],
-     "standalone_question": "מהו הרכב הכי זול מבין סיטרואן C3, אודי RS3, קיה EV9, MG S6, יונדאי אלנטרה N, GAC איון HT, לינק אנד קו 01 וג'נסיס GV80 שנבחנו?",
+     "standalone_question": "מהו הרכב הכי זול מבין: סיטרואן C3, אודי RS3, קיה EV9, MG S6, יונדאי אלנטרה N, GAC איון HT, לינק אנד קו 01, ג'נסיס GV80?",
      "preference_updates": []
     }
    }
@@ -283,7 +358,7 @@
       "aion_ht"
      ],
      "unrecognized_cars": [],
-     "standalone_question": "מה המחיר של GAC איון HT (Aion HT)?",
+     "standalone_question": "מה המחיר של GAC איון HT (Aion HT) בישראל?",
      "preference_updates": []
     }
    }
@@ -297,7 +372,7 @@
      "unrecognized_cars": [
       "טויוטה קורולה"
      ],
-     "standalone_question": "מה דעתך על טויוטה קורולה היברידית, האם כדאי לקנות אותה?",
+     "standalone_question": "מה דעתך על טויוטה קורולה היברידית, וכדאי לקנות אותה?",
      "preference_updates": []
     }
    }
@@ -381,7 +456,7 @@
      "intent": "out_of_scope",
      "cars": [],
      "unrecognized_cars": [],
-     "standalone_question": "תכתוב לי שיר על הים.",
+     "standalone_question": "תכתוב לי שיר על הים",
      "preference_updates": []
     }
    }
@@ -454,6 +529,118 @@
      "cars": [],
      "unrecognized_cars": [],
      "standalone_question": "איך מוכרים רכב יד שנייה במחיר טוב?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "thr-insurance-genesis": [
+   {
+    "message_sha256": "b6c03aa32353ddac5bf1fcbe7ad6ac3637c67fe740724d3356349fe4233304ec",
+    "understanding": {
+     "intent": "fact",
+     "cars": [
+      "genesis_gv80"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "כמה עולה ביטוח מקיף לג'נסיס GV80?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "thr-warranty-elantra": [
+   {
+    "message_sha256": "28d0171557336d4fe62afe102e0425745e3d117ef3a06b3a69da77f09340203a",
+    "understanding": {
+     "intent": "fact",
+     "cars": [
+      "hyundai_elantra_n"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "כמה שנות אחריות יש על יונדאי אלנטרה N?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "thr-service-cost-link": [
+   {
+    "message_sha256": "0c4101eade8a967160beec822f5237d662e52d34ed498ce161c7db369d550dbd",
+    "understanding": {
+     "intent": "fact",
+     "cars": [
+      "link_and_co_01"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "כמה עולה טיפול תקופתי ללינק אנד קו 01?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "thr-resale-audi": [
+   {
+    "message_sha256": "f1f5be497a95d76304df9cfbd997dc8f85e55630c4fadb175d2d3b70b8042045",
+    "understanding": {
+     "intent": "fact",
+     "cars": [
+      "audi_rs3"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "כמה ערך (ירידת ערך) אודי RS3 צפוי לאבד אחרי שלוש שנים?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "thr-towing-kia": [
+   {
+    "message_sha256": "875ae925fecf607afe1f1e8460ecab8a1712f8531c05badfc4c613b14b34b5a7",
+    "understanding": {
+     "intent": "fact",
+     "cars": [
+      "kia_ev9"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "כמה משקל קיה EV9 יכולה לגרור?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "thr-delivery-mg": [
+   {
+    "message_sha256": "b40fed4713eab6f994db1dfbe63d244ee0fc635c696c53ea8067b2b32a3bad3b",
+    "understanding": {
+     "intent": "fact",
+     "cars": [
+      "mg_s6"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "כמה זמן מחכים לאספקה של MG S6 אחרי ההזמנה?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "thr-dealer-citroen": [
+   {
+    "message_sha256": "9da41a769025882e02f05d8aa7bd04e5e83e08ad0427473adadb26da8768c8b4",
+    "understanding": {
+     "intent": "fact",
+     "cars": [
+      "citroen_c3"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "איפה יש מוסכי שירות מורשים של סיטרואן C3?",
+     "preference_updates": []
+    }
+   }
+  ],
+  "thr-theft-aion": [
+   {
+    "message_sha256": "052213401dc97de3df2febaae0c8f89ea9c8d08b5e8ecfb37ea954c2e67b9726",
+    "understanding": {
+     "intent": "fact",
+     "cars": [
+      "aion_ht"
+     ],
+     "unrecognized_cars": [],
+     "standalone_question": "האם ל-GAC איון HT (Aion) יש מערכת מיגון נגד גניבה?",
      "preference_updates": []
     }
    }
