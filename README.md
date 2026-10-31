@@ -526,7 +526,7 @@ From the measurements and the Backlog in [`BOARD.md`](BOARD.md):
   session, not the whole process, so the UI should not be exposed to other users.
 - **Section titles sometimes leak into the answer text.** Citations name the section, and long
   merged section names (an article's FAQ headings run together) end up inside the sentence, as
-  in the UI screenshot above. This is noted on the board under CW-203 and CW-303.
+  in the UI screenshot above. It is in the Backlog in [`BOARD.md`](BOARD.md).
 - **Numbers written as words** are not checked by the numeric post-check (digits only).
 - **SDK-level retries are silent.** The OpenAI SDK retries a timed-out request itself, so one
   slow turn can take about twice `llm.timeout_s`. Next: log `retries_taken` and revisit the

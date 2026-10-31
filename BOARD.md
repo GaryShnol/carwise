@@ -391,11 +391,13 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 | False "not mentioned" check in the pipeline's post-check (CW-302) | Eval-only for now: 1 case in 207 final answers, and a first version had 8 false positives in 9, so its precision needs more data before it can trigger a regenerate | A longer eval run shows it precise, or a demo shows such a claim |
 | Remove the remaining "excerpts" wording (8 of 69 v3 answers) | v4 and v5 removed it but cost accuracy or brought back "another article" (ADR 0004) | A wording that names only the articles is measured on `final` without losing pass rate or stability |
 | Make SDK-level retries visible (`retries_taken`) and revisit `llm.timeout_s` | The SDK retries a timed-out request silently, so a 30 s timeout can cost about 60 s while `attempts` stays 1 (seen once in CW-206) | More than an occasional turn exceeds 10 s in the eval or the demo |
+| Section titles sometimes leak into the answer text (long merged section names in inline citations) | Observed in the CW-203 and CW-303 notes and in the README's UI screenshot (an FAQ heading inside the sentence); answers stay correct, only the wording suffers, and a fix touches chunking or the generate prompt, which would need a new `final` eval run | A citation format that names a short section label is measured on `final` without losing pass rate or stability |
 
 ## Change log
 
 | Date | Change |
 |---|---|
+| 2026-10-31 | Backlog: section titles leaking into the answer text (from the CW-203 and CW-303 notes and the README screenshot). |
 | 2026-10-31 | E5 in review: `CHANGELOG.md` for v1.0; CW-503 waits for the merge, the tag, the private archive and D6 (owner). |
 | 2026-10-31 | CW-501 done: README, checked on a clean clone; `.env.example` bug fixed (an empty `OPENAI_BASE_URL` broke every call). Hygiene scan clean (gitleaks over all commits, no article text, no data or logs). |
 | 2026-10-31 | CW-502 done: example conversation on `final` and a UI screenshot in the README. |
