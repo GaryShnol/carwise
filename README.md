@@ -564,7 +564,8 @@ criteria, a Backlog and a change log), following [`CLAUDE.md`](CLAUDE.md).
   measurement, interface and packaging, documentation and release.
 - One branch and one pull request per epic. Merged without squashing, so the per-ticket commits
   (`feat(CW-102): ...`) stay readable in the history.
-- Tags: `v0.1` at the end of the first working vertical slice, `v1.0` for the release.
+- Tags: `v0.1` at the end of the first working vertical slice, `v1.0` for the release; release
+  notes in [`CHANGELOG.md`](CHANGELOG.md).
 - CI ([docs/ci.md](docs/ci.md)): `ci.yml` runs ruff, the format check, mypy and pytest on Python
   3.11 and 3.13 on every push and pull request, offline and with no secrets. The retrieval eval,
   the answer eval and a Docker smoke test are manual workflows.

@@ -71,7 +71,7 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E2 Reliability and guardrails | none | 6 | 6 | 9 | DONE (PR #3) |
 | E3 Measurement | none | 4 | 4 | 6 | DONE (PR #4) |
 | E4 Interface and packaging | none | 4 | 4 | 5 | DONE (PR #5) |
-| E5 Documentation and release | `v1.0` | 3 | 2 | 4 | IN PROGRESS |
+| E5 Documentation and release | `v1.0` | 3 | 2 | 4 | IN REVIEW (tag `v1.0` after the merge) |
 | **Total** |  | **26** | **25** | **38** |  |
 
 ## Epic E0: Scaffold and source check
@@ -152,7 +152,7 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 |---|---|---|---|---|---|---|
 | CW-501 | README: architecture, decision table, not-built list, AWS mapping | `docs` | M | P1 | DONE | CW-302 |
 | CW-502 | Example conversation and eval results in README | `docs` | S | P1 | DONE | CW-302, CW-501 |
-| CW-503 | Release `v1.0` | `chore` | S | P1 | TODO | all |
+| CW-503 | Release `v1.0` | `chore` | S | P1 | IN REVIEW | all |
 
 ## Ticket details and acceptance criteria
 
@@ -369,12 +369,12 @@ Scope set by the owner at the start of E4: the automatic workflow is offline; bo
 - [x] Eval pass rate per category and known failure cases stated honestly.
 
 ### CW-503 Release `v1.0`
-- [ ] All tickets `DONE` or `DEFERRED` with a reason.
-- [ ] `make ingest`, `make chat`, `make ui`, `make eval` run from a clean checkout.
-- [ ] Private archive of the raw articles prepared for the interviewer (outside the public repository).
-- [ ] Final scan of the public history for secrets and copied article text.
-- [ ] Short cover message for the interviewer drafted (repository link, how to run in three commands, where the TL;DR is).
-- [ ] Tag `v1.0` on `main`.
+- [x] All tickets `DONE` or `DEFERRED` with a reason (CW-503 itself closes with the tag).
+- [x] `make ingest`, `make chat`, `make ui`, `make eval` run from a clean checkout. As run: the `python -m app` commands they wrap (`make` is not installed on the Windows development machine), on a fresh clone; see CW-501.
+- [ ] Private archive of the raw articles prepared for the interviewer (outside the public repository). Owner: command in the E5 pull request description.
+- [x] Final scan of the public history for secrets and copied article text: gitleaks 8.28.0 over all commits and the tracked tree, no leaks; a key-pattern grep found only the tests' planted fake keys; no 12-word run of the cleaned articles in any added line; no data, log or `.env` file ever committed.
+- [x] Short cover message for the interviewer drafted (repository link, how to run in three commands, where the TL;DR is). Kept outside the repository; decision D6 stays with the owner.
+- [ ] Tag `v1.0` on `main`. Owner, after the E5 merge.
 
 ## Backlog (not committed)
 
@@ -396,6 +396,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Date | Change |
 |---|---|
+| 2026-10-31 | E5 in review: `CHANGELOG.md` for v1.0; CW-503 waits for the merge, the tag, the private archive and D6 (owner). |
 | 2026-10-31 | CW-501 done: README, checked on a clean clone; `.env.example` bug fixed (an empty `OPENAI_BASE_URL` broke every call). Hygiene scan clean (gitleaks over all commits, no article text, no data or logs). |
 | 2026-10-31 | CW-502 done: example conversation on `final` and a UI screenshot in the README. |
 | 2026-10-31 | E5 started on `epic/e5-docs-release`. Progress table corrected: E3 and E4 were merged (PR #4, PR #5). |

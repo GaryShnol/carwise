@@ -25,3 +25,4 @@ from the committed reports under [`eval/reports/`](../eval/reports/).
 - [`BOARD.md`](../BOARD.md): epics, tickets, acceptance criteria, Backlog and change log.
 - [`CLAUDE.md`](../CLAUDE.md): the project guide the work followed (architecture, rules, scope).
 - [`eval/reports/`](../eval/reports/): committed eval reports (metrics only, no answer text).
+- [`CHANGELOG.md`](../CHANGELOG.md): release notes per tag.
