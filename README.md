@@ -486,8 +486,12 @@ _Retrieved per car, with each car's spec box forced in. Every figure stays with 
 A separate three-turn conversation on `final`, in headless Chrome. The refusal is the blue
 box. Under each answer are the expandable list of retrieved chunks, the links to the cited
 articles and the token and cost line. The side panel shows each preference with the message it
-came from. The comparison answer here mentions "בגרסה אחרת" ("in another version"), close to the
-"in another article" phrasing the prompt forbids (see Known limitations).
+came from. The last answer, the comparison, shows three flaws (see Known limitations):
+- it says "בגרסה אחרת" ("in another version"), close to the "in another article" phrasing the
+  prompt forbids;
+- it puts an article's FAQ heading inside the sentence;
+- it gives two range figures for the Aion HT, 370 and 350 km. Both are in the article, one in
+  the spec box and one in the FAQ, but the answer doesn't say which to use.
 
 ## Deliberately not built
 
@@ -520,6 +524,9 @@ From the measurements and the Backlog in [`BOARD.md`](BOARD.md):
   is lost with it. Next: mount a second volume or ship the lines to a log service.
 - **Local use with your own key.** There is no authentication. The cost cap bounds one browser
   session, not the whole process, so the UI should not be exposed to other users.
+- **Section titles sometimes leak into the answer text.** Citations name the section, and long
+  merged section names (an article's FAQ headings run together) end up inside the sentence, as
+  in the UI screenshot above. This is noted on the board under CW-203 and CW-303.
 - **Numbers written as words** are not checked by the numeric post-check (digits only).
 - **SDK-level retries are silent.** The OpenAI SDK retries a timed-out request itself, so one
   slow turn can take about twice `llm.timeout_s`. Next: log `retries_taken` and revisit the
