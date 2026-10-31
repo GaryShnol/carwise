@@ -19,6 +19,7 @@ from pathlib import Path
 from app.ui_text import (
     ARTICLES_PREFIX,
     CITED_MARK,
+    FIRST_START_FAILED,
     INDEX_MISSING,
     MISSING_KEY,
     SOURCES_HEADERS,
@@ -26,11 +27,13 @@ from app.ui_text import (
 )
 from carwise.config import Settings, load_settings
 from carwise.guardrails import section_label
+from carwise.ingest.run import ingest
 from carwise.llm.base import LLMClient, LLMConfigError
 from carwise.llm.openai_client import OpenAIClient
 from carwise.pipeline import Pipeline
 from carwise.preferences import FIELD_LABELS
 from carwise.registry import Registry, load_registry
+from carwise.retrieval.embedder import make_embedder
 from carwise.retrieval.retriever import ChunkRetriever, SerializedRetriever, open_retriever
 from carwise.retrieval.store import IndexNotReadyError
 from carwise.schemas import Answer, Preferences, RefusalReason
@@ -39,6 +42,16 @@ from carwise.telemetry import TurnLogger
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = Path(__file__).resolve().parent / "ui.py"
 DEFAULT_PORT = 8501
+INGEST_ENV = "CARWISE_INGEST_IF_MISSING"
+
+
+class FirstStartError(RuntimeError):
+    """Ingest at first start did not finish (articles blocked or missing, or index build)."""
+
+
+def ingest_if_missing() -> bool:
+    """Set by `python -m app ui --ingest-if-missing` for the Streamlit process (Docker)."""
+    return os.environ.get(INGEST_ENV) == "1"
 
 
 @dataclass(frozen=True)
@@ -51,11 +64,25 @@ class Resources:
     logger: TurnLogger | None
 
 
-def load_resources(settings: Settings) -> Resources:
+def load_resources(settings: Settings, *, ingest_if_missing: bool = False) -> Resources:
     """Open the index and load the embedding model now, not on the first question.
 
-    Raises IndexNotReadyError when ingest has not run."""
-    retriever = open_retriever(settings)
+    Raises IndexNotReadyError when ingest has not run. With ingest_if_missing (the
+    Docker image's first start) it runs ingest instead: fetch the articles politely,
+    download the model, build the index, all into the mounted volume, while the
+    page shows its loading state. Raises FirstStartError when that fails."""
+    embedder = make_embedder(settings.embeddings)  # one model load for ingest and search
+    try:
+        retriever = open_retriever(settings, embedder)
+    except IndexNotReadyError:
+        if not ingest_if_missing:
+            raise
+        result = ingest(settings, embedder=embedder)
+        if not result.ok:
+            raise FirstStartError(
+                result.fallback or result.index_error or "ingest failed"
+            ) from None
+        retriever = open_retriever(settings, embedder)
     retriever.warm_up()
     profile = settings.profile()
     logger = TurnLogger(
@@ -85,6 +112,8 @@ def startup_message(error: Exception) -> str:
         return MISSING_KEY
     if isinstance(error, IndexNotReadyError):
         return INDEX_MISSING
+    if isinstance(error, FirstStartError):
+        return FIRST_START_FAILED
     return UNEXPECTED
 
 
@@ -209,6 +238,11 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
     # Local only by default: Streamlit otherwise listens on every interface. The
     # Docker image passes 0.0.0.0, since the container's port is mapped explicitly.
     parser.add_argument("--address", default="localhost", help="interface to listen on")
+    parser.add_argument(
+        "--ingest-if-missing",
+        action="store_true",
+        help="build the index at first start if it is missing (the Docker image uses this)",
+    )
 
 
 def streamlit_command(port: int, address: str) -> list[str]:
@@ -233,6 +267,8 @@ def run(args: argparse.Namespace) -> int:
     # the path of the Streamlit process, as it is for `python -m app`.
     paths = [str(ROOT), os.environ.get("PYTHONPATH", "")]
     env = {**os.environ, "PYTHONPATH": os.pathsep.join(path for path in paths if path)}
+    if args.ingest_if_missing:
+        env[INGEST_ENV] = "1"
     try:
         return subprocess.call(streamlit_command(args.port, args.address), cwd=ROOT, env=env)
     except KeyboardInterrupt:

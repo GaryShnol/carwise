@@ -32,7 +32,7 @@ log = logging.getLogger("carwise.ui")
 
 @st.cache_resource(show_spinner=False)
 def shared_resources() -> ui.Resources:
-    return ui.load_resources(load_settings())
+    return ui.load_resources(load_settings(), ingest_if_missing=ui.ingest_if_missing())
 
 
 def render_answer(answer: Answer, settings: Settings, registry: Registry) -> None:
@@ -91,7 +91,7 @@ def render() -> None:
     try:
         with st.spinner(labels.LOADING):
             resources = shared_resources()
-    except IndexNotReadyError as error:
+    except (IndexNotReadyError, ui.FirstStartError) as error:
         st.error(ui.startup_message(error))
         st.stop()
     if "pipeline" not in state:

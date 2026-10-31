@@ -7,6 +7,8 @@ same fakes the pipeline tests use, so the UI is exercised end to end, offline.
 
 from __future__ import annotations
 
+import argparse
+import types
 from collections.abc import Callable, Iterator
 from typing import Any
 
@@ -20,6 +22,7 @@ from carwise.guardrails import LLM_ERROR_REPLY
 from carwise.llm.base import BudgetExceededError, LLMConfigError, LLMUnavailableError
 from carwise.llm.fake import FakeLLMClient
 from carwise.preferences import EMPTY_PREFERENCES, RESET_REPLY
+from carwise.retrieval.retriever import SerializedRetriever
 from carwise.retrieval.store import IndexNotReadyError
 from carwise.schemas import Intent, PreferenceUpdate, Understanding
 from tests.test_pipeline import REGISTRY, SpyRetriever, _settings, generation, make, understanding
@@ -88,7 +91,7 @@ def run_app(monkeypatch: pytest.MonkeyPatch) -> Iterator[Callable[..., AppTest]]
     def start(replies: list[Any], *, llm_error: Exception | None = None) -> AppTest:
         settings = _settings()
 
-        def resources(_: Any) -> ui.Resources:
+        def resources(_: Any, **__: Any) -> ui.Resources:
             return ui.Resources(settings, REGISTRY, SpyRetriever(settings), None)
 
         def new_llm(_: Any) -> FakeLLMClient:
@@ -167,7 +170,7 @@ def test_missing_api_key_shows_a_hebrew_message_and_no_chat(
 def test_missing_index_shows_a_hebrew_message(
     run_app: Callable[..., AppTest], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    def no_index(_: Any) -> ui.Resources:
+    def no_index(_: Any, **__: Any) -> ui.Resources:
         raise IndexNotReadyError("index not built")
 
     app = run_app([])
@@ -243,3 +246,84 @@ def test_page_links_the_cited_article(run_app: Callable[..., AppTest]) -> None:
 def test_link_separator_keeps_latin_names_in_right_to_left_order() -> None:
     line = ui.links_markdown([("MG S6", "https://a.example"), ("GAC איון HT", "https://b.example")])
     assert "‏ · ‏" in line and line.endswith("‏")
+
+
+# --- first start in Docker (CW-402) ------------------------------------------------------
+class _FirstStart:
+    """Fakes for load_resources: no index until ingest has run."""
+
+    def __init__(self, ingest_ok: bool = True) -> None:
+        self.indexed = False
+        self.ingest_ok = ingest_ok
+        self.ingest_embedders: list[object] = []
+        self.open_embedders: list[object] = []
+
+    def open_retriever(self, settings: Any, embedder: Any = None) -> SpyRetriever:
+        self.open_embedders.append(embedder)
+        if not self.indexed:
+            raise IndexNotReadyError("index not built")
+        return SpyRetriever(_settings())
+
+    def ingest(self, settings: Any, *, embedder: Any = None) -> Any:
+        self.ingest_embedders.append(embedder)
+        self.indexed = self.ingest_ok
+        fallback = None if self.ingest_ok else "place the files in data/raw"
+        return types.SimpleNamespace(ok=self.ingest_ok, fallback=fallback, index_error=None)
+
+
+@pytest.fixture
+def first_start(monkeypatch: pytest.MonkeyPatch) -> Callable[[bool], _FirstStart]:
+    def install(ingest_ok: bool = True) -> _FirstStart:
+        fakes = _FirstStart(ingest_ok)
+        monkeypatch.setattr(ui, "open_retriever", fakes.open_retriever)
+        monkeypatch.setattr(ui, "ingest", fakes.ingest)
+        monkeypatch.setattr(ui, "make_embedder", lambda config: object())
+        return fakes
+
+    return install
+
+
+def test_without_the_flag_a_missing_index_is_reported_not_built(
+    first_start: Callable[[bool], _FirstStart],
+) -> None:
+    fakes = first_start(True)
+    with pytest.raises(IndexNotReadyError):
+        ui.load_resources(_settings())
+    assert fakes.ingest_embedders == []  # the local app never fetches on its own
+
+
+def test_first_start_builds_the_index_with_one_model_load(
+    first_start: Callable[[bool], _FirstStart],
+) -> None:
+    fakes = first_start(True)
+    resources = ui.load_resources(_settings(), ingest_if_missing=True)
+    assert isinstance(resources.retriever, SerializedRetriever)
+    # ingest and search share the embedder: the 2 GB model is loaded once
+    assert len(fakes.ingest_embedders) == 1
+    assert fakes.ingest_embedders[0] is fakes.open_embedders[0] is fakes.open_embedders[1]
+
+
+def test_failed_first_start_gives_a_hebrew_message(
+    first_start: Callable[[bool], _FirstStart],
+) -> None:
+    first_start(False)
+    with pytest.raises(ui.FirstStartError) as caught:
+        ui.load_resources(_settings(), ingest_if_missing=True)
+    assert ui.startup_message(caught.value) == text.FIRST_START_FAILED
+
+
+def test_ingest_flag_reaches_the_streamlit_process(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen: dict[str, str] = {}
+
+    def fake_call(command: list[str], cwd: Any, env: dict[str, str]) -> int:
+        seen.update(env)
+        return 0
+
+    monkeypatch.setattr(ui.subprocess, "call", fake_call)
+    monkeypatch.delenv(ui.INGEST_ENV, raising=False)
+    args = argparse.Namespace(port=8501, address="0.0.0.0", ingest_if_missing=True)
+    assert ui.run(args) == 0 and seen[ui.INGEST_ENV] == "1"
+    monkeypatch.setenv(ui.INGEST_ENV, "1")
+    assert ui.ingest_if_missing()
+    monkeypatch.setenv(ui.INGEST_ENV, "0")
+    assert not ui.ingest_if_missing()
