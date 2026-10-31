@@ -4,16 +4,32 @@ from pathlib import Path
 import pytest
 import yaml
 
-from app.__main__ import PENDING, main
+from app import ui_support
+from app.__main__ import main
 from carwise.config import DEFAULT_CONFIG_PATH
 from carwise.registry import load_registry
 
 FIXTURE = Path(__file__).parent / "fixtures" / "article.html"
 
 
-def test_pending_commands_report_their_ticket(capsys: pytest.CaptureFixture[str]) -> None:
-    assert main(["ui"]) == 2
-    assert PENDING["ui"] in capsys.readouterr().out
+def test_ui_command_starts_streamlit_with_the_profile(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen: dict[str, object] = {}
+
+    def fake_call(command: list[str], cwd: Path, env: dict[str, str]) -> int:
+        seen.update(command=command, env=env)
+        return 0
+
+    monkeypatch.setattr(ui_support.subprocess, "call", fake_call)
+    monkeypatch.setenv("CARWISE_PROFILE", "dev")  # recorded, so the value main sets is undone
+    assert main(["--profile", "final", "ui", "--port", "8600"]) == 0
+    command = seen["command"]
+    env = seen["env"]
+    assert isinstance(command, list) and isinstance(env, dict)
+    assert command[1:4] == ["-m", "streamlit", "run"] and command[4].endswith("ui.py")
+    assert "--server.port=8600" in command and "--browser.gatherUsageStats=false" in command
+    assert "--server.address=localhost" in command  # local only unless asked
+    assert env["CARWISE_PROFILE"] == "final"
+    assert str(ui_support.ROOT) in env["PYTHONPATH"]
 
 
 def test_unknown_command_is_rejected() -> None:
