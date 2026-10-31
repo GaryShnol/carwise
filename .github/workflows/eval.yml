@@ -1,0 +1,138 @@
+# Manual evaluation, never on push: Actions tab -> "eval (manual)" -> Run workflow.
+#
+# - retrieval: free and deterministic. Needs the articles and the embedding model
+#   (restored from the Actions cache, or fetched once). Also runs the tests that
+#   skip without the articles, and the slow tests that load the real model.
+# - answer: real LLM calls, so it costs money (bounded by the caps in
+#   config/settings.yaml) and runs only when the OPENAI_API_KEY repository secret
+#   is set; otherwise it ends with a notice and spends nothing.
+#
+# Only people with write access can dispatch a workflow, so the secret never
+# reaches a pull request from a fork. The key is given to the one step that calls
+# the API, never to install or ingest steps. Reports hold chunk ids and scores, not
+# article text; eval/runs/ (answer text) is never uploaded.
+name: eval (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      level:
+        description: Which eval to run
+        type: choice
+        options: [retrieval, answer]
+        default: retrieval
+      profile:
+        description: Model profile for the answer eval
+        type: choice
+        options: [dev, final]
+        default: dev
+      runs:
+        description: Runs per question
+        type: number
+        default: 1
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eval-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  UV_VERSION: "0.13.1"
+  PYTHON_VERSION: "3.13"
+
+jobs:
+  retrieval:
+    if: inputs.level == 'retrieval'
+    name: retrieval eval (no LLM, $0)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: ${{ env.PYTHON_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install (exactly the lock file)
+        run: uv sync --locked
+
+      - name: Articles, model and index
+        uses: ./.github/actions/corpus
+
+      - name: Tests that need the articles or the real model
+        run: uv run --no-sync pytest -m "not live"
+
+      - name: Retrieval eval
+        env:
+          RUNS: ${{ inputs.runs }} # inputs reach the shell as variables, never as code
+        run: uv run --no-sync python -m app eval --level retrieval --runs "$RUNS"
+
+      - name: Upload the reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: retrieval-reports
+          path: eval/reports/
+          retention-days: 14
+          if-no-files-found: warn
+
+  answer:
+    if: inputs.level == 'answer'
+    name: answer eval (${{ inputs.profile }}, costs money)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Is OPENAI_API_KEY configured?
+        id: key
+        env:
+          KEY_SET: ${{ secrets.OPENAI_API_KEY != '' }}
+        run: |
+          echo "present=$KEY_SET" >> "$GITHUB_OUTPUT"
+          if [ "$KEY_SET" != "true" ]; then
+            echo "::notice::OPENAI_API_KEY is not set as a repository secret; the answer eval is skipped and nothing is spent."
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.key.outputs.present == 'true'
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        if: steps.key.outputs.present == 'true'
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: ${{ env.PYTHON_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install (exactly the lock file)
+        if: steps.key.outputs.present == 'true'
+        run: uv sync --locked
+
+      - name: Articles, model and index
+        if: steps.key.outputs.present == 'true'
+        uses: ./.github/actions/corpus
+
+      - name: Answer eval (capped by eval.answer_max_cost_usd and eval.judge_max_cost_usd)
+        if: steps.key.outputs.present == 'true'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PROFILE: ${{ inputs.profile }}
+          RUNS: ${{ inputs.runs }}
+        run: uv run --no-sync python -m app eval --level answer --profile "$PROFILE" --runs "$RUNS"
+
+      - name: Upload the reports (not eval/runs, which holds answer text)
+        if: always() && steps.key.outputs.present == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: answer-reports-${{ inputs.profile }}
+          path: eval/reports/
+          retention-days: 14
+          if-no-files-found: warn

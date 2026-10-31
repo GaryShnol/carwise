@@ -70,9 +70,9 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E1 Thin vertical slice | `v0.1` | 6 | 6 | 11 | DONE |
 | E2 Reliability and guardrails | none | 6 | 6 | 9 | DONE |
 | E3 Measurement | none | 4 | 4 | 6 | DONE (pull request not opened yet) |
-| E4 Interface and packaging | none | 3 | 0 | 4 | TODO |
+| E4 Interface and packaging | none | 4 | 4 | 5 | DONE (pull request not opened yet) |
 | E5 Documentation and release | `v1.0` | 3 | 0 | 4 | TODO |
-| **Total** |  | **25** | **19** | **37** |  |
+| **Total** |  | **26** | **23** | **38** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -137,9 +137,10 @@ Branch: `epic/e4-interface-packaging` | Tag: none
 
 | ID | Ticket | Type | Size | Pri | Status | Depends on |
 |---|---|---|---|---|---|---|
-| CW-401 | Streamlit UI in Hebrew, right to left (chat, preferences panel, sources, cost) | `feat` | M | P1 | TODO | CW-203 |
-| CW-402 | Dockerfile and run command | `feat` | S | P2 | TODO | CW-401 |
-| CW-403 | GitHub Actions: lint, tests, retrieval eval | `ci` | S | P2 | TODO | CW-302, CW-003 |
+| CW-405 | Number-aware preference grounding; rejected field names in telemetry | `fix` | S | P1 | DONE | CW-203, CW-302 |
+| CW-401 | Streamlit UI in Hebrew, right to left (chat, preferences panel, sources, cost) | `feat` | M | P1 | DONE | CW-203, CW-405 |
+| CW-402 | Dockerfile and run command | `feat` | S | P2 | DONE | CW-401 |
+| CW-403 | GitHub Actions: lint, tests, retrieval eval | `ci` | S | P2 | DONE | CW-302, CW-003 |
 
 ## Epic E5: Documentation and release
 
@@ -315,23 +316,39 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [x] Measured here, not fixed: long merged section names in inline citations of cross-car answers. Moved to the CW-302 answer eval, where citations exist; the embedded header now uses the 60-character label.
 - [x] Known weakness, accepted: a figure that only the prose states can rank just below `per_car_cap` (hold-out: MG S6 top speed, fourth within its car against a cap of 3). The cap stays 3 so the hold-out stays a hold-out; hold-out 5/6 reported separately as a small sanity check.
 
+### CW-405 Number-aware preference grounding
+- [x] `grounded_in` reads numbers on both sides, in digits or Hebrew words ("חמישה", "מאה וחמישים אלף", "150,000", decimal comma), and compares them by value as whole numbers, so "5" is not found in "150". The numeric post-check still reads digits only.
+- [x] A value that shares nothing with the user's message is still rejected, including a number taken from an assistant turn.
+- [x] Rejected field names (never values) are on the `Answer` and in the turn log as `rejected_preferences`.
+- [x] Tests: word to digit, digit to word, thousands, compound numbers, a different number, a number from an assistant turn, telemetry.
+- [x] Family scenario re-run on `final`, 3 runs, $0.07: passenger count set in 3 of 3 runs (CW-302 v3: 1 of 3). The log now shows the model re-sending reworded earlier values on the last turn; they are rejected and the stored values kept.
+
 ### CW-401 Streamlit UI
-- [ ] Chat window, side panel with the live preference profile.
-- [ ] All text is Hebrew and renders right to left (`dir="rtl"`); Latin-script car names such as EV9 or GV80 inside Hebrew sentences stay readable.
-- [ ] Command-line output is checked in a common terminal; any limitation is noted in the README.
-- [ ] Expandable list of retrieved chunks under each answer (car, section, score).
-- [ ] Tokens and estimated cost line per answer (from the CW-204 telemetry when it exists); distinct visual state for refusals.
-- [ ] No business logic in the UI; it only calls `pipeline.answer`.
+- [x] Chat window, side panel with the live preference profile (each value with the message it came from) and a "new conversation" button that does what `/reset` does; `/prefs` and `/reset` also work when typed.
+- [x] All text is Hebrew and renders right to left (CSS `direction: rtl`); Latin-script car names such as EV9 or GV80 inside Hebrew sentences stay readable (checked on a screenshot of a three-turn `final` conversation in headless Chrome).
+- [x] Command-line output: the limitation (most terminals print Hebrew left to right) is noted in `app/chat.py`; the README note is written in CW-501.
+- [x] Expandable list of every retrieved chunk under each answer (car, section label, score, cited mark).
+- [x] Tokens and estimated cost line per answer, session cost in the side panel; refusals where the articles do not cover the question are a blue info box, failures a yellow warning.
+- [x] No business logic in the UI; it holds a `Session` and calls `pipeline.answer`, like the CLI. Input length comes from `input.max_message_chars`; the turn-input limit stays in the pipeline.
+- [x] Loading state on a cold start (title, then a Hebrew spinner while the modules, the model and the index load); Hebrew messages instead of a stack trace for a missing API key, a missing index, an LLM outage, the cost cap (which also disables the input) and any unexpected error. The API key is never displayed or logged.
+- [x] `streamlit==1.66.0` pinned (released 2026-10-14; 1.66.1 is newer than two weeks). `python -m app ui` listens on localhost only, hides the Deploy button and turns off Streamlit's usage statistics.
+- [x] Tests: display helpers, and a smoke test of the real script with `streamlit.testing` (AppTest) and fake wiring, offline.
 
 ### CW-402 Dockerfile and run command
-- [ ] Slim Python base, installs from `pyproject.toml`, default command starts the UI.
-- [ ] One documented `docker run` line; the key is passed as an environment variable.
+- [x] `python:3.13.18-slim` pinned by digest, two-stage build, exactly `uv.lock` (`--locked --no-dev`) with CPU torch; non-root user `carwise`; default command starts the UI on 0.0.0.0 inside the container only.
+- [x] One documented `docker run` line (README and `docs/docker.md`); the key is passed at run time with `-e OPENAI_API_KEY`, never a build argument, never in ENV, layers or logs (checked on the built image).
+- [x] Articles, model and index are not in the image: the UI builds them into the `/app/data` volume at first start (`--ingest-if-missing`, polite fetcher) while the page shows its loading state; a failure gets a Hebrew message.
+- [x] `.dockerignore` is an allow-list that also excludes `.env*`, keys, `data/`, `logs/`, `eval/runs/`, `.git/`, `.venv/` and caches; checked against the real build context.
+- [x] `HEALTHCHECK` on `/_stcore/health`; static tests in `tests/test_docker.py`; image built and the run line tested locally: image 2.18 GB, first start 177 s until the chat is ready, later starts 17 s, healthy, the key absent from image, layers and logs (`docs/docker.md`).
+- [x] Manual `docker.yml` (review follow-up): builds the image and loads the settings and the car registry inside it, offline and without a key; the check that would have caught the first container crash (config looked up next to a non-editable install), which the static tests could not see.
 
 ### CW-403 GitHub Actions
-- [ ] Workflow runs lint, unit tests and the retrieval eval.
-- [ ] The articles are downloaded in CI or restored from the Actions cache; if the site blocks CI, only unit tests on small fixtures run and this is documented.
-- [ ] Answer eval runs only when `OPENAI_API_KEY` is configured and is triggered manually, not on every push; documented in the README.
-- [ ] Branch protection on `main` requires green CI.
+Scope set by the owner at the start of E4: the automatic workflow is offline; both evals are manual.
+- [x] `ci.yml` on every push to `main` or `epic/**` and every pull request to `main`: ruff, ruff format check, mypy and pytest on Python 3.11 and 3.13, offline (synthetic data, `HF_HUB_OFFLINE=1`, no secrets).
+- [x] `eval.yml`, manual only: the retrieval eval (plus the tests that need the articles or the real model) and the answer eval, sharing a corpus step that caches the Hugging Face model (by name and revision) and the articles (by `config/cars.yaml`), fetching politely on a miss. If the site blocks the runner, ingest fails with its message; this is documented in `docs/ci.md`.
+- [x] The answer eval runs only when the `OPENAI_API_KEY` secret is set (otherwise a notice, $0); the key reaches only the eval step. Documented in `docs/ci.md`; the README links it in CW-501.
+- [x] `permissions: contents: read`, actions pinned to commit SHAs, uv pinned, `uv sync --locked`; no `pull_request_target`, so forks never see a secret. Linux installs take the CPU build of torch.
+- [ ] Branch protection on `main` requires green CI: exact settings in `docs/ci.md`; the owner applies them (needs repository admin), after `ci.yml` has run once so the checks can be selected.
 
 ### CW-501 README
 - [ ] Problem statement and run instructions (three commands at most).
@@ -340,6 +357,7 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [ ] A TL;DR under one page at the top: approach, architecture in five lines, three key decisions.
 - [ ] Determinism trade-off stated honestly; assumptions listed.
 - [ ] Honest notes: time actually spent, what would be cut or added with more time, how AI tooling was used, and a copyright notice for the articles.
+- [ ] Running note (CW-401 review): the app is meant to run locally with the user's own API key; the cost cap bounds one conversation (one browser session), not the whole process.
 - [ ] Data note: articles are downloaded by `make ingest`, are not in the repository, and can be placed manually in `data/raw/`.
 - [ ] Quotes from the articles are short, with the source named; the repository is public.
 - [ ] Embedding model choice backed by the comparison from CW-305, and tuned values from CW-303, when those tickets are done; otherwise the README states the defaults and that they were not tuned.
@@ -370,7 +388,6 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 | Cross-session memory | Out of scope for a proof of concept | Persistent users are required |
 | Agent loop with tools | Flow is linear | Live prices or external tools are needed |
 | False "not mentioned" check in the pipeline's post-check (CW-302) | Eval-only for now: 1 case in 207 final answers, and a first version had 8 false positives in 9, so its precision needs more data before it can trigger a regenerate | A longer eval run shows it precise, or a demo shows such a claim |
-| Preference grounding accepts digits for number words; log rejected values (CW-302) | Diagnosis only: the CW-203 check drops "5 נוסעים" when the user wrote "חמישה" (2 of 3 v3 runs of the family scenario); the recommendation still passed the judge | The preference panel (CW-401) shows a missing passenger count, or the scenario fails on it |
 | Remove the remaining "excerpts" wording (8 of 69 v3 answers) | v4 and v5 removed it but cost accuracy or brought back "another article" (ADR 0004) | A wording that names only the articles is measured on `final` without losing pass rate or stability |
 | Make SDK-level retries visible (`retries_taken`) and revisit `llm.timeout_s` | The SDK retries a timed-out request silently, so a 30 s timeout can cost about 60 s while `attempts` stays 1 (seen once in CW-206) | More than an occasional turn exceeds 10 s in the eval or the demo |
 
@@ -378,6 +395,10 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Date | Change |
 |---|---|
+| 2026-10-31 | CW-402 done: Docker image with first-start ingest into the volume. E4 complete; pull request not opened yet. |
+| 2026-10-31 | CW-403 done: offline `ci.yml` on push and pull request, manual `eval.yml` (retrieval, answer); CPU torch on Linux; `docs/ci.md` with the branch-protection settings for the owner to apply. CW-401 review fixes: registry article links, links rejected in answers, thread-safe retriever and log. |
+| 2026-10-31 | CW-401 done: Streamlit UI in Hebrew, right to left; `streamlit==1.66.0` added. |
+| 2026-10-31 | E4 started on `epic/e4-interface-packaging`. Added CW-405 (P1, S), promoted from the Backlog item on number words in preference grounding: 26 tickets, 38 points. CW-405 done. |
 | 2026-10-31 | E3 done (CW-302, CW-303, CW-305, CW-306). Answer level on `final` (3 runs): generate v3 64/69, kept as default over v4 (60/69) and v5 (63/69, less stable); hold-out 15/18. Judge gpt-5.4, cap raised to $0.30. Eval-only false "not mentioned" check added; three Backlog items. ADRs 0002 to 0004. Process slip: commit 288307c went in with a failing test (fixed in 70757be). |
 | 2026-10-28 | Board created with 22 tickets across 6 epics. |
 | 2026-10-28 | Added CW-003, CW-206, CW-305, CW-404 (26 tickets, 38 points). Raw articles are no longer committed: download script plus private archive. |

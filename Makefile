@@ -22,5 +22,6 @@ lint:
 	uv run ruff format --check .
 	uv run mypy src app eval
 
+# Builds the image; run it with the line in README.md (the key is passed with -e).
 docker:
-	@echo "Dockerfile arrives with CW-402."; exit 1
+	docker build -t carwise .

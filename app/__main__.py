@@ -13,7 +13,7 @@ import os
 import sys
 from collections.abc import Callable, Sequence
 
-from app import chat, ingest, search
+from app import chat, ingest, search, ui_support
 from eval import cli as eval_cli
 
 Command = Callable[[argparse.Namespace], int]
@@ -23,10 +23,7 @@ COMMANDS: dict[str, tuple[Command, Callable[[argparse.ArgumentParser], None] | N
     "search": (search.run, search.add_arguments, "show retrieved chunks for a query (dev)"),
     "chat": (chat.run, chat.add_arguments, "chat in Hebrew about the eight reviewed cars"),
     "eval": (eval_cli.run, eval_cli.add_arguments, "run the eval (retrieval level is free)"),
-}
-# Command -> board ticket that implements it. Moved to COMMANDS as they land.
-PENDING = {
-    "ui": "CW-401",
+    "ui": (ui_support.run, ui_support.add_arguments, "the Hebrew web chat (Streamlit)"),
 }
 
 
@@ -38,8 +35,6 @@ def build_parser() -> argparse.ArgumentParser:
         subparser = commands.add_parser(name, help=help_line)
         if add_arguments:
             add_arguments(subparser)
-    for name, ticket in PENDING.items():
-        commands.add_parser(name, help=f"not implemented yet ({ticket})")
     return parser
 
 
@@ -54,11 +49,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if getattr(args, "profile", None):
         os.environ["CARWISE_PROFILE"] = args.profile
-    if args.command in COMMANDS:
-        use_utf8_output()
-        return COMMANDS[args.command][0](args)
-    print(f"'{args.command}' is not implemented yet (see {PENDING[args.command]} in BOARD.md).")
-    return 2
+    use_utf8_output()
+    return COMMANDS[args.command][0](args)
 
 
 if __name__ == "__main__":

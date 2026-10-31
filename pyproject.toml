@@ -13,6 +13,9 @@ requires-python = ">=3.11"
 # in the pull request (CLAUDE.md section 12.1). Current ones:
 #   pydantic: typed schemas, config and validated structured LLM output.
 #   pyyaml:   reads config/settings.yaml and config/cars.yaml.
+#   streamlit: the Hebrew web UI (CW-401).
+#   torch:    already required by sentence-transformers; listed so Linux takes the
+#             CPU build (see [tool.uv.sources], CW-403).
 dependencies = [
   "beautifulsoup4==4.13.4",
   "chromadb==1.5.9",
@@ -20,6 +23,8 @@ dependencies = [
   "pydantic==2.13.5",
   "pyyaml==6.0.3",
   "sentence-transformers==6.2.0",
+  "streamlit==1.66.0",
+  "torch==2.15.0",
 ]
 
 [dependency-groups]
@@ -69,3 +74,14 @@ ignore_missing_imports = true
 module = ["numpy", "numpy.*"]
 follow_imports = "skip"
 follow_imports_for_stubs = true  # numpy ships .pyi stubs, which "skip" alone still reads
+
+# CW-403: on Linux (CI and the Docker image) torch comes from the PyTorch CPU index.
+# PyPI's Linux wheel pulls about 3 GB of CUDA libraries that nothing here uses
+# (embeddings run on CPU). Windows and macOS wheels on PyPI are CPU-only already.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]

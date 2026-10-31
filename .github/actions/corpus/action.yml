@@ -1,0 +1,38 @@
+# Shared by the manual eval jobs: the eight articles, the embedding model and the index.
+#
+# The articles are restored from the Actions cache, or fetched once with the polite
+# fetcher (identifiable User-Agent, delay between requests, robots.txt respected).
+# If the site blocks the runner, `ingest` stops with its message telling where to
+# place the files by hand, and the job fails; it never works around a block.
+# The model is cached by name and pinned revision (about 2 GB on first download).
+name: corpus
+description: Restore or fetch the articles and the embedding model, then build the index.
+
+runs:
+  using: composite
+  steps:
+    - name: Embedding model cache key (model and pinned revision from config)
+      id: model
+      shell: bash
+      run: |
+        uv run --no-sync python -c "
+        from carwise.config import load_settings
+        e = load_settings().embeddings
+        print('key=hf-' + f'{e.model}-{e.revision}'.replace('/', '_'))
+        " >> "$GITHUB_OUTPUT"
+
+    - name: Restore the embedding model
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.cache/huggingface
+        key: ${{ steps.model.outputs.key }}
+
+    - name: Restore the articles
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: data/raw
+        key: articles-${{ hashFiles('config/cars.yaml') }}
+
+    - name: Ingest (fetch only what the cache lacks, then chunk, embed and index)
+      shell: bash
+      run: uv run --no-sync python -m app ingest
