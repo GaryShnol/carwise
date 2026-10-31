@@ -71,6 +71,7 @@ class _Turn:
     # every reply, refusals included, hands it back so nothing said is lost.
     preferences: Preferences = field(default_factory=Preferences)
     updated_preferences: list[str] = field(default_factory=list)
+    rejected_preferences: list[str] = field(default_factory=list)
 
     calls: list[LLMCall] = field(default_factory=list)
 
@@ -354,13 +355,15 @@ class Pipeline:
         unrecognized = understanding.unrecognized_cars if understanding else []
         if understanding:
             intent = understanding.intent
-            turn.preferences, turn.updated_preferences, flags = merge_preferences(
+            merged = merge_preferences(
                 turn.preferences,
                 understanding.preference_updates,
                 message,
                 self._settings.preferences.max_value_chars,
             )
-            turn.flags += flags
+            turn.preferences, turn.updated_preferences = merged.preferences, merged.updated
+            turn.rejected_preferences = merged.rejected
+            turn.flags += merged.flags
         else:
             intent = Intent.COMPARE if len(cars) > 1 else Intent.FACT
         not_covered = guardrails.not_covered(unrecognized, brands)
@@ -507,6 +510,7 @@ class Pipeline:
             post_check=post_check,
             preferences=turn.preferences,
             updated_preferences=list(turn.updated_preferences),
+            rejected_preferences=list(turn.rejected_preferences),
             flags=list(turn.flags),
             llm_calls=turn.llm_calls,
             calls=list(turn.calls),

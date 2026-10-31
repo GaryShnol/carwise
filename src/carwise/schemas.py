@@ -256,6 +256,7 @@ class Answer(BaseModel):
     post_check: PostCheck | None  # None when no answer was generated
     preferences: Preferences  # the profile after this turn; the caller keeps it (Session)
     updated_preferences: list[str]  # field names this turn set or changed
+    rejected_preferences: list[str]  # field names whose value was not in the user's words
     flags: list[str]
     llm_calls: int
     calls: list[LLMCall]  # one record per LLM call, in order

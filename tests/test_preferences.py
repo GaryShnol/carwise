@@ -88,7 +88,7 @@ def test_conflicting_preference_in_a_later_turn_replaces_the_earlier_one() -> No
 def test_within_one_turn_the_last_update_on_a_field_wins() -> None:
     message = "חשמלי, או בעצם היברידי"
     updates = [PreferenceUpdate(field="powertrain", value=v) for v in ("חשמלי", "היברידי")]
-    prefs, updated, flags = merge(Preferences(), updates, message, MAX_CHARS)
+    prefs, updated, flags, _ = merge(Preferences(), updates, message, MAX_CHARS)
     assert prefs.powertrain == Preference(value="היברידי", source=message)
     assert updated == ["powertrain"] and flags == []
 
@@ -99,7 +99,7 @@ def test_unknown_field_is_dropped_and_flagged() -> None:
         PreferenceUpdate(field="color", value="אדום"),
         PreferenceUpdate(field="budget", value="עד 200 אלף"),
     ]
-    prefs, updated, flags = merge(Preferences(), updates, message, MAX_CHARS)
+    prefs, updated, flags, _ = merge(Preferences(), updates, message, MAX_CHARS)
     assert prefs.field_names() == ["budget"] and updated == ["budget"]
     assert flags == ["preference_unknown_field"]
 
@@ -114,7 +114,7 @@ def test_strict_schema_still_lists_the_allowed_field_names() -> None:
 def test_long_value_is_capped_and_flagged() -> None:
     message = "חשוב לי " + " ".join(["נוחות"] * 40)
     update = PreferenceUpdate(field="priorities", value=" ".join(["נוחות"] * 40))
-    prefs, _, flags = merge(Preferences(), [update], message, MAX_CHARS)
+    prefs, _, flags, _ = merge(Preferences(), [update], message, MAX_CHARS)
     assert prefs.priorities is not None and len(prefs.priorities.value) <= MAX_CHARS
     assert flags == ["preference_value_truncated"]
 
@@ -132,6 +132,59 @@ def test_long_value_is_capped_and_flagged() -> None:
 )
 def test_grounded_in_the_users_message(value: str, message: str, expected: bool) -> None:
     assert grounded_in(value, message) is expected
+
+
+# --- numbers in words or digits (CW-405) ---------------------------------------------
+@pytest.mark.parametrize(
+    ("value", "message"),
+    [
+        ("5 נוסעים", "אנחנו משפחה, חמישה בסך הכול"),  # the family scenario's miss
+        ("5", "לחמישה אנשים"),  # word with a prefix
+        ("חמישה נוסעים", "צריך מקום ל-5"),  # digit to word
+        ("עד 150,000", "עד 150 אלף שקל"),  # thousands comma and scale word
+        ("עד 150 אלף", "התקציב מאה וחמישים אלף"),  # compound number in words
+        ("300000", "שלוש מאות אלף"),
+        ("עד 1.5 מיליון", "עד 1,5 מיליון"),  # decimal comma
+        ("15 אלף", "חמישה עשר אלף בשנה"),
+        ("23", "עשרים ושלוש"),
+    ],
+)
+def test_numbers_match_by_value_in_words_or_digits(value: str, message: str) -> None:
+    assert grounded_in(value, message)
+
+
+@pytest.mark.parametrize(
+    ("value", "message"),
+    [
+        ("5", "תקציב 150 אלף"),  # a whole number, never a digit inside another
+        ("5 נוסעים", "אנחנו שבעה"),  # a different number
+        ("עד 200 אלף", "עד 20 אלף"),
+        ("57", "חמישה שבעה"),  # two numbers in a row are not one
+    ],
+)
+def test_a_different_number_is_not_grounded(value: str, message: str) -> None:
+    assert not grounded_in(value, message)
+
+
+def test_a_number_from_an_assistant_turn_is_still_rejected() -> None:
+    history = [
+        {"role": "user", "content": "שלום"},
+        {"role": "assistant", "content": "לרכב משפחתי לחמישה נוסעים יש כמה אפשרויות."},
+    ]
+    pipeline, _, _ = make([said(("passengers", "5")), RECOMMENDATION])
+    answer = pipeline.ask("מה תמליץ?", history)
+    assert answer.preferences == Preferences()
+    assert answer.rejected_preferences == ["passengers"]
+
+
+def test_rejected_preferences_list_field_names_once() -> None:
+    updates = [
+        PreferenceUpdate(field="budget", value="500 אלף"),
+        PreferenceUpdate(field="budget", value="600 אלף"),
+        PreferenceUpdate(field="powertrain", value="חשמלי"),
+    ]
+    result = merge(Preferences(), updates, "רק חשמלי", MAX_CHARS)
+    assert result.updated == ["powertrain"] and result.rejected == ["budget"]
 
 
 # --- never from assistant turns or article text ------------------------------------------
@@ -168,14 +221,14 @@ def test_earlier_preference_resent_unchanged_is_kept_without_a_flag() -> None:
 def test_new_value_for_a_stored_field_must_still_come_from_the_user() -> None:
     stored = Preferences(budget=Preference(value="עד 200 אלף", source="x"))
     update = PreferenceUpdate(field="budget", value="עד 300 אלף")
-    profile, updated, flags = merge(stored, [update], "ומה עם תא המטען?", MAX_CHARS)
+    profile, updated, flags, _ = merge(stored, [update], "ומה עם תא המטען?", MAX_CHARS)
     assert profile == stored and updated == [] and flags == ["preference_not_from_user"]
 
 
 def test_repeat_check_compares_with_the_same_field_only() -> None:
     stored = Preferences(budget=Preference(value="חשמלי", source="x"))
     update = PreferenceUpdate(field="powertrain", value="חשמלי")
-    profile, updated, flags = merge(stored, [update], "מה מתאים לי?", MAX_CHARS)
+    profile, updated, flags, _ = merge(stored, [update], "מה מתאים לי?", MAX_CHARS)
     assert profile == stored and updated == [] and flags == ["preference_not_from_user"]
 
 
@@ -279,3 +332,12 @@ def test_telemetry_has_preference_field_names_only(tmp_path: Path) -> None:
     assert record["preferences"] == ["budget", "powertrain"]
     assert record["updated_preferences"] == ["budget", "powertrain"]
     assert "200" not in raw and "חשמלי" not in raw  # no values, no message text
+
+
+def test_telemetry_lists_rejected_preference_names_without_values(tmp_path: Path) -> None:
+    logger = TurnLogger(tmp_path, profile="dev", models={"understand": "a", "generate": "b"})
+    pipeline, _, _ = make([said(("budget", "עד 900 אלף")), RECOMMENDATION], logger=logger)
+    pipeline.ask("מה תמליץ?", [])
+    raw = logger.path.read_text(encoding="utf-8")
+    assert json.loads(raw)["rejected_preferences"] == ["budget"]
+    assert "900" not in raw

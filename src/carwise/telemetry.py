@@ -56,6 +56,7 @@ def turn_record(
         # Field names only: the values and their source messages are the user's words.
         "preferences": answer.preferences.field_names(),
         "updated_preferences": answer.updated_preferences,
+        "rejected_preferences": answer.rejected_preferences,
         "post_check": answer.post_check.model_dump(mode="json") if answer.post_check else None,
         "llm_calls": answer.llm_calls,
         "llm_calls_detail": [call.model_dump(mode="json") for call in answer.calls],
