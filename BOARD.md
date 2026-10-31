@@ -70,9 +70,9 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E1 Thin vertical slice | `v0.1` | 6 | 6 | 11 | DONE |
 | E2 Reliability and guardrails | none | 6 | 6 | 9 | DONE |
 | E3 Measurement | none | 4 | 4 | 6 | DONE (pull request not opened yet) |
-| E4 Interface and packaging | none | 4 | 2 | 5 | IN PROGRESS |
+| E4 Interface and packaging | none | 4 | 3 | 5 | IN PROGRESS |
 | E5 Documentation and release | `v1.0` | 3 | 0 | 4 | TODO |
-| **Total** |  | **26** | **21** | **38** |  |
+| **Total** |  | **26** | **22** | **38** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -140,7 +140,7 @@ Branch: `epic/e4-interface-packaging` | Tag: none
 | CW-405 | Number-aware preference grounding; rejected field names in telemetry | `fix` | S | P1 | DONE | CW-203, CW-302 |
 | CW-401 | Streamlit UI in Hebrew, right to left (chat, preferences panel, sources, cost) | `feat` | M | P1 | DONE | CW-203, CW-405 |
 | CW-402 | Dockerfile and run command | `feat` | S | P2 | TODO | CW-401 |
-| CW-403 | GitHub Actions: lint, tests, retrieval eval | `ci` | S | P2 | TODO | CW-302, CW-003 |
+| CW-403 | GitHub Actions: lint, tests, retrieval eval | `ci` | S | P2 | DONE | CW-302, CW-003 |
 
 ## Epic E5: Documentation and release
 
@@ -339,10 +339,12 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [ ] One documented `docker run` line; the key is passed as an environment variable.
 
 ### CW-403 GitHub Actions
-- [ ] Workflow runs lint, unit tests and the retrieval eval.
-- [ ] The articles are downloaded in CI or restored from the Actions cache; if the site blocks CI, only unit tests on small fixtures run and this is documented.
-- [ ] Answer eval runs only when `OPENAI_API_KEY` is configured and is triggered manually, not on every push; documented in the README.
-- [ ] Branch protection on `main` requires green CI.
+Scope set by the owner at the start of E4: the automatic workflow is offline; both evals are manual.
+- [x] `ci.yml` on every push to `main` or `epic/**` and every pull request to `main`: ruff, ruff format check, mypy and pytest on Python 3.11 and 3.13, offline (synthetic data, `HF_HUB_OFFLINE=1`, no secrets).
+- [x] `eval.yml`, manual only: the retrieval eval (plus the tests that need the articles or the real model) and the answer eval, sharing a corpus step that caches the Hugging Face model (by name and revision) and the articles (by `config/cars.yaml`), fetching politely on a miss. If the site blocks the runner, ingest fails with its message; this is documented in `docs/ci.md`.
+- [x] The answer eval runs only when the `OPENAI_API_KEY` secret is set (otherwise a notice, $0); the key reaches only the eval step. Documented in `docs/ci.md`; the README links it in CW-501.
+- [x] `permissions: contents: read`, actions pinned to commit SHAs, uv pinned, `uv sync --locked`; no `pull_request_target`, so forks never see a secret. Linux installs take the CPU build of torch.
+- [ ] Branch protection on `main` requires green CI: exact settings in `docs/ci.md`; the owner applies them (needs repository admin), after `ci.yml` has run once so the checks can be selected.
 
 ### CW-501 README
 - [ ] Problem statement and run instructions (three commands at most).
@@ -389,6 +391,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Date | Change |
 |---|---|
+| 2026-10-31 | CW-403 done: offline `ci.yml` on push and pull request, manual `eval.yml` (retrieval, answer); CPU torch on Linux; `docs/ci.md` with the branch-protection settings for the owner to apply. CW-401 review fixes: registry article links, links rejected in answers, thread-safe retriever and log. |
 | 2026-10-31 | CW-401 done: Streamlit UI in Hebrew, right to left; `streamlit==1.66.0` added. |
 | 2026-10-31 | E4 started on `epic/e4-interface-packaging`. Added CW-405 (P1, S), promoted from the Backlog item on number words in preference grounding: 26 tickets, 38 points. CW-405 done. |
 | 2026-10-31 | E3 done (CW-302, CW-303, CW-305, CW-306). Answer level on `final` (3 runs): generate v3 64/69, kept as default over v4 (60/69) and v5 (63/69, less stable); hold-out 15/18. Judge gpt-5.4, cap raised to $0.30. Eval-only false "not mentioned" check added; three Backlog items. ADRs 0002 to 0004. Process slip: commit 288307c went in with a failing test (fixed in 70757be). |
