@@ -71,8 +71,8 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E2 Reliability and guardrails | none | 6 | 6 | 9 | DONE (PR #3) |
 | E3 Measurement | none | 4 | 4 | 6 | DONE (PR #4) |
 | E4 Interface and packaging | none | 4 | 4 | 5 | DONE (PR #5) |
-| E5 Documentation and release | `v1.0` | 3 | 1 | 4 | IN PROGRESS |
-| **Total** |  | **26** | **24** | **38** |  |
+| E5 Documentation and release | `v1.0` | 3 | 2 | 4 | IN PROGRESS |
+| **Total** |  | **26** | **25** | **38** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -150,7 +150,7 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 
 | ID | Ticket | Type | Size | Pri | Status | Depends on |
 |---|---|---|---|---|---|---|
-| CW-501 | README: architecture, decision table, not-built list, AWS mapping | `docs` | M | P1 | IN PROGRESS | CW-302 |
+| CW-501 | README: architecture, decision table, not-built list, AWS mapping | `docs` | M | P1 | DONE | CW-302 |
 | CW-502 | Example conversation and eval results in README | `docs` | S | P1 | DONE | CW-302, CW-501 |
 | CW-503 | Release `v1.0` | `chore` | S | P1 | TODO | all |
 
@@ -351,16 +351,17 @@ Scope set by the owner at the start of E4: the automatic workflow is offline; bo
 - [ ] Branch protection on `main` requires green CI: exact settings in `docs/ci.md`; the owner applies them (needs repository admin), after `ci.yml` has run once so the checks can be selected. Open: an owner action on GitHub, not a code change; the ticket counts as done without it.
 
 ### CW-501 README
-- [ ] Problem statement and run instructions (three commands at most).
-- [ ] Architecture in plain language; decision table (decision, alternative, reason, when it changes).
-- [ ] "Deliberately not built" section and the AWS production mapping.
-- [ ] A TL;DR under one page at the top: approach, architecture in five lines, three key decisions.
-- [ ] Determinism trade-off stated honestly; assumptions listed.
-- [ ] Honest notes: time actually spent, what would be cut or added with more time, how AI tooling was used, and a copyright notice for the articles.
-- [ ] Running note (CW-401 review): the app is meant to run locally with the user's own API key; the cost cap bounds one conversation (one browser session), not the whole process.
-- [ ] Data note: articles are downloaded by `make ingest`, are not in the repository, and can be placed manually in `data/raw/`.
-- [ ] Quotes from the articles are short, with the source named; the repository is public.
-- [ ] Embedding model choice backed by the comparison from CW-305, and tuned values from CW-303, when those tickets are done; otherwise the README states the defaults and that they were not tuned.
+- [x] Problem statement and run instructions (three commands at most).
+- [x] Architecture in plain language; decision table (decision, alternative, reason, when it changes).
+- [x] "Deliberately not built" section and the AWS production mapping.
+- [x] A TL;DR under one page at the top: approach, architecture in five lines, three key decisions.
+- [x] Determinism trade-off stated honestly; assumptions listed.
+- [x] Honest notes (the hours are `TODO(owner)` until the owner fills them in): time actually spent, what would be cut or added with more time, how AI tooling was used, and a copyright notice for the articles.
+- [x] Running note (CW-401 review): the app is meant to run locally with the user's own API key; the cost cap bounds one conversation (one browser session), not the whole process.
+- [x] Data note: articles are downloaded by `make ingest`, are not in the repository, and can be placed manually in `data/raw/`.
+- [x] Quotes from the articles are short, with the source named; the repository is public.
+- [x] Embedding model choice backed by the comparison from CW-305, and tuned values from CW-303, when those tickets are done; otherwise the README states the defaults and that they were not tuned.
+- [x] As built: every command in the README was run on a clean clone (uv, Docker on a fresh volume, Ollama). The check found one code bug (an empty `OPENAI_BASE_URL` from `.env.example` broke every LLM call; fixed with tests) and three missing instructions (the clone step, the Ollama cold-start timeout, the retrieval eval overwriting a committed report).
 
 ### CW-502 Example conversation and eval results
 - [x] Sample conversation, produced with the `final` (OpenAI) profile, shows preferences inferred over several turns, a comparison and a refusal; article excerpts stay short (public repository). As built: a real six-turn CLI conversation, answers unedited, URLs removed from the source lines and marked "(shortened)"; $0.021. A first recording asked about the Toyota last, when the history carried two known cars, so it went to generation with a "not covered" note instead of the gate; the published one asks first. Not committed: both transcripts stay local.
@@ -395,6 +396,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Date | Change |
 |---|---|
+| 2026-10-31 | CW-501 done: README, checked on a clean clone; `.env.example` bug fixed (an empty `OPENAI_BASE_URL` broke every call). Hygiene scan clean (gitleaks over all commits, no article text, no data or logs). |
 | 2026-10-31 | CW-502 done: example conversation on `final` and a UI screenshot in the README. |
 | 2026-10-31 | E5 started on `epic/e5-docs-release`. Progress table corrected: E3 and E4 were merged (PR #4, PR #5). |
 | 2026-10-31 | CW-402 done: Docker image with first-start ingest into the volume. E4 complete; pull request not opened yet. |

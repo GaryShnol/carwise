@@ -92,6 +92,7 @@ the embedding model (about 2.2 GB) and the eight articles.
 ### Local (uv)
 
 ```bash
+git clone https://github.com/GaryShnol/carwise.git && cd carwise
 uv sync
 uv run python -m app ingest
 cp .env.example .env            # then put your key in OPENAI_API_KEY (PowerShell: copy .env.example .env)
@@ -147,8 +148,13 @@ quality was not evaluated**, and no Ollama numbers are reported. To try it:
      qwen3:4b-instruct-2507-q4_K_M: { input: 0, cached_input: 0, output: 0 }
    ```
 
-3. Run from the repository root, with no `OPENAI_API_KEY` set:
+3. Run from the repository root, with no `OPENAI_API_KEY` set (bash):
    `CARWISE_CONFIG=settings.local.yaml uv run python -m app chat --profile ollama`
+
+`settings.local.yaml` is gitignored. On a machine without a GPU, the first question can fail
+with the "something went wrong" reply: the generate call hit `llm.timeout_s` (30 s) while
+Ollama was still loading the model. Ask again once the model is loaded, or raise
+`llm.timeout_s` in your copy.
 
 ### What needs an API key, and what it costs
 
@@ -288,7 +294,8 @@ gitignored `eval/runs/`.
   mixing-trap premise correction, and the preference scenario. The judge is gpt-5.4, a larger
   model than either generator; criteria in [`eval/judge.yaml`](eval/judge.yaml).
 
-Run it: `uv run python -m app eval` (retrieval level, free, writes to `eval/reports/`), or
+Run it: `uv run python -m app eval` (retrieval level, free). It writes its report to
+`eval/reports/` and so overwrites the committed one; add `--out <folder>` to keep it. Or
 `uv run --env-file .env python -m app eval --level answer --profile final --runs 3`. Add
 `--holdout` for the hold-out set.
 
