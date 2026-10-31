@@ -340,6 +340,7 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [x] Articles, model and index are not in the image: the UI builds them into the `/app/data` volume at first start (`--ingest-if-missing`, polite fetcher) while the page shows its loading state; a failure gets a Hebrew message.
 - [x] `.dockerignore` is an allow-list that also excludes `.env*`, keys, `data/`, `logs/`, `eval/runs/`, `.git/`, `.venv/` and caches; checked against the real build context.
 - [x] `HEALTHCHECK` on `/_stcore/health`; static tests in `tests/test_docker.py`; image built and the run line tested locally: image 2.18 GB, first start 177 s until the chat is ready, later starts 17 s, healthy, the key absent from image, layers and logs (`docs/docker.md`).
+- [x] Manual `docker.yml` (review follow-up): builds the image and loads the settings and the car registry inside it, offline and without a key; the check that would have caught the first container crash (config looked up next to a non-editable install), which the static tests could not see.
 
 ### CW-403 GitHub Actions
 Scope set by the owner at the start of E4: the automatic workflow is offline; both evals are manual.

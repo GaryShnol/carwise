@@ -1,0 +1,41 @@
+# Manual Docker smoke test, never on push: Actions tab -> "docker (manual)" -> Run workflow.
+#
+# Builds the image from the Dockerfile and runs a short check inside it: the settings
+# file and the car registry load from the installed package. This is the check that
+# would have caught the first container crash (CW-402): with a non-editable install,
+# the package sat in site-packages and config/settings.yaml was looked up next to it.
+# The static tests in tests/test_docker.py read the Dockerfile and could not see this.
+#
+# The container runs with --network none and no environment: no API key, no article
+# fetch, no model download. No secrets are used; the image is not pushed anywhere.
+name: docker (manual)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: build the image and load the config inside it
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Plain docker build: base images are pinned by digest in the Dockerfile, and no
+      # third-party build action is needed for a local, unpushed image.
+      - name: Build
+        run: docker build -t carwise:smoke .
+
+      - name: Settings and registry load inside the container (offline, no key)
+        run: |
+          docker run --rm --network none carwise:smoke \
+            python -c "from carwise.config import load_settings; load_settings(); from carwise.registry import load_registry; load_registry(); print('config ok')"

@@ -7,6 +7,7 @@
 | `ci.yml` | push to `main` or `epic/**`, pull request to `main` | `ruff check`, `ruff format --check`, `mypy`, `pytest` on Python 3.11 and 3.13 | package install only; tests are offline (`HF_HUB_OFFLINE=1`) | none |
 | `eval.yml`, level `retrieval` | manual (`workflow_dispatch`) | ingest, the tests that need the articles or the real model, the retrieval eval | fetches the articles and the model on a cache miss | none |
 | `eval.yml`, level `answer` | manual (`workflow_dispatch`) | ingest, the answer eval on `dev` or `final` | as above, plus the OpenAI API | `OPENAI_API_KEY`, only in the eval step |
+| `docker.yml` | manual (`workflow_dispatch`) | build the image, then inside it (`--network none`, no environment) load `config/settings.yaml` and `config/cars.yaml` | base images and packages for the build only | none |
 
 - The unit tests use synthetic chunks, a fake embedder and a fake LLM. Tests that need the
   articles skip without them; they run in the manual retrieval job.
