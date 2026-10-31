@@ -13,6 +13,7 @@ requires-python = ">=3.11"
 # in the pull request (CLAUDE.md section 12.1). Current ones:
 #   pydantic: typed schemas, config and validated structured LLM output.
 #   pyyaml:   reads config/settings.yaml and config/cars.yaml.
+#   streamlit: the Hebrew web UI (CW-401).
 dependencies = [
   "beautifulsoup4==4.13.4",
   "chromadb==1.5.9",
@@ -20,6 +21,7 @@ dependencies = [
   "pydantic==2.13.5",
   "pyyaml==6.0.3",
   "sentence-transformers==6.2.0",
+  "streamlit==1.66.0",
 ]
 
 [dependency-groups]
