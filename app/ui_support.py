@@ -127,10 +127,17 @@ def article_links(answer: Answer, registry: Registry) -> list[tuple[str, str]]:
     return list(links.values())
 
 
+# A right-to-left mark on each side of the separator: without it the browser's bidi
+# algorithm joins a Latin-only name ("MG S6") and the separator into one
+# left-to-right run, and the links read out of order in the Hebrew line.
+_RLM = "‏"
+LINK_SEPARATOR = f"{_RLM} · {_RLM}"
+
+
 def links_markdown(links: list[tuple[str, str]]) -> str:
     """One markdown line of article links; the names cannot break the link syntax."""
     items = [f"[{_link_text(name)}]({url})" for name, url in links]
-    return as_markdown(f"{ARTICLES_PREFIX}: " + " · ".join(items))
+    return as_markdown(f"{ARTICLES_PREFIX}: " + LINK_SEPARATOR.join(items) + _RLM)
 
 
 def _link_text(text: str) -> str:

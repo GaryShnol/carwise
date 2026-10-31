@@ -238,3 +238,8 @@ def test_page_links_the_cited_article(run_app: Callable[..., AppTest]) -> None:
     app = run_app([family_plan(), generation()])
     app.chat_input[0].set_value(QUESTION).run()
     assert any(REGISTRY.get("mg_s6").url in text for text in texts(app))
+
+
+def test_link_separator_keeps_latin_names_in_right_to_left_order() -> None:
+    line = ui.links_markdown([("MG S6", "https://a.example"), ("GAC איון HT", "https://b.example")])
+    assert "‏ · ‏" in line and line.endswith("‏")
