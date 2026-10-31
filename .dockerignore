@@ -1,0 +1,35 @@
+# Allow-list: the build context holds only what the image needs, so a new file in
+# the repository (or a secret dropped into it) never reaches the image by accident.
+*
+!pyproject.toml
+!uv.lock
+!README.md
+!LICENSE
+!src/
+!app/
+!eval/
+!config/
+
+# Never in the image, even inside an allowed folder:
+# secrets
+**/.env
+**/.env.*
+**/*.pem
+**/*.key
+**/secrets.toml
+**/.streamlit/secrets.toml
+# the publisher's articles, the index and the model (built into the volume at first start)
+data/
+**/data/
+# logs and eval answer text (it quotes the articles)
+logs/
+**/logs/
+eval/runs/
+# local environments and caches
+.git/
+.venv/
+**/__pycache__/
+**/*.py[cod]
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
