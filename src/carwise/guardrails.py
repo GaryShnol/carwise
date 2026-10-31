@@ -35,6 +35,10 @@ _FIELD_ASSIGNMENT = re.compile(r"\b[a-z]+(?:_[a-z]+)+\s*[=:]")
 _OWN_FIELD_NAMES = re.compile(r"\b(?:used_chunk_ids|answer)\b")
 _CHUNK_ID = re.compile(r"\b[a-z0-9]+(?:_[a-z0-9]+)*:\d{3}\b")
 _HEBREW_LETTER = re.compile("[א-ת]")
+# Links and images (CW-401): a URL, "www." (which markdown renders as a link), or
+# markdown link and image syntax. The UI renders answers as markdown, so a link
+# the model wrote would be clickable; the only links shown come from the registry.
+_LINK = re.compile(r"https?://|\bwww\.|!?\[[^\]]*\]\([^)]*\)", re.IGNORECASE)
 
 
 def answer_text_problem(text: str) -> str | None:
@@ -51,6 +55,11 @@ def answer_text_problem(text: str) -> str | None:
         return (
             "The answer text repeats JSON field names; write plain Hebrew prose only and "
             "put structured values in their own fields."
+        )
+    if _LINK.search(text):
+        return (
+            "The answer text contains a link or an image; write plain Hebrew prose with no "
+            "URLs and no markdown links or images. Name the car and section instead."
         )
     if _CHUNK_ID.search(text):
         return (

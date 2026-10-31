@@ -19,6 +19,7 @@ from carwise.llm.base import (
 )
 from carwise.llm.fake import FakeLLMClient
 from carwise.llm.openai_client import OpenAIClient
+from carwise.schemas import Generation
 
 MODEL = "gpt-5.4-nano"
 NANO = Price(input=0.20, cached_input=0.02, output=1.25)
@@ -131,6 +132,20 @@ def test_invalid_reply_is_retried_once_with_the_error() -> None:
     assert retry_messages[-1]["role"] == "user"
     assert "did not match the required JSON schema" in retry_messages[-1]["content"]
     assert "cars" in retry_messages[-1]["content"]  # the validation error names the missing field
+
+
+def test_answer_with_a_link_gets_the_corrective_retry() -> None:
+    linked = json.dumps(
+        {"answer": 'הטווח 400 ק"מ, https://example.org', "used_chunk_ids": []}, ensure_ascii=False
+    )
+    fixed = json.dumps({"answer": 'הטווח 400 ק"מ.', "used_chunk_ids": []}, ensure_ascii=False)
+    stub = StubSDK(_completion(linked), _completion(fixed))
+    client = _client(stub)
+    result = client.complete_json(
+        "system prompt", [{"role": "user", "content": "שאלה"}], Generation, model=MODEL
+    )
+    assert result.attempts == 2 and result.parsed.answer == 'הטווח 400 ק"מ.'
+    assert "link or an image" in stub.requests[1]["messages"][-1]["content"]
 
 
 def test_second_invalid_reply_raises_and_is_still_charged() -> None:

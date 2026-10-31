@@ -293,6 +293,13 @@ def test_cited_ids_that_were_not_retrieved_are_dropped() -> None:
         'הטווח הוא 400 ק"מ (mg_s6:000)',
         "The range is 400 km.",
         "   ",
+        # Links and images (CW-401): the UI renders markdown, so none may come from the model.
+        "הכתבה המלאה: https://www.auto.co.il/article/1",
+        "פרטים נוספים ב-HTTP://example.org",
+        "פרטים נוספים ב-www.auto.co.il",
+        "ראו [את הכתבה](https://example.org)",
+        "ראו [את הכתבה](/article/1)",
+        "![תמונה של הרכב](car.png) הנה הרכב",
     ],
 )
 def test_answer_guard_rejects_field_names_ids_and_non_hebrew(text: str) -> None:
@@ -303,6 +310,18 @@ def test_answer_guard_rejects_field_names_ids_and_non_hebrew(text: str) -> None:
 
 def test_answer_guard_accepts_hebrew_with_latin_car_names() -> None:
     text = 'הטווח בפועל של MG S6 הוא 400 ק"מ (MG S6, הטווח). ל-RS3 יש 400 כ"ס.'
+    assert answer_text_problem(text) is None
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        'הכתבה באתר auto.co.il מציינת טווח של 400 ק"מ.',  # a site name is not a link
+        "המחיר [לפי הכתבה] הוא 180 אלף שקל.",  # brackets alone are not a link
+        "ההאצה (0-100) היא 6 שניות.",
+    ],
+)
+def test_answer_guard_accepts_site_names_and_brackets(text: str) -> None:
     assert answer_text_problem(text) is None
 
 
