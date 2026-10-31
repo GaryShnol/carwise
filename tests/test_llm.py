@@ -213,6 +213,22 @@ def test_local_server_needs_no_key(monkeypatch: pytest.MonkeyPatch) -> None:
     OpenAIClient(load_settings())  # constructs without a network call
 
 
+@pytest.mark.parametrize("value", ["", "  "])
+def test_empty_base_url_variable_means_openai(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
+    # `cp .env.example .env` set OPENAI_BASE_URL to "", which the SDK took as the URL.
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-not-a-real-key")
+    monkeypatch.setenv("OPENAI_BASE_URL", value)
+    client = OpenAIClient(load_settings())
+    assert str(client._sdk.base_url).rstrip("/") == "https://api.openai.com/v1"
+
+
+def test_empty_base_url_variable_still_needs_a_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setenv("OPENAI_BASE_URL", "")
+    with pytest.raises(LLMConfigError, match="OPENAI_API_KEY is not set"):
+        OpenAIClient(load_settings())
+
+
 def test_fake_client_replays_models_json_and_errors() -> None:
     fake = FakeLLMClient([Answer(answer="א", cars=[]), VALID, LLMOutputError("scripted")])
     assert fake.complete_json("s", [], Answer, model="m").parsed.answer == "א"

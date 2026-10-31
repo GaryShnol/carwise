@@ -234,7 +234,7 @@ def test_a_refusal_has_no_article_links() -> None:
 
 def test_link_text_cannot_break_the_markdown_link() -> None:
     line = ui.links_markdown([("a[b](c)", "https://example.org/x")])
-    assert "[a\[b\]\(c\)](https://example.org/x)" in line
+    assert r"[a\[b\]\(c\)](https://example.org/x)" in line
 
 
 def test_page_links_the_cited_article(run_app: Callable[..., AppTest]) -> None:

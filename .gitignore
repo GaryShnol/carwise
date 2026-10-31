@@ -228,3 +228,7 @@ logs/
 eval/runs/
 # CW-305 candidate indexes (generated)
 data/candidates/
+# Other env files (only the example is committed), and the local config copy the README's Ollama steps create
+.env.*
+!.env.example
+settings.local.yaml

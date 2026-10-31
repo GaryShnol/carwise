@@ -37,6 +37,9 @@ from carwise.llm.base import (
 
 # A local OpenAI-compatible server needs some key string but ignores its value.
 LOCAL_SERVER_KEY = "not-needed"
+# Passed explicitly because the SDK reads OPENAI_BASE_URL itself when base_url is None,
+# and an empty value (what `cp .env.example .env` used to give) became a base URL of "".
+OPENAI_BASE_URL = "https://api.openai.com/v1"
 # Enough of the validation error for the model to fix its reply; keeps the retry cheap.
 RETRY_ERROR_CHARS = 1000
 RETRY_INSTRUCTION = (
@@ -108,7 +111,8 @@ class OpenAIClient:
 
     @staticmethod
     def _make_sdk(settings: Settings, profile: ProfileConfig) -> OpenAI:
-        base_url = os.environ.get("OPENAI_BASE_URL") or profile.base_url
+        # An empty or blank variable means "not set", like a missing one.
+        base_url = os.environ.get("OPENAI_BASE_URL", "").strip() or profile.base_url
         api_key = os.environ.get("OPENAI_API_KEY")
         if not api_key:
             if base_url is None:
@@ -119,7 +123,7 @@ class OpenAIClient:
             api_key = LOCAL_SERVER_KEY
         return OpenAI(
             api_key=api_key,
-            base_url=base_url,
+            base_url=base_url or OPENAI_BASE_URL,
             timeout=settings.llm.timeout_s,
             max_retries=settings.llm.retries,
         )

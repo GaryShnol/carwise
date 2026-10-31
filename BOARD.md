@@ -66,13 +66,13 @@ Items outside the code that must not be forgotten. Update the status as each is 
 
 | Epic | Milestone / tag | Tickets | Done | Points | Status |
 |---|---|---|---|---|---|
-| E0 Scaffold and source check | none | 3 | 3 | 3 | DONE |
-| E1 Thin vertical slice | `v0.1` | 6 | 6 | 11 | DONE |
-| E2 Reliability and guardrails | none | 6 | 6 | 9 | DONE |
-| E3 Measurement | none | 4 | 4 | 6 | DONE (pull request not opened yet) |
-| E4 Interface and packaging | none | 4 | 4 | 5 | DONE (pull request not opened yet) |
-| E5 Documentation and release | `v1.0` | 3 | 0 | 4 | TODO |
-| **Total** |  | **26** | **23** | **38** |  |
+| E0 Scaffold and source check | none | 3 | 3 | 3 | DONE (PR #1) |
+| E1 Thin vertical slice | `v0.1` | 6 | 6 | 11 | DONE (PR #2) |
+| E2 Reliability and guardrails | none | 6 | 6 | 9 | DONE (PR #3) |
+| E3 Measurement | none | 4 | 4 | 6 | DONE (PR #4) |
+| E4 Interface and packaging | none | 4 | 4 | 5 | DONE (PR #5) |
+| E5 Documentation and release | `v1.0` | 3 | 2 | 4 | IN REVIEW (tag `v1.0` after the merge) |
+| **Total** |  | **26** | **25** | **38** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -150,9 +150,9 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 
 | ID | Ticket | Type | Size | Pri | Status | Depends on |
 |---|---|---|---|---|---|---|
-| CW-501 | README: architecture, decision table, not-built list, AWS mapping | `docs` | M | P1 | TODO | CW-302 |
-| CW-502 | Example conversation and eval results in README | `docs` | S | P1 | TODO | CW-302, CW-501 |
-| CW-503 | Release `v1.0` | `chore` | S | P1 | TODO | all |
+| CW-501 | README: architecture, decision table, not-built list, AWS mapping | `docs` | M | P1 | DONE | CW-302 |
+| CW-502 | Example conversation and eval results in README | `docs` | S | P1 | DONE | CW-302, CW-501 |
+| CW-503 | Release `v1.0` | `chore` | S | P1 | IN REVIEW | all |
 
 ## Ticket details and acceptance criteria
 
@@ -348,32 +348,33 @@ Scope set by the owner at the start of E4: the automatic workflow is offline; bo
 - [x] `eval.yml`, manual only: the retrieval eval (plus the tests that need the articles or the real model) and the answer eval, sharing a corpus step that caches the Hugging Face model (by name and revision) and the articles (by `config/cars.yaml`), fetching politely on a miss. If the site blocks the runner, ingest fails with its message; this is documented in `docs/ci.md`.
 - [x] The answer eval runs only when the `OPENAI_API_KEY` secret is set (otherwise a notice, $0); the key reaches only the eval step. Documented in `docs/ci.md`; the README links it in CW-501.
 - [x] `permissions: contents: read`, actions pinned to commit SHAs, uv pinned, `uv sync --locked`; no `pull_request_target`, so forks never see a secret. Linux installs take the CPU build of torch.
-- [ ] Branch protection on `main` requires green CI: exact settings in `docs/ci.md`; the owner applies them (needs repository admin), after `ci.yml` has run once so the checks can be selected.
+- [ ] Branch protection on `main` requires green CI: exact settings in `docs/ci.md`; the owner applies them (needs repository admin), after `ci.yml` has run once so the checks can be selected. Open: an owner action on GitHub, not a code change; the ticket counts as done without it.
 
 ### CW-501 README
-- [ ] Problem statement and run instructions (three commands at most).
-- [ ] Architecture in plain language; decision table (decision, alternative, reason, when it changes).
-- [ ] "Deliberately not built" section and the AWS production mapping.
-- [ ] A TL;DR under one page at the top: approach, architecture in five lines, three key decisions.
-- [ ] Determinism trade-off stated honestly; assumptions listed.
-- [ ] Honest notes: time actually spent, what would be cut or added with more time, how AI tooling was used, and a copyright notice for the articles.
-- [ ] Running note (CW-401 review): the app is meant to run locally with the user's own API key; the cost cap bounds one conversation (one browser session), not the whole process.
-- [ ] Data note: articles are downloaded by `make ingest`, are not in the repository, and can be placed manually in `data/raw/`.
-- [ ] Quotes from the articles are short, with the source named; the repository is public.
-- [ ] Embedding model choice backed by the comparison from CW-305, and tuned values from CW-303, when those tickets are done; otherwise the README states the defaults and that they were not tuned.
+- [x] Problem statement and run instructions (three commands at most).
+- [x] Architecture in plain language; decision table (decision, alternative, reason, when it changes).
+- [x] "Deliberately not built" section and the AWS production mapping.
+- [x] A TL;DR under one page at the top: approach, architecture in five lines, three key decisions.
+- [x] Determinism trade-off stated honestly; assumptions listed.
+- [x] Honest notes (the hours are `TODO(owner)` until the owner fills them in): time actually spent, what would be cut or added with more time, how AI tooling was used, and a copyright notice for the articles.
+- [x] Running note (CW-401 review): the app is meant to run locally with the user's own API key; the cost cap bounds one conversation (one browser session), not the whole process.
+- [x] Data note: articles are downloaded by `make ingest`, are not in the repository, and can be placed manually in `data/raw/`.
+- [x] Quotes from the articles are short, with the source named; the repository is public.
+- [x] Embedding model choice backed by the comparison from CW-305, and tuned values from CW-303, when those tickets are done; otherwise the README states the defaults and that they were not tuned.
+- [x] As built: every command in the README was run on a clean clone (uv, Docker on a fresh volume, Ollama). The check found one code bug (an empty `OPENAI_BASE_URL` from `.env.example` broke every LLM call; fixed with tests) and three missing instructions (the clone step, the Ollama cold-start timeout, the retrieval eval overwriting a committed report).
 
 ### CW-502 Example conversation and eval results
-- [ ] Sample conversation, produced with the `final` (OpenAI) profile, shows preferences inferred over several turns, a comparison and a refusal; article excerpts stay short (public repository).
-- [ ] One UI screenshot included.
-- [ ] Eval pass rate per category and known failure cases stated honestly.
+- [x] Sample conversation, produced with the `final` (OpenAI) profile, shows preferences inferred over several turns, a comparison and a refusal; article excerpts stay short (public repository). As built: a real six-turn CLI conversation, answers unedited, URLs removed from the source lines and marked "(shortened)"; $0.021. A first recording asked about the Toyota last, when the history carried two known cars, so it went to generation with a "not covered" note instead of the gate; the published one asks first. Not committed: both transcripts stay local.
+- [x] One UI screenshot included (`docs/images/ui-example.png`, a separate three-turn `final` conversation in headless Chrome).
+- [x] Eval pass rate per category and known failure cases stated honestly.
 
 ### CW-503 Release `v1.0`
-- [ ] All tickets `DONE` or `DEFERRED` with a reason.
-- [ ] `make ingest`, `make chat`, `make ui`, `make eval` run from a clean checkout.
-- [ ] Private archive of the raw articles prepared for the interviewer (outside the public repository).
-- [ ] Final scan of the public history for secrets and copied article text.
-- [ ] Short cover message for the interviewer drafted (repository link, how to run in three commands, where the TL;DR is).
-- [ ] Tag `v1.0` on `main`.
+- [x] All tickets `DONE` or `DEFERRED` with a reason (CW-503 itself closes with the tag).
+- [x] `make ingest`, `make chat`, `make ui`, `make eval` run from a clean checkout. As run: the `python -m app` commands they wrap (`make` is not installed on the Windows development machine), on a fresh clone; see CW-501.
+- [ ] Private archive of the raw articles prepared for the interviewer (outside the public repository). Owner: command in the E5 pull request description.
+- [x] Final scan of the public history for secrets and copied article text: gitleaks 8.28.0 over all commits and the tracked tree, no leaks; a key-pattern grep found only the tests' planted fake keys; no 12-word run of the cleaned articles in any added line; no data, log or `.env` file ever committed.
+- [x] Short cover message for the interviewer drafted (repository link, how to run in three commands, where the TL;DR is). Kept outside the repository; decision D6 stays with the owner.
+- [ ] Tag `v1.0` on `main`. Owner, after the E5 merge.
 
 ## Backlog (not committed)
 
@@ -390,11 +391,17 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 | False "not mentioned" check in the pipeline's post-check (CW-302) | Eval-only for now: 1 case in 207 final answers, and a first version had 8 false positives in 9, so its precision needs more data before it can trigger a regenerate | A longer eval run shows it precise, or a demo shows such a claim |
 | Remove the remaining "excerpts" wording (8 of 69 v3 answers) | v4 and v5 removed it but cost accuracy or brought back "another article" (ADR 0004) | A wording that names only the articles is measured on `final` without losing pass rate or stability |
 | Make SDK-level retries visible (`retries_taken`) and revisit `llm.timeout_s` | The SDK retries a timed-out request silently, so a 30 s timeout can cost about 60 s while `attempts` stays 1 (seen once in CW-206) | More than an occasional turn exceeds 10 s in the eval or the demo |
+| Section titles sometimes leak into the answer text (long merged section names in inline citations) | Observed in the CW-203 and CW-303 notes and in the README's UI screenshot (an FAQ heading inside the sentence); answers stay correct, only the wording suffers, and a fix touches chunking or the generate prompt, which would need a new `final` eval run | A citation format that names a short section label is measured on `final` without losing pass rate or stability |
 
 ## Change log
 
 | Date | Change |
 |---|---|
+| 2026-10-31 | Backlog: section titles leaking into the answer text (from the CW-203 and CW-303 notes and the README screenshot). |
+| 2026-10-31 | E5 in review: `CHANGELOG.md` for v1.0; CW-503 waits for the merge, the tag, the private archive and D6 (owner). |
+| 2026-10-31 | CW-501 done: README, checked on a clean clone; `.env.example` bug fixed (an empty `OPENAI_BASE_URL` broke every call). Hygiene scan clean (gitleaks over all commits, no article text, no data or logs). |
+| 2026-10-31 | CW-502 done: example conversation on `final` and a UI screenshot in the README. |
+| 2026-10-31 | E5 started on `epic/e5-docs-release`. Progress table corrected: E3 and E4 were merged (PR #4, PR #5). |
 | 2026-10-31 | CW-402 done: Docker image with first-start ingest into the volume. E4 complete; pull request not opened yet. |
 | 2026-10-31 | CW-403 done: offline `ci.yml` on push and pull request, manual `eval.yml` (retrieval, answer); CPU torch on Linux; `docs/ci.md` with the branch-protection settings for the owner to apply. CW-401 review fixes: registry article links, links rejected in answers, thread-safe retriever and log. |
 | 2026-10-31 | CW-401 done: Streamlit UI in Hebrew, right to left; `streamlit==1.66.0` added. |
