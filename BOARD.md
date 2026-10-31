@@ -66,12 +66,12 @@ Items outside the code that must not be forgotten. Update the status as each is 
 
 | Epic | Milestone / tag | Tickets | Done | Points | Status |
 |---|---|---|---|---|---|
-| E0 Scaffold and source check | none | 3 | 3 | 3 | DONE |
-| E1 Thin vertical slice | `v0.1` | 6 | 6 | 11 | DONE |
-| E2 Reliability and guardrails | none | 6 | 6 | 9 | DONE |
-| E3 Measurement | none | 4 | 4 | 6 | DONE (pull request not opened yet) |
-| E4 Interface and packaging | none | 4 | 4 | 5 | DONE (pull request not opened yet) |
-| E5 Documentation and release | `v1.0` | 3 | 0 | 4 | TODO |
+| E0 Scaffold and source check | none | 3 | 3 | 3 | DONE (PR #1) |
+| E1 Thin vertical slice | `v0.1` | 6 | 6 | 11 | DONE (PR #2) |
+| E2 Reliability and guardrails | none | 6 | 6 | 9 | DONE (PR #3) |
+| E3 Measurement | none | 4 | 4 | 6 | DONE (PR #4) |
+| E4 Interface and packaging | none | 4 | 4 | 5 | DONE (PR #5) |
+| E5 Documentation and release | `v1.0` | 3 | 0 | 4 | IN PROGRESS |
 | **Total** |  | **26** | **23** | **38** |  |
 
 ## Epic E0: Scaffold and source check
@@ -150,7 +150,7 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 
 | ID | Ticket | Type | Size | Pri | Status | Depends on |
 |---|---|---|---|---|---|---|
-| CW-501 | README: architecture, decision table, not-built list, AWS mapping | `docs` | M | P1 | TODO | CW-302 |
+| CW-501 | README: architecture, decision table, not-built list, AWS mapping | `docs` | M | P1 | IN PROGRESS | CW-302 |
 | CW-502 | Example conversation and eval results in README | `docs` | S | P1 | TODO | CW-302, CW-501 |
 | CW-503 | Release `v1.0` | `chore` | S | P1 | TODO | all |
 
@@ -348,7 +348,7 @@ Scope set by the owner at the start of E4: the automatic workflow is offline; bo
 - [x] `eval.yml`, manual only: the retrieval eval (plus the tests that need the articles or the real model) and the answer eval, sharing a corpus step that caches the Hugging Face model (by name and revision) and the articles (by `config/cars.yaml`), fetching politely on a miss. If the site blocks the runner, ingest fails with its message; this is documented in `docs/ci.md`.
 - [x] The answer eval runs only when the `OPENAI_API_KEY` secret is set (otherwise a notice, $0); the key reaches only the eval step. Documented in `docs/ci.md`; the README links it in CW-501.
 - [x] `permissions: contents: read`, actions pinned to commit SHAs, uv pinned, `uv sync --locked`; no `pull_request_target`, so forks never see a secret. Linux installs take the CPU build of torch.
-- [ ] Branch protection on `main` requires green CI: exact settings in `docs/ci.md`; the owner applies them (needs repository admin), after `ci.yml` has run once so the checks can be selected.
+- [ ] Branch protection on `main` requires green CI: exact settings in `docs/ci.md`; the owner applies them (needs repository admin), after `ci.yml` has run once so the checks can be selected. Open: an owner action on GitHub, not a code change; the ticket counts as done without it.
 
 ### CW-501 README
 - [ ] Problem statement and run instructions (three commands at most).
@@ -395,6 +395,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Date | Change |
 |---|---|
+| 2026-10-31 | E5 started on `epic/e5-docs-release`. Progress table corrected: E3 and E4 were merged (PR #4, PR #5). |
 | 2026-10-31 | CW-402 done: Docker image with first-start ingest into the volume. E4 complete; pull request not opened yet. |
 | 2026-10-31 | CW-403 done: offline `ci.yml` on push and pull request, manual `eval.yml` (retrieval, answer); CPU torch on Linux; `docs/ci.md` with the branch-protection settings for the owner to apply. CW-401 review fixes: registry article links, links rejected in answers, thread-safe retriever and log. |
 | 2026-10-31 | CW-401 done: Streamlit UI in Hebrew, right to left; `streamlit==1.66.0` added. |
