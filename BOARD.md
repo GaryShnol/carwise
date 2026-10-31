@@ -70,9 +70,9 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E1 Thin vertical slice | `v0.1` | 6 | 6 | 11 | DONE |
 | E2 Reliability and guardrails | none | 6 | 6 | 9 | DONE |
 | E3 Measurement | none | 4 | 4 | 6 | DONE (pull request not opened yet) |
-| E4 Interface and packaging | none | 3 | 0 | 4 | TODO |
+| E4 Interface and packaging | none | 4 | 1 | 5 | IN PROGRESS |
 | E5 Documentation and release | `v1.0` | 3 | 0 | 4 | TODO |
-| **Total** |  | **25** | **19** | **37** |  |
+| **Total** |  | **26** | **20** | **38** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -137,7 +137,8 @@ Branch: `epic/e4-interface-packaging` | Tag: none
 
 | ID | Ticket | Type | Size | Pri | Status | Depends on |
 |---|---|---|---|---|---|---|
-| CW-401 | Streamlit UI in Hebrew, right to left (chat, preferences panel, sources, cost) | `feat` | M | P1 | TODO | CW-203 |
+| CW-405 | Number-aware preference grounding; rejected field names in telemetry | `fix` | S | P1 | DONE | CW-203, CW-302 |
+| CW-401 | Streamlit UI in Hebrew, right to left (chat, preferences panel, sources, cost) | `feat` | M | P1 | TODO | CW-203, CW-405 |
 | CW-402 | Dockerfile and run command | `feat` | S | P2 | TODO | CW-401 |
 | CW-403 | GitHub Actions: lint, tests, retrieval eval | `ci` | S | P2 | TODO | CW-302, CW-003 |
 
@@ -315,6 +316,13 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [x] Measured here, not fixed: long merged section names in inline citations of cross-car answers. Moved to the CW-302 answer eval, where citations exist; the embedded header now uses the 60-character label.
 - [x] Known weakness, accepted: a figure that only the prose states can rank just below `per_car_cap` (hold-out: MG S6 top speed, fourth within its car against a cap of 3). The cap stays 3 so the hold-out stays a hold-out; hold-out 5/6 reported separately as a small sanity check.
 
+### CW-405 Number-aware preference grounding
+- [x] `grounded_in` reads numbers on both sides, in digits or Hebrew words ("חמישה", "מאה וחמישים אלף", "150,000", decimal comma), and compares them by value as whole numbers, so "5" is not found in "150". The numeric post-check still reads digits only.
+- [x] A value that shares nothing with the user's message is still rejected, including a number taken from an assistant turn.
+- [x] Rejected field names (never values) are on the `Answer` and in the turn log as `rejected_preferences`.
+- [x] Tests: word to digit, digit to word, thousands, compound numbers, a different number, a number from an assistant turn, telemetry.
+- [x] Family scenario re-run on `final`, 3 runs, $0.07: passenger count set in 3 of 3 runs (CW-302 v3: 1 of 3). The log now shows the model re-sending reworded earlier values on the last turn; they are rejected and the stored values kept.
+
 ### CW-401 Streamlit UI
 - [ ] Chat window, side panel with the live preference profile.
 - [ ] All text is Hebrew and renders right to left (`dir="rtl"`); Latin-script car names such as EV9 or GV80 inside Hebrew sentences stay readable.
@@ -370,7 +378,6 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 | Cross-session memory | Out of scope for a proof of concept | Persistent users are required |
 | Agent loop with tools | Flow is linear | Live prices or external tools are needed |
 | False "not mentioned" check in the pipeline's post-check (CW-302) | Eval-only for now: 1 case in 207 final answers, and a first version had 8 false positives in 9, so its precision needs more data before it can trigger a regenerate | A longer eval run shows it precise, or a demo shows such a claim |
-| Preference grounding accepts digits for number words; log rejected values (CW-302) | Diagnosis only: the CW-203 check drops "5 נוסעים" when the user wrote "חמישה" (2 of 3 v3 runs of the family scenario); the recommendation still passed the judge | The preference panel (CW-401) shows a missing passenger count, or the scenario fails on it |
 | Remove the remaining "excerpts" wording (8 of 69 v3 answers) | v4 and v5 removed it but cost accuracy or brought back "another article" (ADR 0004) | A wording that names only the articles is measured on `final` without losing pass rate or stability |
 | Make SDK-level retries visible (`retries_taken`) and revisit `llm.timeout_s` | The SDK retries a timed-out request silently, so a 30 s timeout can cost about 60 s while `attempts` stays 1 (seen once in CW-206) | More than an occasional turn exceeds 10 s in the eval or the demo |
 
@@ -378,6 +385,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Date | Change |
 |---|---|
+| 2026-10-31 | E4 started on `epic/e4-interface-packaging`. Added CW-405 (P1, S), promoted from the Backlog item on number words in preference grounding: 26 tickets, 38 points. CW-405 done. |
 | 2026-10-31 | E3 done (CW-302, CW-303, CW-305, CW-306). Answer level on `final` (3 runs): generate v3 64/69, kept as default over v4 (60/69) and v5 (63/69, less stable); hold-out 15/18. Judge gpt-5.4, cap raised to $0.30. Eval-only false "not mentioned" check added; three Backlog items. ADRs 0002 to 0004. Process slip: commit 288307c went in with a failing test (fixed in 70757be). |
 | 2026-10-28 | Board created with 22 tickets across 6 epics. |
 | 2026-10-28 | Added CW-003, CW-206, CW-305, CW-404 (26 tickets, 38 points). Raw articles are no longer committed: download script plus private archive. |
