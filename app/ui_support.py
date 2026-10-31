@@ -16,7 +16,14 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from app.ui_text import CITED_MARK, INDEX_MISSING, MISSING_KEY, SOURCES_HEADERS, UNEXPECTED
+from app.ui_text import (
+    ARTICLES_PREFIX,
+    CITED_MARK,
+    INDEX_MISSING,
+    MISSING_KEY,
+    SOURCES_HEADERS,
+    UNEXPECTED,
+)
 from carwise.config import Settings, load_settings
 from carwise.guardrails import section_label
 from carwise.llm.base import LLMClient, LLMConfigError
@@ -104,6 +111,29 @@ def source_rows(answer: Answer, max_section_chars: int) -> list[SourceRow]:
         )
         for hit in sorted(answer.retrieved, key=lambda h: h.score, reverse=True)
     ]
+
+
+def article_links(answer: Answer, registry: Registry) -> list[tuple[str, str]]:
+    """(car name, article URL) for each car the answer cited, in citation order.
+
+    Why from the registry: the URL is trusted data checked at load time (https, the
+    article's slug), so a link can never come from model output or article text."""
+    links: dict[str, tuple[str, str]] = {}
+    for source in answer.sources:
+        if source.car not in links:
+            car = registry.get(source.car)
+            links[source.car] = (car.display_name, car.url)
+    return list(links.values())
+
+
+def links_markdown(links: list[tuple[str, str]]) -> str:
+    """One markdown line of article links; the names cannot break the link syntax."""
+    items = [f"[{_link_text(name)}]({url})" for name, url in links]
+    return as_markdown(f"{ARTICLES_PREFIX}: " + " · ".join(items))
+
+
+def _link_text(text: str) -> str:
+    return "".join("\\" + c if c in "\\[]()" else c for c in text)
 
 
 def _cell(text: str) -> str:

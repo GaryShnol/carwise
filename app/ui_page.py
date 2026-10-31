@@ -23,6 +23,7 @@ from app.chat import RESET_COMMAND, run_command
 from carwise.config import Settings, load_settings
 from carwise.llm.base import LLMConfigError
 from carwise.preferences import EMPTY_PREFERENCES, Session
+from carwise.registry import Registry
 from carwise.retrieval.store import IndexNotReadyError
 from carwise.schemas import Answer
 
@@ -34,7 +35,7 @@ def shared_resources() -> ui.Resources:
     return ui.load_resources(load_settings())
 
 
-def render_answer(answer: Answer, settings: Settings) -> None:
+def render_answer(answer: Answer, settings: Settings, registry: Registry) -> None:
     text = ui.as_markdown(answer.text)
     style = ui.refusal_style(answer)
     if style == "info":
@@ -47,6 +48,9 @@ def render_answer(answer: Answer, settings: Settings) -> None:
     if rows:
         with st.expander(labels.SOURCES_TITLE.format(count=len(rows))):
             st.markdown(ui.sources_markdown(rows))
+    links = ui.article_links(answer, registry)
+    if links:
+        st.markdown(ui.links_markdown(links))
     st.caption(ui.as_markdown(ui.cost_line(answer)))
 
 
@@ -131,7 +135,7 @@ def render() -> None:
     for role, item in state.turns:
         with st.chat_message(role):
             if isinstance(item, Answer):
-                render_answer(item, settings)
+                render_answer(item, settings, resources.registry)
             else:
                 st.markdown(ui.as_markdown(item))
     if state.stopped:

@@ -211,3 +211,30 @@ def test_the_api_key_is_never_shown(
     app = run_app([understanding(unrecognized=["טויוטה קורולה"], question=TOYOTA)])
     app.chat_input[0].set_value(TOYOTA).run()
     assert not app.exception and not any(secret in text for text in texts(app))
+
+
+# --- article links (CW-401 review) -----------------------------------------------------
+def test_article_links_come_from_the_registry_once_per_cited_car() -> None:
+    ids = ["mg_s6:000", "mg_s6:001", "aion_ht:000"]
+    pipeline, _, _ = make([understanding(cars=["mg_s6", "aion_ht"]), generation(ids=ids)])
+    links = ui.article_links(pipeline.ask(QUESTION, []), REGISTRY)
+    assert links == [
+        (REGISTRY.get("mg_s6").display_name, REGISTRY.get("mg_s6").url),
+        (REGISTRY.get("aion_ht").display_name, REGISTRY.get("aion_ht").url),
+    ]
+
+
+def test_a_refusal_has_no_article_links() -> None:
+    pipeline, _, _ = make([understanding(unrecognized=["טויוטה קורולה"], question=TOYOTA)])
+    assert ui.article_links(pipeline.ask(TOYOTA, []), REGISTRY) == []
+
+
+def test_link_text_cannot_break_the_markdown_link() -> None:
+    line = ui.links_markdown([("a[b](c)", "https://example.org/x")])
+    assert "[a\[b\]\(c\)](https://example.org/x)" in line
+
+
+def test_page_links_the_cited_article(run_app: Callable[..., AppTest]) -> None:
+    app = run_app([family_plan(), generation()])
+    app.chat_input[0].set_value(QUESTION).run()
+    assert any(REGISTRY.get("mg_s6").url in text for text in texts(app))

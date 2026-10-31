@@ -16,6 +16,7 @@ RESET_BUTTON = "שיחה חדשה"
 SOURCES_TITLE = "מקורות ({count} קטעים שנשלפו)"
 SOURCES_HEADERS = ("רכב", "פרק", "ציון", "צוטט")
 CITED_MARK = "✓"
+ARTICLES_PREFIX = "הכתבות המלאות"
 SESSION_COST = "עלות השיחה עד עכשיו: ${cost:.4f}"
 STOPPED = "השיחה נעצרה כי הגיעה למגבלת העלות. כדי להתחיל מחדש יש לרענן את הדף."
 MISSING_KEY = (
