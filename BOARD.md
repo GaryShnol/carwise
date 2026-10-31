@@ -351,6 +351,7 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [ ] A TL;DR under one page at the top: approach, architecture in five lines, three key decisions.
 - [ ] Determinism trade-off stated honestly; assumptions listed.
 - [ ] Honest notes: time actually spent, what would be cut or added with more time, how AI tooling was used, and a copyright notice for the articles.
+- [ ] Running note (CW-401 review): the app is meant to run locally with the user's own API key; the cost cap bounds one conversation (one browser session), not the whole process.
 - [ ] Data note: articles are downloaded by `make ingest`, are not in the repository, and can be placed manually in `data/raw/`.
 - [ ] Quotes from the articles are short, with the source named; the repository is public.
 - [ ] Embedding model choice backed by the comparison from CW-305, and tuned values from CW-303, when those tickets are done; otherwise the README states the defaults and that they were not tuned.
