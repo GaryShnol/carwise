@@ -70,9 +70,9 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E1 Thin vertical slice | `v0.1` | 6 | 6 | 11 | DONE |
 | E2 Reliability and guardrails | none | 6 | 6 | 9 | DONE |
 | E3 Measurement | none | 4 | 4 | 6 | DONE (pull request not opened yet) |
-| E4 Interface and packaging | none | 4 | 1 | 5 | IN PROGRESS |
+| E4 Interface and packaging | none | 4 | 2 | 5 | IN PROGRESS |
 | E5 Documentation and release | `v1.0` | 3 | 0 | 4 | TODO |
-| **Total** |  | **26** | **20** | **38** |  |
+| **Total** |  | **26** | **21** | **38** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -138,7 +138,7 @@ Branch: `epic/e4-interface-packaging` | Tag: none
 | ID | Ticket | Type | Size | Pri | Status | Depends on |
 |---|---|---|---|---|---|---|
 | CW-405 | Number-aware preference grounding; rejected field names in telemetry | `fix` | S | P1 | DONE | CW-203, CW-302 |
-| CW-401 | Streamlit UI in Hebrew, right to left (chat, preferences panel, sources, cost) | `feat` | M | P1 | TODO | CW-203, CW-405 |
+| CW-401 | Streamlit UI in Hebrew, right to left (chat, preferences panel, sources, cost) | `feat` | M | P1 | DONE | CW-203, CW-405 |
 | CW-402 | Dockerfile and run command | `feat` | S | P2 | TODO | CW-401 |
 | CW-403 | GitHub Actions: lint, tests, retrieval eval | `ci` | S | P2 | TODO | CW-302, CW-003 |
 
@@ -324,12 +324,15 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [x] Family scenario re-run on `final`, 3 runs, $0.07: passenger count set in 3 of 3 runs (CW-302 v3: 1 of 3). The log now shows the model re-sending reworded earlier values on the last turn; they are rejected and the stored values kept.
 
 ### CW-401 Streamlit UI
-- [ ] Chat window, side panel with the live preference profile.
-- [ ] All text is Hebrew and renders right to left (`dir="rtl"`); Latin-script car names such as EV9 or GV80 inside Hebrew sentences stay readable.
-- [ ] Command-line output is checked in a common terminal; any limitation is noted in the README.
-- [ ] Expandable list of retrieved chunks under each answer (car, section, score).
-- [ ] Tokens and estimated cost line per answer (from the CW-204 telemetry when it exists); distinct visual state for refusals.
-- [ ] No business logic in the UI; it only calls `pipeline.answer`.
+- [x] Chat window, side panel with the live preference profile (each value with the message it came from) and a "new conversation" button that does what `/reset` does; `/prefs` and `/reset` also work when typed.
+- [x] All text is Hebrew and renders right to left (CSS `direction: rtl`); Latin-script car names such as EV9 or GV80 inside Hebrew sentences stay readable (checked on a screenshot of a three-turn `final` conversation in headless Chrome).
+- [x] Command-line output: the limitation (most terminals print Hebrew left to right) is noted in `app/chat.py`; the README note is written in CW-501.
+- [x] Expandable list of every retrieved chunk under each answer (car, section label, score, cited mark).
+- [x] Tokens and estimated cost line per answer, session cost in the side panel; refusals where the articles do not cover the question are a blue info box, failures a yellow warning.
+- [x] No business logic in the UI; it holds a `Session` and calls `pipeline.answer`, like the CLI. Input length comes from `input.max_message_chars`; the turn-input limit stays in the pipeline.
+- [x] Loading state on a cold start (title, then a Hebrew spinner while the modules, the model and the index load); Hebrew messages instead of a stack trace for a missing API key, a missing index, an LLM outage, the cost cap (which also disables the input) and any unexpected error. The API key is never displayed or logged.
+- [x] `streamlit==1.66.0` pinned (released 2026-10-14; 1.66.1 is newer than two weeks). `python -m app ui` listens on localhost only, hides the Deploy button and turns off Streamlit's usage statistics.
+- [x] Tests: display helpers, and a smoke test of the real script with `streamlit.testing` (AppTest) and fake wiring, offline.
 
 ### CW-402 Dockerfile and run command
 - [ ] Slim Python base, installs from `pyproject.toml`, default command starts the UI.
@@ -385,6 +388,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Date | Change |
 |---|---|
+| 2026-10-31 | CW-401 done: Streamlit UI in Hebrew, right to left; `streamlit==1.66.0` added. |
 | 2026-10-31 | E4 started on `epic/e4-interface-packaging`. Added CW-405 (P1, S), promoted from the Backlog item on number words in preference grounding: 26 tickets, 38 points. CW-405 done. |
 | 2026-10-31 | E3 done (CW-302, CW-303, CW-305, CW-306). Answer level on `final` (3 runs): generate v3 64/69, kept as default over v4 (60/69) and v5 (63/69, less stable); hold-out 15/18. Judge gpt-5.4, cap raised to $0.30. Eval-only false "not mentioned" check added; three Backlog items. ADRs 0002 to 0004. Process slip: commit 288307c went in with a failing test (fixed in 70757be). |
 | 2026-10-28 | Board created with 22 tickets across 6 epics. |
