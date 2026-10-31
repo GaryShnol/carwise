@@ -70,9 +70,9 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E1 Thin vertical slice | `v0.1` | 6 | 6 | 11 | DONE |
 | E2 Reliability and guardrails | none | 6 | 6 | 9 | DONE |
 | E3 Measurement | none | 4 | 4 | 6 | DONE (pull request not opened yet) |
-| E4 Interface and packaging | none | 4 | 3 | 5 | IN PROGRESS |
+| E4 Interface and packaging | none | 4 | 4 | 5 | DONE (pull request not opened yet) |
 | E5 Documentation and release | `v1.0` | 3 | 0 | 4 | TODO |
-| **Total** |  | **26** | **22** | **38** |  |
+| **Total** |  | **26** | **23** | **38** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -139,7 +139,7 @@ Branch: `epic/e4-interface-packaging` | Tag: none
 |---|---|---|---|---|---|---|
 | CW-405 | Number-aware preference grounding; rejected field names in telemetry | `fix` | S | P1 | DONE | CW-203, CW-302 |
 | CW-401 | Streamlit UI in Hebrew, right to left (chat, preferences panel, sources, cost) | `feat` | M | P1 | DONE | CW-203, CW-405 |
-| CW-402 | Dockerfile and run command | `feat` | S | P2 | TODO | CW-401 |
+| CW-402 | Dockerfile and run command | `feat` | S | P2 | DONE | CW-401 |
 | CW-403 | GitHub Actions: lint, tests, retrieval eval | `ci` | S | P2 | DONE | CW-302, CW-003 |
 
 ## Epic E5: Documentation and release
@@ -335,8 +335,11 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 - [x] Tests: display helpers, and a smoke test of the real script with `streamlit.testing` (AppTest) and fake wiring, offline.
 
 ### CW-402 Dockerfile and run command
-- [ ] Slim Python base, installs from `pyproject.toml`, default command starts the UI.
-- [ ] One documented `docker run` line; the key is passed as an environment variable.
+- [x] `python:3.13.18-slim` pinned by digest, two-stage build, exactly `uv.lock` (`--locked --no-dev`) with CPU torch; non-root user `carwise`; default command starts the UI on 0.0.0.0 inside the container only.
+- [x] One documented `docker run` line (README and `docs/docker.md`); the key is passed at run time with `-e OPENAI_API_KEY`, never a build argument, never in ENV, layers or logs (checked on the built image).
+- [x] Articles, model and index are not in the image: the UI builds them into the `/app/data` volume at first start (`--ingest-if-missing`, polite fetcher) while the page shows its loading state; a failure gets a Hebrew message.
+- [x] `.dockerignore` is an allow-list that also excludes `.env*`, keys, `data/`, `logs/`, `eval/runs/`, `.git/`, `.venv/` and caches; checked against the real build context.
+- [x] `HEALTHCHECK` on `/_stcore/health`; static tests in `tests/test_docker.py`; image built and the run line tested locally: image 2.18 GB, first start 177 s until the chat is ready, later starts 17 s, healthy, the key absent from image, layers and logs (`docs/docker.md`).
 
 ### CW-403 GitHub Actions
 Scope set by the owner at the start of E4: the automatic workflow is offline; both evals are manual.
@@ -391,6 +394,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Date | Change |
 |---|---|
+| 2026-10-31 | CW-402 done: Docker image with first-start ingest into the volume. E4 complete; pull request not opened yet. |
 | 2026-10-31 | CW-403 done: offline `ci.yml` on push and pull request, manual `eval.yml` (retrieval, answer); CPU torch on Linux; `docs/ci.md` with the branch-protection settings for the owner to apply. CW-401 review fixes: registry article links, links rejected in answers, thread-safe retriever and log. |
 | 2026-10-31 | CW-401 done: Streamlit UI in Hebrew, right to left; `streamlit==1.66.0` added. |
 | 2026-10-31 | E4 started on `epic/e4-interface-packaging`. Added CW-405 (P1, S), promoted from the Backlog item on number words in preference grounding: 26 tickets, 38 points. CW-405 done. |
