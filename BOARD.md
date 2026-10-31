@@ -71,8 +71,8 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E2 Reliability and guardrails | none | 6 | 6 | 9 | DONE (PR #3) |
 | E3 Measurement | none | 4 | 4 | 6 | DONE (PR #4) |
 | E4 Interface and packaging | none | 4 | 4 | 5 | DONE (PR #5) |
-| E5 Documentation and release | `v1.0` | 3 | 0 | 4 | IN PROGRESS |
-| **Total** |  | **26** | **23** | **38** |  |
+| E5 Documentation and release | `v1.0` | 3 | 1 | 4 | IN PROGRESS |
+| **Total** |  | **26** | **24** | **38** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -151,7 +151,7 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 | ID | Ticket | Type | Size | Pri | Status | Depends on |
 |---|---|---|---|---|---|---|
 | CW-501 | README: architecture, decision table, not-built list, AWS mapping | `docs` | M | P1 | IN PROGRESS | CW-302 |
-| CW-502 | Example conversation and eval results in README | `docs` | S | P1 | TODO | CW-302, CW-501 |
+| CW-502 | Example conversation and eval results in README | `docs` | S | P1 | DONE | CW-302, CW-501 |
 | CW-503 | Release `v1.0` | `chore` | S | P1 | TODO | all |
 
 ## Ticket details and acceptance criteria
@@ -363,9 +363,9 @@ Scope set by the owner at the start of E4: the automatic workflow is offline; bo
 - [ ] Embedding model choice backed by the comparison from CW-305, and tuned values from CW-303, when those tickets are done; otherwise the README states the defaults and that they were not tuned.
 
 ### CW-502 Example conversation and eval results
-- [ ] Sample conversation, produced with the `final` (OpenAI) profile, shows preferences inferred over several turns, a comparison and a refusal; article excerpts stay short (public repository).
-- [ ] One UI screenshot included.
-- [ ] Eval pass rate per category and known failure cases stated honestly.
+- [x] Sample conversation, produced with the `final` (OpenAI) profile, shows preferences inferred over several turns, a comparison and a refusal; article excerpts stay short (public repository). As built: a real six-turn CLI conversation, answers unedited, URLs removed from the source lines and marked "(shortened)"; $0.021. A first recording asked about the Toyota last, when the history carried two known cars, so it went to generation with a "not covered" note instead of the gate; the published one asks first. Not committed: both transcripts stay local.
+- [x] One UI screenshot included (`docs/images/ui-example.png`, a separate three-turn `final` conversation in headless Chrome).
+- [x] Eval pass rate per category and known failure cases stated honestly.
 
 ### CW-503 Release `v1.0`
 - [ ] All tickets `DONE` or `DEFERRED` with a reason.
@@ -395,6 +395,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Date | Change |
 |---|---|
+| 2026-10-31 | CW-502 done: example conversation on `final` and a UI screenshot in the README. |
 | 2026-10-31 | E5 started on `epic/e5-docs-release`. Progress table corrected: E3 and E4 were merged (PR #4, PR #5). |
 | 2026-10-31 | CW-402 done: Docker image with first-start ingest into the volume. E4 complete; pull request not opened yet. |
 | 2026-10-31 | CW-403 done: offline `ci.yml` on push and pull request, manual `eval.yml` (retrieval, answer); CPU torch on Linux; `docs/ci.md` with the branch-protection settings for the owner to apply. CW-401 review fixes: registry article links, links rejected in answers, thread-safe retriever and log. |

@@ -370,8 +370,117 @@ of inventing one.
 
 ## Example conversation
 
-_TODO(CW-502): a real, unedited conversation on the `final` profile showing preferences inferred
-over several turns, a comparison and a refusal, plus one UI screenshot._
+A real conversation on the `final` profile, recorded on 2026-10-31 with
+`uv run --env-file .env python -m app chat --profile final --show-cost`. The answers are
+unedited. Two layout changes: the URLs were removed from the source lines, marked
+"(shortened)", and the questions were piped in, so the terminal did not echo them; each is
+shown after its `שאלה>` prompt the way it looks when typed. The notes in italics after each turn are mine, not part of the output. The whole
+conversation cost $0.021.
+
+A first recording asked about the Toyota as the last turn. By then the history named MG S6 and
+Aion HT, so the turn carried known cars as well as the unknown one, and it went to generation
+with a "not covered" note instead of the gate's refusal. That is the designed behavior for a
+mix of known and unknown cars, but it doesn't show the gate, so this recording asks about the
+Toyota first.
+
+**1. A car outside the eight: the registry gate refuses before generation.**
+
+```text
+שאלה> יש לכם מידע על טויוטה bZ4X?
+אין לי מידע על טויוטה bZ4X: הכתבות שאני מכיר עוסקות רק בשמונה רכבים. אלה שמונה הרכבים שנבחנו - חשמלי: קיה EV9 (רכב פנאי), MG S6 (רכב פנאי), GAC איון HT (פנאי-קופה); היברידי נטען: לינק אנד קו 01 (רכב פנאי); היברידי מתון: סיטרואן C3 (סופרמיני); בנזין: אודי RS3 (סדאן), יונדאי אלנטרה N, ג'נסיס GV80 (רכב פנאי). אפשר לשאול על כל אחד מהם, להשוות ביניהם או לבקש המלצה.
+
+[1 LLM calls | tokens in 938 (cached 0) out 54 | $0.00026 | ms: understand 1311, total 1321 | refusal: unknown_car]
+```
+
+_One LLM call, no generation. The message has no body-type or powertrain hint, so the reply
+lists all eight cars, grouped by powertrain._
+
+**2. Preferences in the first message, used for a recommendation.**
+
+```text
+שאלה> אני מחפש רכב חשמלי למשפחה, התקציב שלי עד 200 אלף שקל
+מבין שמונה הרכבים שנבחנו, הבחירה הכי מתאימה לפי התקציב שציינת ולשימוש משפחתי חשמלי היא MG S6: הוא זול יותר מהתקציב עם מחיר של 168,888 ₪, ומציג טווח חשמלי של 530 ק״מ WLTP ו-430 ק״מ בפועל, לצד יתרונות של מרווח, אבזור, בטיחות והנדסת אנוש (MG S6, הרכב הנבחן). GAC איון HT גם נכנס לתקציב עם מחיר של 179,990 ₪ ומציע ממדים, מרחב ואבזור טובים, אבל בכתבה מצוינים גם חסרונות בנוחות הנסיעה ובהנדסת האנוש (GAC איון HT, הרכב הנבחן; GAC איון HT, סיכום). לינק אנד קו 01 מוצע ב-198,900 ₪, אבל הוא אינו חשמלי אלא היברידי-נטען, ולכן פחות מתאים אם חיפשת רכב חשמלי למשפחה (לינק אנד קו 01, הרכב הנבחן; לינק אנד קו 01, סיכום, תמורה). קיה EV9 לא מתאים לתקציב הזה, כי מחירו 575,990 ₪ (קיה EV9, הרכב הנבחן).
+
+מקורות:  (shortened)
+  - MG S6 | הרכב הנבחן
+  - GAC איון HT | מהם המותג והדגם האלה?, הרכב הנבחן
+  - GAC איון HT | סיכום
+  - לינק אנד קו 01 | מה התחדש?, הרכב הנבחן
+  - לינק אנד קו 01 | סיכום, תמורה, יתרונות, חסרונות, לינק אנד קו 01 המחודש…
+
+[2 LLM calls | tokens in 7915 (cached 0) out 477 | $0.00705 | ms: understand 1536, retrieve 320, generate 2316, total 4177 | flags: dropped_unretrieved_ids]
+```
+
+_The budget and "electric, for a family" were picked up. Every price is one the post-check found
+in the retrieved chunks, and each car is cited with its section. The flag means the model cited a
+chunk id it was not given; code dropped it._
+
+**3. One more preference.**
+
+```text
+שאלה> אנחנו חמישה, עם שני ילדים קטנים
+מבין שמונה הרכבים שנבחנו, המתאימים ביותר לצרכים שציינת הם MG S6 ו-GAC איון HT, כי שניהם חשמליים, מתומחרים מתחת ל-200 אלף שקל, ומציעים מרחב ויתרונות שמתאימים למשפחה (MG S6, הרכב הנבחן; GAC איון HT, הרכב הנבחן). ל-MG S6 יש מחיר של 168,888 שקל, טווח WLTP של 530 ק״מ ומרחב ואבזור בולטים (MG S6, הרכב הנבחן). ל-GAC איון HT יש מחיר של 179,990 שקל, ממדים ומרחב טובים גם מאחור וגם בתא המטען, והוא מציע גם אבזור ומחיר אטרקטיביים (GAC איון HT, הרכב הנבחן; GAC איון HT, סיכום). אם חשוב לך במיוחד מרחב משפחתי, גם לינק אנד קו 01 יכול להתאים מבחינת מחיר של 198,900 שקל ואבזור, אבל הוא לא חשמלי אלא היברידי-נטען (לינק אנד קו 01, הרכב הנבחן; לינק אנד קו 01, מה התחדש? / הרכב הנבחן).
+
+מקורות:  (shortened)
+  - MG S6 | הרכב הנבחן
+  - GAC איון HT | מהם המותג והדגם האלה?, הרכב הנבחן
+  - GAC איון HT | סיכום
+  - לינק אנד קו 01 | מה התחדש?, הרכב הנבחן
+
+[2 LLM calls | tokens in 7906 (cached 0) out 471 | $0.00679 | ms: understand 1313, retrieve 250, generate 1872, total 3440]
+```
+
+**4. The inferred profile, with the message each value came from.**
+
+```text
+שאלה> /prefs
+ההעדפות בשיחה הזאת:
+- תקציב: עד 200 אלף שקל (מתוך: "אני מחפש רכב חשמלי למשפחה, התקציב שלי עד 200 אלף שקל")
+- שימוש עיקרי: רכב חשמלי למשפחה (מתוך: "אני מחפש רכב חשמלי למשפחה, התקציב שלי עד 200 אלף שקל")
+- נוסעים: 5 אנשים (כולל שני ילדים קטנים) (מתוך: "אנחנו חמישה, עם שני ילדים קטנים")
+```
+
+**5. A follow-up that relies on the history.**
+
+```text
+שאלה> מה היית ממליץ?
+מבין שני הרכבים, MG S6 נראה מתאים יותר לפי התקציב שציינת ולפי הצורך ברכב חשמלי למשפחה: הוא זול יותר, עם מחיר של 168,888 ₪, ומוצג כמרווח עם יתרונות של מרחב, אבזור, בטיחות ונוחות (MG S6, הרכב הנבחן). גם ל-GAC איון HT יש ממדים ומרחב מכובדים, כולל מאחור ובתא המטען, אבל מחירו 179,990 ₪ והוא סובל מהנדסת אנוש ותפעול פחות טובים ונוחות נסיעה בינונית (GAC איון HT, הרכב הנבחן; GAC איון HT, סיכום).
+
+מקורות:  (shortened)
+  - MG S6 | הרכב הנבחן
+  - GAC איון HT | מהם המותג והדגם האלה?, הרכב הנבחן
+  - GAC איון HT | סיכום
+
+[2 LLM calls | tokens in 7706 (cached 0) out 319 | $0.00582 | ms: understand 1263, retrieve 231, generate 1365, total 2863 | flags: preference_not_from_user]
+```
+
+_The flag means the understand step re-sent a preference that is not in this message. Code
+rejected it and kept the stored profile._
+
+**6. A comparison.**
+
+```text
+שאלה> תשווה לי בין MG S6 לאיון HT בטווח הנסיעה
+ב-MG S6 טווח הנסיעה הרשמי הוא 530 ק״מ, והטווח בפועל הוא 430 ק״מ (MG S6, הרכב הנבחן). ב-GAC איון HT הטווח הרשמי הוא 445 ק״מ, והטווח בפועל הוא 370 ק״מ (GAC איון HT, הרכב הנבחן). לכן, לפי הכתבות ל-MG S6 יש טווח גבוה יותר גם רשמית וגם בפועל (MG S6, הרכב הנבחן; GAC איון HT, הרכב הנבחן).
+
+מקורות:  (shortened)
+  - MG S6 | הרכב הנבחן
+  - GAC איון HT | מהם המותג והדגם האלה?, הרכב הנבחן
+
+[2 LLM calls | tokens in 4981 (cached 3072) out 212 | $0.00146 | ms: understand 849, retrieve 150, generate 1330, total 2331]
+```
+
+_Retrieved per car, with each car's spec box forced in. Every figure stays with its own car._
+
+### The web UI
+
+![The Streamlit UI: a refusal in a blue box, a recommendation and a comparison, each with its sources, cost line and article links; the inferred preferences in the side panel](docs/images/ui-example.png)
+
+A separate three-turn conversation on `final`, in headless Chrome. The refusal is the blue
+box. Under each answer are the expandable list of retrieved chunks, the links to the cited
+articles and the token and cost line. The side panel shows each preference with the message it
+came from. The comparison answer here mentions "בגרסה אחרת" ("in another version"), close to the
+"in another article" phrasing the prompt forbids (see Known limitations).
 
 ## Deliberately not built
 
@@ -396,8 +505,9 @@ From the measurements and the Backlog in [`BOARD.md`](BOARD.md):
   in 207 that said a figure was missing while a retrieved chunk stated it. A first version had
   8 false positives in 9 flags. Next: promote it to the post-check (a regenerate on a hit) once
   a longer run shows it is precise.
-- **"In another article" phrasing, rarely.** Generate v3 produced none in 69 answers, but v5
-  produced it twice, and v3 still calls sources "excerpts" in 8 of 69 answers. Next: measure a
+- **"In another article" phrasing, rarely.** Generate v3 produced none in 69 eval answers, but
+  v5 produced it twice, v3 still calls sources "excerpts" in 8 of 69 answers, and the UI
+  screenshot above shows a near variant ("בגרסה אחרת"). Next: measure a
   wording rule that names only "the articles" without listing the forbidden phrases.
 - **The turn log is not persisted in Docker.** It goes to `/app/logs` inside the container and
   is lost with it. Next: mount a second volume or ship the lines to a log service.
