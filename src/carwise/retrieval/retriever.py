@@ -7,6 +7,7 @@ the car with the wordier review take every slot, and a ranking question
 
 from __future__ import annotations
 
+import threading
 from collections import Counter
 from pathlib import Path
 from typing import Protocol
@@ -42,6 +43,45 @@ class ChunkRetriever(Protocol):
     ) -> list[RetrievedChunk]: ...
 
     def spec_boxes(self, query: str, car_ids: list[str]) -> list[RetrievedChunk]: ...
+
+
+class SerializedRetriever:
+    """A retriever shared by threads (the Streamlit UI serves each browser session
+    on its own thread), taking one call at a time.
+
+    Why a lock and not trust: the embedding model loads lazily on first use, Hugging
+    Face fast tokenizers can fail when one instance is used from two threads at once
+    ("Already borrowed"), and the local Chroma client does not promise thread
+    safety. A search takes milliseconds, so serializing costs nothing noticeable for
+    a local app. The CLI and the eval are single-threaded and use the Retriever
+    directly.
+    """
+
+    def __init__(self, inner: ChunkRetriever) -> None:
+        self._inner = inner
+        self._lock = threading.Lock()
+
+    def search(
+        self, query: str, car_ids: list[str] | None = None, top_k: int | None = None
+    ) -> list[RetrievedChunk]:
+        with self._lock:
+            return self._inner.search(query, car_ids, top_k)
+
+    def search_per_car(
+        self, query: str, car_ids: list[str], top_k_per_car: int | None = None
+    ) -> list[RetrievedChunk]:
+        with self._lock:
+            return self._inner.search_per_car(query, car_ids, top_k_per_car)
+
+    def search_all(
+        self, query: str, top_k: int | None = None, per_car_cap: int | None = None
+    ) -> list[RetrievedChunk]:
+        with self._lock:
+            return self._inner.search_all(query, top_k, per_car_cap)
+
+    def spec_boxes(self, query: str, car_ids: list[str]) -> list[RetrievedChunk]:
+        with self._lock:
+            return self._inner.spec_boxes(query, car_ids)
 
 
 class Retriever:

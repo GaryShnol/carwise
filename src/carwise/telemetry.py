@@ -11,6 +11,7 @@ here (the API key lives inside the SDK client).
 from __future__ import annotations
 
 import json
+import threading
 from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
@@ -73,17 +74,22 @@ class TurnLogger:
         self._profile = profile
         self._models = models
         self._turns = 0
+        # The UI shares one logger across browser sessions (one thread each): the
+        # counter and the append happen together, so lines never interleave and
+        # process_turn stays unique.
+        self._lock = threading.Lock()
 
     def log(self, answer: Answer, *, message_chars: int, history_messages: int = 0) -> None:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        self._turns += 1
-        record = turn_record(
-            answer,
-            message_chars=message_chars,
-            profile=self._profile,
-            models=self._models,
-            process_turn=self._turns,
-            history_messages=history_messages,
-        )
-        with self.path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+        with self._lock:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            self._turns += 1
+            record = turn_record(
+                answer,
+                message_chars=message_chars,
+                profile=self._profile,
+                models=self._models,
+                process_turn=self._turns,
+                history_messages=history_messages,
+            )
+            with self.path.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps(record, ensure_ascii=False) + "\n")

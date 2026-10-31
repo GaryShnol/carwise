@@ -31,7 +31,7 @@ from carwise.llm.openai_client import OpenAIClient
 from carwise.pipeline import Pipeline
 from carwise.preferences import FIELD_LABELS
 from carwise.registry import Registry, load_registry
-from carwise.retrieval.retriever import ChunkRetriever, open_retriever
+from carwise.retrieval.retriever import ChunkRetriever, SerializedRetriever, open_retriever
 from carwise.retrieval.store import IndexNotReadyError
 from carwise.schemas import Answer, Preferences, RefusalReason
 from carwise.telemetry import TurnLogger
@@ -63,7 +63,8 @@ def load_resources(settings: Settings) -> Resources:
         profile=os.environ.get("CARWISE_PROFILE") or settings.default_profile,
         models={"understand": profile.understand_model, "generate": profile.generate_model},
     )
-    return Resources(settings, load_registry(), retriever, logger)
+    # Shared by every browser session's thread: one retrieval at a time.
+    return Resources(settings, load_registry(), SerializedRetriever(retriever), logger)
 
 
 def new_llm(settings: Settings) -> LLMClient:
