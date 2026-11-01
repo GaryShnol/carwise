@@ -653,7 +653,6 @@ criteria, a Backlog and a change log), following [`CLAUDE.md`](CLAUDE.md).
 
 ## Notes
 
-- **Time spent:** 14 hours in total over the project.
 - **What I would add with more time:** the next steps above, mainly the prose-only figure gap,
   the false "not mentioned" check in the pipeline, and a larger question set with a bigger
   hold-out.
