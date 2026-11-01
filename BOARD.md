@@ -432,6 +432,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Date | Change |
 |---|---|
+| 2026-11-01 | Verifier follow-ups to CW-607, CW-609, CW-617: the README architecture line counts the user's own words as number sources; the re-score note says it also ran the false "not mentioned" check (no pass changed); the candidates report header takes its chunk count from the reports. |
 | 2026-11-01 | CW-620 done: README Caveats and an ADR 0004 addendum: the judge is the generator's vendor and family, emits `passed` before `reason`, and has no human-labelled calibration; the retrieval eval replays one recorded understand sample (43 cases), so its numbers hold for those plans. Judge schema unchanged. |
 | 2026-11-01 | CW-618 done: `docs/ci.md` says the retrieval eval is manual by the owner's E4 scope decision (CW-403: offline, free, secret-free pushes), not a blocked site; notes the deviation from CLAUDE.md sections 13 and 14 and its cost (a retrieval regression can merge with green CI). |
 | 2026-11-01 | CW-617 done: E5 and CW-503 DONE (PR #6 merged, `v1.0` tags `1224478`); tier table corrected to 18 P1 tickets, 29 points (one S ticket was missing; the effort target is 38 points, not 37) and E6 tiers noted; present-tense "75 chunks" comments now say 78 (`config/corpus.lock.yaml`); README lists E6. `docs/docker.md` was already fixed by CW-605. |

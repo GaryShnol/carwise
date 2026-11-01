@@ -18,7 +18,8 @@ loop. The model writes the answer, and code decides what goes into the model and
 3. Retrieve and gate (no LLM): per-car retrieval. Code refuses a car outside the eight, and
    off-topic messages, before any generation call.
 4. Generate (LLM call 2): JSON with the answer and the ids of the chunks it used. Code checks the
-   ids, the car names it knows and the numbers written in digits against the retrieved chunks.
+   ids, the car names it knows and the numbers written in digits against the retrieved chunks
+   and the user's own words.
    A suspect answer is regenerated once, then replaced by a fixed reply.
 5. Telemetry: one JSON line per turn (chunk ids, scores, tokens, cost, latency, check results),
    never the user's words: not the message, and not the unknown car names taken from it
@@ -333,7 +334,8 @@ top speed), ranked fourth within its car against a cap of 3.
 
 Generate prompt v3, understand on gpt-5.4-nano, generate on gpt-5.4-mini. One run of the eval,
 graded twice: as run ([report](eval/reports/answer/final/v3/answer-tuning-final.md)), and
-re-scored from the logged answers after a checker fix
+re-scored from the logged answers after a checker fix (the re-score also ran the new false
+"not mentioned" check, which changed no pass)
 ([report](eval/reports/answer/final/v3/answer-tuning-rescored-final.md)):
 
 | Category | As graded | After the checker fix |
