@@ -85,7 +85,8 @@ class RetrievalConfig(_Strict):
     cross_car_per_car_cap: int
     relevance_threshold: float
     lexical: LexicalConfig
-    force_spec_box: bool  # CW-303 option B: comparisons get each named car's spec box
+    # CW-303 option B, for comparisons only: recommendations add spec boxes regardless (CW-306)
+    force_spec_box: bool
 
 
 class GuardrailsConfig(_Strict):

@@ -196,3 +196,13 @@ plan names are only a hint whose spec boxes are added. On the same recording the
 its car); no other question regressed; recommendation and ranking questions send 12 to 19 chunks
 instead of 24 to 27. The hold-out, re-run as a regression check only, is unchanged at 5/6.
 (`eval/reports/cw306/`)
+
+## Addendum (2026-11-01, CW-616): what `force_spec_box` gates now
+
+Step 2 describes option B as applying to compare and recommend intents behind
+`retrieval.force_spec_box`. Since CW-306 that is true only for comparisons. A recommendation (or
+ranking) searches all cars and then always adds the spec box of each car the plan names,
+whatever the flag says (`Pipeline._retrieve` in `src/carwise/pipeline.py`). Setting
+`force_spec_box: false` therefore does not reproduce the step 2 "no option" baseline for
+recommendations; to re-run that ablation, the recommendation branch must be gated on the flag
+too. The published numbers are unchanged: they were measured with the flag on.

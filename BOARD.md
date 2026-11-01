@@ -72,8 +72,8 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E3 Measurement | none | 4 | 4 | 6 | DONE (PR #4) |
 | E4 Interface and packaging | none | 4 | 4 | 5 | DONE (PR #5) |
 | E5 Documentation and release | `v1.0` | 3 | 2 | 4 | IN REVIEW (tag `v1.0` after the merge) |
-| E6 Review fixes | `v1.0.1` | 20 | 16 | 20 | IN PROGRESS |
-| **Total** |  | **46** | **41** | **58** |  |
+| E6 Review fixes | `v1.0.1` | 20 | 17 | 20 | IN PROGRESS |
+| **Total** |  | **46** | **42** | **58** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -178,7 +178,7 @@ Branch: `epic/e6-review-fixes` | Tag: `v1.0.1` (owner, after the merge)
 | CW-613 | Telemetry logs only a count of uncovered names; CLI profile label (CR-013) | `fix` | S | P2 | DONE |  |
 | CW-614 | Embed the query once per turn (CR-014) | `refactor` | S | P2 | DONE |  |
 | CW-615 | Backlog: one number-word module (CR-015) | `docs` | S | P3 | DONE |  |
-| CW-616 | ADR 0003 addendum: recommendation spec boxes are unconditional (CR-016) | `docs` | S | P3 | TODO |  |
+| CW-616 | ADR 0003 addendum: recommendation spec boxes are unconditional (CR-016) | `docs` | S | P3 | DONE |  |
 | CW-617 | Stale statuses and counts (CR-017) | `docs` | S | P3 | TODO |  |
 | CW-618 | CI doc: retrieval eval is manual, and why (CR-018) | `docs` | S | P3 | TODO |  |
 | CW-619 | Adversarial post-check test set (CR-019) | `test` | S | P2 | DONE | CW-601, CW-603 |
@@ -430,6 +430,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Date | Change |
 |---|---|
+| 2026-11-01 | CW-616 done: ADR 0003 addendum: `retrieval.force_spec_box` gates comparisons only; since CW-306 recommendations always add the named cars' spec boxes, so `false` does not reproduce the step 2 baseline for them. Config comments say the same. |
 | 2026-11-01 | CW-615 done: Backlog row for one number-word module (`carwise.numbers`, `carwise.preferences`, `eval/answer.py`; the eval's table covers 1 to 7 only). |
 | 2026-11-01 | CW-609 done: README TL;DR, Numeric post-check row and Known limitations say the check reads digits only, per value not per car (swaps caught only by the eval's attribution check), accepts truncation and sums or differences of chunk-backed numbers, is weak on small numbers (spec boxes state 9 of 1-10, 21 of 901 in 100-1,000, re-measured on the index), and takes user words only from user turns and preferences (CW-603). |
 | 2026-11-01 | CW-607 done: README TL;DR and answer results lead with 62/69 as graded; 64/69 shown beside it as after the one checker fix found on that run (citation split, one comparison 1/3 to 3/3). README and an ADR 0004 addendum state that corrections came only from failing runs and the judge criterion changed after its `dev` verdicts; CW-405 and CW-606 not re-measured. |
