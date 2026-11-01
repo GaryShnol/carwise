@@ -23,12 +23,15 @@ from app.ui_text import (
     INDEX_MISSING,
     MISSING_KEY,
     SOURCES_HEADERS,
+    STOPPED,
+    STOPPED_SERVER,
     UNEXPECTED,
 )
 from carwise.config import Settings, load_settings
 from carwise.guardrails import section_label
 from carwise.ingest.run import ingest
 from carwise.llm.base import LLMClient, LLMConfigError
+from carwise.llm.budget import SharedBudget
 from carwise.llm.openai_client import OpenAIClient
 from carwise.pipeline import Pipeline
 from carwise.preferences import FIELD_LABELS
@@ -94,10 +97,16 @@ def load_resources(settings: Settings, *, ingest_if_missing: bool = False) -> Re
     return Resources(settings, load_registry(), SerializedRetriever(retriever), logger)
 
 
-def new_llm(settings: Settings) -> LLMClient:
+def new_budget(settings: Settings) -> SharedBudget:
+    """The spend of every browser session in this process together (CW-605)."""
+    return SharedBudget(settings.llm.max_total_cost_usd)
+
+
+def new_llm(settings: Settings, budget: SharedBudget) -> LLMClient:
     """One client per browser session, so the cost cap bounds one conversation, as
-    in the CLI. Raises LLMConfigError when the API key is missing (no network call)."""
-    return OpenAIClient(settings, settings.profile())
+    in the CLI; all of them charge the process's shared budget, which a refresh does
+    not reset. Raises LLMConfigError when the API key is missing (no network call)."""
+    return OpenAIClient(settings, settings.profile(), shared_budget=budget)
 
 
 def new_pipeline(resources: Resources, llm: LLMClient) -> Pipeline:
@@ -219,6 +228,11 @@ def refusal_style(answer: Answer) -> str | None:
 def stops_session(answer: Answer) -> bool:
     """The cost cap ends the conversation: every later call would be refused (CW-204)."""
     return answer.refusal is RefusalReason.BUDGET_EXCEEDED
+
+
+def stopped_message(answer: Answer) -> str:
+    """Which cap stopped the session: only the session's own cap is reset by a refresh."""
+    return STOPPED_SERVER if "server_budget_exceeded" in answer.flags else STOPPED
 
 
 def preference_rows(preferences: Preferences) -> list[tuple[str, str, str]]:

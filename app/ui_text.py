@@ -22,6 +22,11 @@ CITED_MARK = "✓"
 ARTICLES_PREFIX = "הכתבות המלאות"
 SESSION_COST = "עלות השיחה עד עכשיו: ${cost:.4f}"
 STOPPED = "השיחה נעצרה כי הגיעה למגבלת העלות. כדי להתחיל מחדש יש לרענן את הדף."
+# CW-605: the cap over every session on this server; a refresh opens a session under it too.
+STOPPED_SERVER = (
+    "השיחה נעצרה כי השרת הגיע למגבלת העלות הכוללת של כל השיחות. "
+    "רענון הדף לא יעזור; כדי להמשיך, מי שהפעיל את השרת צריך להפעיל אותו מחדש."
+)
 MISSING_KEY = (
     "לא הוגדר מפתח API של OpenAI, ולכן אי אפשר לענות על שאלות. "
     "יש להגדיר את משתנה הסביבה OPENAI_API_KEY (למשל בקובץ ‎.env‎) ולהפעיל מחדש."

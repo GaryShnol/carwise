@@ -77,6 +77,13 @@ class BudgetExceededError(LLMError):
     """The running cost passed llm.max_cost_usd; the run must stop."""
 
 
+class SharedBudgetExceededError(BudgetExceededError):
+    """The cost of every session in this process passed llm.max_total_cost_usd (CW-605).
+
+    A subclass, so every caller that stops on the session cap stops on this one too;
+    only the message differs, because a new session does not get past it."""
+
+
 def cost_usd(usage: Usage, price: Price) -> float:
     """Cached input is billed at its own rate; reasoning is billed as output."""
     uncached = usage.input_tokens - usage.cached_tokens

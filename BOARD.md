@@ -72,8 +72,8 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E3 Measurement | none | 4 | 4 | 6 | DONE (PR #4) |
 | E4 Interface and packaging | none | 4 | 4 | 5 | DONE (PR #5) |
 | E5 Documentation and release | `v1.0` | 3 | 2 | 4 | IN REVIEW (tag `v1.0` after the merge) |
-| E6 Review fixes | `v1.0.1` | 20 | 5 | 20 | IN PROGRESS |
-| **Total** |  | **46** | **30** | **58** |  |
+| E6 Review fixes | `v1.0.1` | 20 | 6 | 20 | IN PROGRESS |
+| **Total** |  | **46** | **31** | **58** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -167,7 +167,7 @@ Branch: `epic/e6-review-fixes` | Tag: `v1.0.1` (owner, after the merge)
 | CW-602 | Short Hebrew outside brands must not match ordinary words (CR-002) | `fix` | S | P1 | DONE |  |
 | CW-603 | Numeric check: user words only, not the LLM rewrite (CR-003) | `fix` | S | P1 | DONE |  |
 | CW-604 | README: what the car-name post-check covers (CR-004) | `docs` | S | P1 | TODO | CW-601 |
-| CW-605 | Docker binds to localhost; process-wide spend cap (CR-005) | `fix` | S | P1 | TODO |  |
+| CW-605 | Docker binds to localhost; process-wide spend cap (CR-005) | `fix` | S | P1 | DONE |  |
 | CW-606 | Code-enforced "covers only the eight cars" statement (CR-006) | `fix` | S | P1 | DONE |  |
 | CW-607 | Headline answer score 62/69; re-scoring bias stated (CR-007) | `docs` | S | P1 | TODO |  |
 | CW-608 | Off-topic refusal also when a car is named (CR-008) | `fix` | S | P1 | DONE |  |
@@ -428,6 +428,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Date | Change |
 |---|---|
+| 2026-11-01 | CW-605 done: Docker run line publishes on 127.0.0.1 only; a process-wide `llm.max_total_cost_usd` ($5) shared by all UI sessions, which a refresh does not reset. |
 | 2026-11-01 | CW-606 done: recommendation and ranking answers that do not state the eight-car scope get a fixed guardrails sentence in code (flag `scope_note_added`); detection checked on 81 logged answers (13 lack it, 0 missed). Not re-measured on the answer eval yet. |
 | 2026-11-01 | CW-608 done: out_of_scope is refused even when a car is named; only chitchat that names a car goes on to retrieval. README Intent check row reworded to match. |
 | 2026-11-01 | CW-603 done: the numeric post-check accepts only the user's own words (this message, user turns in the history window, preference values), never the understand rewrite; the car-name post-check is unchanged. |

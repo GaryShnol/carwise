@@ -160,7 +160,9 @@ class RefusalReason(StrEnum):
     OUT_OF_SCOPE = "out_of_scope"  # chitchat or off-topic: no retrieval at all
     LLM_ERROR = "llm_error"  # provider unavailable or unusable output
     UNVERIFIED = "unverified"  # post-check failed on the answer and on its one regeneration
-    BUDGET_EXCEEDED = "budget_exceeded"  # llm.max_cost_usd reached: the session must stop
+    # llm.max_cost_usd, or the UI server's llm.max_total_cost_usd (flag
+    # server_budget_exceeded), reached: the session must stop.
+    BUDGET_EXCEEDED = "budget_exceeded"
 
 
 class CheckFindings(BaseModel):

@@ -1,7 +1,7 @@
 # carwise: the Hebrew Streamlit chat in one container (CW-402).
 #
 #   docker build -t carwise .
-#   docker run --rm -e OPENAI_API_KEY -v carwise-data:/app/data -p 8501:8501 carwise
+#   docker run --rm -e OPENAI_API_KEY -v carwise-data:/app/data -p 127.0.0.1:8501:8501 carwise
 #
 # What is NOT in the image, on purpose:
 # - the articles: they belong to the publisher; the app fetches them politely at
@@ -62,5 +62,6 @@ EXPOSE 8501
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
     CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=4)"]
 
-# 0.0.0.0 inside the container only: the host decides what to publish with -p.
+# 0.0.0.0 inside the container only: the host decides what to publish with -p, and
+# the documented -p 127.0.0.1:8501:8501 keeps it on the host's loopback address.
 CMD ["python", "-m", "app", "ui", "--address", "0.0.0.0", "--port", "8501", "--ingest-if-missing"]

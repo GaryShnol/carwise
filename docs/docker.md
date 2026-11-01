@@ -4,7 +4,7 @@
 
 ```bash
 docker build -t carwise .
-docker run --rm -e OPENAI_API_KEY -v carwise-data:/app/data -p 8501:8501 carwise
+docker run --rm -e OPENAI_API_KEY -v carwise-data:/app/data -p 127.0.0.1:8501:8501 carwise
 ```
 
 - `-e OPENAI_API_KEY` passes the key from your shell by name: it is not typed on the command
@@ -12,13 +12,20 @@ docker run --rm -e OPENAI_API_KEY -v carwise-data:/app/data -p 8501:8501 carwise
   works, but leaves the key in your shell history.)
 - `-v carwise-data:/app/data` is a named volume for the articles, the embedding model and the
   index. Keep it between runs; delete it (`docker volume rm carwise-data`) to start over.
-- `-p 8501:8501` publishes the UI on http://localhost:8501. Inside the container Streamlit
-  listens on 0.0.0.0, because only the published port is reachable from the host. Outside
-  Docker, `python -m app ui` listens on localhost only.
+- `-p 127.0.0.1:8501:8501` publishes the UI on the host's loopback address only, at
+  http://localhost:8501, so other machines on the network cannot reach it. Without the
+  `127.0.0.1:` part (`-p 8501:8501`) Docker publishes the port on every interface of the
+  host, and on Linux its firewall rules bypass ufw. The UI has no login, and every question
+  is paid for with your API key. Inside the container Streamlit listens on 0.0.0.0, because
+  only the published port is reachable from the host. Outside Docker, `python -m app ui`
+  listens on localhost only.
 - `-e CARWISE_PROFILE=final` selects the `final` profile (default `dev`).
 
-The app is meant to run locally with your own API key. The cost cap
-(`llm.max_cost_usd`) bounds one conversation (one browser session), not the process.
+The app is meant to run locally with your own API key. Two cost caps apply:
+`llm.max_cost_usd` ($2.00) bounds one conversation (one browser session), and a refresh starts
+a new one; `llm.max_total_cost_usd` ($5.00) bounds every session of the running server
+together, and only a restart resets it. Calls already in flight when the total is reached
+still finish, so the total can pass it by at most one call per active session.
 
 ## First start
 

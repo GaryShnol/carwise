@@ -26,6 +26,10 @@ llm:
   retries: 1
   history_window: 6    # last N messages sent to the understanding call
   max_cost_usd: 2.0    # abort a run (eval or chat session) above this
+  # CW-605: the UI server's cap over all browser sessions together; a refresh opens a
+  # new session (and a new max_cost_usd), never a new total. 2.5 times the session
+  # cap, or about eleven 3-run answer evals on final ($0.2447 + $0.2017 judge, README).
+  max_total_cost_usd: 5.0
 
 # USD per 1M tokens, Standard tier. Verified on 2026-10-30 against
 # https://developers.openai.com/api/docs/pricing (CW-104). Reasoning tokens are

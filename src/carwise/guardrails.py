@@ -544,6 +544,14 @@ def budget_reply(max_cost_usd: float) -> str:
     )
 
 
+def server_budget_reply(max_total_cost_usd: float) -> str:
+    """The shared cap of every session on this server (CW-605); a refresh cannot help."""
+    return (
+        "הגעתי למגבלת העלות הכוללת שהוגדרה לשרת הזה "
+        f"(${max_total_cost_usd:g} לכל השיחות יחד), ולכן אין אפשרות לענות על שאלות נוספות."
+    )
+
+
 # --- scope of a recommendation (CW-606) ------------------------------------------------
 # Prompt rule 8 asks every recommendation or ranking to say it covers only the eight
 # reviewed cars; the eval showed the model leaving it out, so code adds it when missing.

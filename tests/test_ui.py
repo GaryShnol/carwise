@@ -19,7 +19,13 @@ from streamlit.testing.v1 import AppTest
 from app import ui_support as ui
 from app import ui_text as text
 from carwise.guardrails import LLM_ERROR_REPLY
-from carwise.llm.base import BudgetExceededError, LLMConfigError, LLMUnavailableError
+from carwise.llm.base import (
+    BudgetExceededError,
+    LLMConfigError,
+    LLMUnavailableError,
+    SharedBudgetExceededError,
+)
+from carwise.llm.budget import SharedBudget
 from carwise.llm.fake import FakeLLMClient
 from carwise.preferences import EMPTY_PREFERENCES, RESET_REPLY
 from carwise.retrieval.retriever import SerializedRetriever
@@ -88,19 +94,26 @@ def run_app(monkeypatch: pytest.MonkeyPatch) -> Iterator[Callable[..., AppTest]]
     """Start the real script with fake wiring; returns a function of the scripted replies."""
     st.cache_resource.clear()
 
-    def start(replies: list[Any], *, llm_error: Exception | None = None) -> AppTest:
+    def start(
+        replies: list[Any],
+        *,
+        llm_error: Exception | None = None,
+        budget: SharedBudget | None = None,
+    ) -> AppTest:
         settings = _settings()
 
         def resources(_: Any, **__: Any) -> ui.Resources:
             return ui.Resources(settings, REGISTRY, SpyRetriever(settings), None)
 
-        def new_llm(_: Any) -> FakeLLMClient:
+        def new_llm(_: Any, __: SharedBudget) -> FakeLLMClient:
             if llm_error:
                 raise llm_error
             return FakeLLMClient(replies)
 
         monkeypatch.setattr(ui, "load_resources", resources)
         monkeypatch.setattr(ui, "new_llm", new_llm)
+        if budget is not None:
+            monkeypatch.setattr(ui, "new_budget", lambda _: budget)
         app = AppTest.from_file(str(ui.SCRIPT), default_timeout=30)
         app.run()
         return app
@@ -157,6 +170,75 @@ def test_cost_cap_stops_the_conversation(run_app: Callable[..., AppTest]) -> Non
     assert not app.exception
     assert app.chat_input[0].disabled
     assert text.STOPPED in [str(w.value) for w in app.warning]
+
+
+def test_server_total_stops_with_a_message_that_does_not_suggest_a_refresh(
+    run_app: Callable[..., AppTest],
+) -> None:
+    app = run_app([SharedBudgetExceededError("total reached")])
+    app.chat_input[0].set_value(QUESTION).run()
+    assert not app.exception and app.chat_input[0].disabled
+    warnings = [str(w.value) for w in app.warning]
+    assert text.STOPPED_SERVER in warnings and text.STOPPED not in warnings
+    assert "לרענן" not in text.STOPPED_SERVER
+
+
+def test_new_session_opens_stopped_once_the_server_total_is_spent(
+    run_app: Callable[..., AppTest],
+) -> None:
+    spent = SharedBudget(1.0)
+    spent.add(1.0)  # other sessions spent it all
+    app = run_app([], budget=spent)
+    assert not app.exception and app.chat_input[0].disabled
+    assert text.STOPPED_SERVER in [str(w.value) for w in app.warning]
+
+
+def test_sessions_and_a_refresh_share_one_budget_per_process(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The CR-005 bug: a fresh budget per session (a refresh) would reset the total.
+    Each AppTest run is a new browser session in the same process."""
+    st.cache_resource.clear()  # isolation; not cleared between the sessions below
+    settings = _settings()
+    seen: list[SharedBudget] = []
+
+    def resources(_: Any, **__: Any) -> ui.Resources:
+        return ui.Resources(settings, REGISTRY, SpyRetriever(settings), None)
+
+    def new_llm(_: Any, budget: SharedBudget) -> FakeLLMClient:
+        seen.append(budget)
+        return FakeLLMClient([])
+
+    monkeypatch.setattr(ui, "load_resources", resources)
+    monkeypatch.setattr(ui, "new_llm", new_llm)
+    try:
+        for _ in range(2):
+            AppTest.from_file(str(ui.SCRIPT), default_timeout=30).run()
+        assert len(seen) == 2 and seen[0] is seen[1]
+        seen[0].add(seen[0].max_cost_usd)
+        third = AppTest.from_file(str(ui.SCRIPT), default_timeout=30)
+        third.run()
+        assert not third.exception and third.chat_input[0].disabled
+        assert text.STOPPED_SERVER in [str(w.value) for w in third.warning]
+        assert seen[2] is seen[0]
+    finally:
+        st.cache_resource.clear()
+
+
+def test_every_session_client_charges_the_one_shared_budget(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")  # builds the SDK; no network call
+    settings = _settings()
+    budget = ui.new_budget(settings)
+    assert budget.max_cost_usd == settings.llm.max_total_cost_usd
+    first, second = ui.new_llm(settings, budget), ui.new_llm(settings, budget)
+    assert first is not second
+    budget.add(budget.max_cost_usd)  # spent: both refuse before any network call
+    model = settings.profile().generate_model
+    for client in (first, second):
+        with pytest.raises(SharedBudgetExceededError):
+            client.complete_json("system", [], Understanding, model=model)
 
 
 def test_missing_api_key_shows_a_hebrew_message_and_no_chat(

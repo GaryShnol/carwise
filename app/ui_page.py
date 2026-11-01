@@ -8,7 +8,12 @@ the retrieved chunks with scores, tokens and cost, and the refusal state.
 Why the model is shared and the client is not: the embedding model and the
 index load once per process (about a minute cold), so every browser session
 reuses them; the LLM client holds the cost cap, so each browser session gets
-its own, and the cap bounds one conversation as it does in the CLI.
+its own, and the cap bounds one conversation as it does in the CLI. Every client
+also charges one budget shared by the process (llm.max_total_cost_usd, CW-605),
+so opening a new session (a refresh) never resets what the server may spend.
+The budget is its own cached resource, not part of Resources: a session's client
+is built before Resources load (so a missing key shows at once), and a failed
+first start, retried on refresh, must not reset the total.
 """
 
 from __future__ import annotations
@@ -22,12 +27,18 @@ from app import ui_text as labels
 from app.chat import RESET_COMMAND, run_command
 from carwise.config import Settings, load_settings
 from carwise.llm.base import LLMConfigError
+from carwise.llm.budget import SharedBudget
 from carwise.preferences import EMPTY_PREFERENCES, Session
 from carwise.registry import Registry
 from carwise.retrieval.store import IndexNotReadyError
 from carwise.schemas import Answer
 
 log = logging.getLogger("carwise.ui")
+
+
+@st.cache_resource(show_spinner=False)
+def shared_budget() -> SharedBudget:
+    return ui.new_budget(load_settings())
 
 
 @st.cache_resource(show_spinner=False)
@@ -82,9 +93,10 @@ def render() -> None:
     settings = load_settings()
     state = st.session_state
 
+    budget = shared_budget()
     if "llm" not in state:
         try:
-            state.llm = ui.new_llm(settings)
+            state.llm = ui.new_llm(settings, budget)
         except LLMConfigError as error:
             st.error(ui.startup_message(error))
             st.stop()
@@ -99,6 +111,10 @@ def render() -> None:
         state.session = Session(history_window=settings.llm.history_window)
         state.turns = []  # (role, text or Answer), for display only
         state.stopped = False
+        state.stopped_text = labels.STOPPED
+    if budget.exhausted and not state.stopped:
+        # Another session spent the rest: no question here could be answered either.
+        state.stopped, state.stopped_text = True, labels.STOPPED_SERVER
     session: Session = state.session
 
     message = st.chat_input(
@@ -121,6 +137,7 @@ def render() -> None:
                 if ui.stops_session(answer):
                     # The input box above was drawn enabled; draw the page again.
                     state.stopped = True
+                    state.stopped_text = ui.stopped_message(answer)
                     st.rerun()
             except Exception:
                 # The pipeline turns provider failures into Hebrew refusals already;
@@ -139,4 +156,4 @@ def render() -> None:
             else:
                 st.markdown(ui.as_markdown(item))
     if state.stopped:
-        st.warning(labels.STOPPED)
+        st.warning(state.stopped_text)

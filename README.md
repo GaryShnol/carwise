@@ -117,7 +117,7 @@ uv run --env-file .env python -m app chat
 
 ```bash
 docker build -t carwise .
-docker run --rm -e OPENAI_API_KEY -v carwise-data:/app/data -p 8501:8501 carwise
+docker run --rm -e OPENAI_API_KEY -v carwise-data:/app/data -p 127.0.0.1:8501:8501 carwise
 ```
 
 Set `OPENAI_API_KEY` in your shell first. `-e OPENAI_API_KEY` passes it by name, so the key is
@@ -171,8 +171,9 @@ $0.2447 for the answers (400,092 input and 18,764 output tokens) and $0.2017 for
 6-question hold-out, 3 runs, cost $0.0409. Prices per model are in
 [`config/settings.yaml`](config/settings.yaml), checked against OpenAI's pricing page
 ([ADR 0001](docs/decisions/0001-llm-sampling-controls.md)). Every chat session stops at
-`llm.max_cost_usd` ($2.00). In the UI that cap applies to one browser session, not to the whole
-process.
+`llm.max_cost_usd` ($2.00). In the UI that cap applies to one browser session, and a refresh
+starts a new one, so every UI session also charges one total for the whole process,
+`llm.max_total_cost_usd` ($5.00); only a restart resets it.
 
 ## Architecture
 
@@ -265,7 +266,7 @@ Retrieval itself is deterministic: the same index and query return the same chun
 | Prompt-injection hygiene | prompt building | The prompt says article text is data, never instructions. Every outside value (chunk text, attributes, the question, preferences, history) is escaped: `<` and `>`, fake headers, role labels such as "System:". Links and images in an answer are rejected; the only links shown come from the registry. |
 | Input limits | before understand | A message is at most 500 characters. Message plus history window is at most 6,000 characters, with the oldest messages dropped first. |
 | Preference grounding | after understand | A preference value is kept only if it is grounded in the user's current message (number words compared by value). Values lifted from an answer or an article are dropped and flagged. |
-| Cost cap | LLM client | Each call's cost comes from token counts and config prices. A chat session stops at `llm.max_cost_usd` ($2.00) with a fixed Hebrew message. Eval runs have their own caps ($0.50 answers, $0.30 judge). |
+| Cost cap | LLM client | Each call's cost comes from token counts and config prices. A chat session stops at `llm.max_cost_usd` ($2.00) with a fixed Hebrew message; in the UI all sessions of one process together stop at `llm.max_total_cost_usd` ($5.00). Eval runs have their own caps ($0.50 answers, $0.30 judge). |
 | Secrets | everywhere | The API key comes only from the environment. The turn log never holds the key or the message text (tested with a planted key). |
 
 ## Evaluation
@@ -522,8 +523,10 @@ From the measurements and the Backlog in [`BOARD.md`](BOARD.md):
   wording rule that names only "the articles" without listing the forbidden phrases.
 - **The turn log is not persisted in Docker.** It goes to `/app/logs` inside the container and
   is lost with it. Next: mount a second volume or ship the lines to a log service.
-- **Local use with your own key.** There is no authentication. The cost cap bounds one browser
-  session, not the whole process, so the UI should not be exposed to other users.
+- **Local use with your own key.** There is no authentication, so the UI should not be exposed
+  to other users; the documented Docker command publishes it on the host's loopback address
+  only. Each browser session has its own cap, and all of them share one total per process
+  (`llm.max_total_cost_usd`, $5.00), which a refresh does not reset.
 - **Section titles sometimes leak into the answer text.** Citations name the section, and long
   merged section names (an article's FAQ headings run together) end up inside the sentence, as
   in the UI screenshot above. It is in the Backlog in [`BOARD.md`](BOARD.md).

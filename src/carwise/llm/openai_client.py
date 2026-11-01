@@ -34,6 +34,7 @@ from carwise.llm.base import (
     Usage,
     cost_usd,
 )
+from carwise.llm.budget import SharedBudget
 
 # A local OpenAI-compatible server needs some key string but ignores its value.
 LOCAL_SERVER_KEY = "not-needed"
@@ -94,7 +95,9 @@ class OpenAIClient:
 
     `total_cost_usd` accumulates over the client's lifetime (one chat session
     or one eval run). Once it reaches llm.max_cost_usd every further call is
-    refused, so the overrun is bounded by a single call.
+    refused, so the overrun is bounded by a single call. A `shared_budget` (the UI
+    server's, CW-605) is charged with the same costs and checked first: the total of
+    every session in the process is the limit a new session cannot reset.
     """
 
     def __init__(
@@ -103,10 +106,12 @@ class OpenAIClient:
         profile: ProfileConfig | None = None,
         *,
         sdk: OpenAI | None = None,
+        shared_budget: SharedBudget | None = None,
     ) -> None:
         self._config = settings.llm
         self._prices = settings.prices
         self.total_cost_usd = 0.0
+        self._shared_budget = shared_budget
         self._sdk = sdk or self._make_sdk(settings, profile or settings.profile())
 
     @staticmethod
@@ -162,6 +167,8 @@ class OpenAIClient:
         self, system: str, messages: list[Message], schema: type[T], *, model: str
     ) -> LLMResult[T]:
         price = self._price(model)
+        if self._shared_budget:
+            self._shared_budget.check()
         if self.total_cost_usd >= self._config.max_cost_usd:
             raise BudgetExceededError(
                 f"Spent ${self.total_cost_usd:.4f} of the ${self._config.max_cost_usd:.2f} "
@@ -176,7 +183,7 @@ class OpenAIClient:
             except LLMUnavailableError as error:
                 # A failed retry must not hide what the first attempt already cost.
                 spent = cost_usd(usage, price)
-                self.total_cost_usd += spent
+                self._charge(spent)
                 raise LLMUnavailableError(
                     str(error), usage=usage, cost_usd=spent, attempts=attempt - 1
                 ) from error.__cause__
@@ -186,7 +193,7 @@ class OpenAIClient:
             except ValidationError as error:
                 if attempt == 2:
                     spent = cost_usd(usage, price)
-                    self.total_cost_usd += spent
+                    self._charge(spent)
                     raise LLMOutputError(
                         f"{model} returned invalid {schema.__name__} twice: "
                         f"{error.error_count()} validation error(s)",
@@ -202,7 +209,7 @@ class OpenAIClient:
                 ]
                 continue
             cost = cost_usd(usage, price)
-            self.total_cost_usd += cost
+            self._charge(cost)
             return LLMResult(
                 parsed=parsed,
                 usage=usage,
@@ -212,3 +219,8 @@ class OpenAIClient:
                 attempts=attempt,
             )
         raise AssertionError("unreachable: the loop returns or raises")
+
+    def _charge(self, cost: float) -> None:
+        self.total_cost_usd += cost
+        if self._shared_budget:
+            self._shared_budget.add(cost)

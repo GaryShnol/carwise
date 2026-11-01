@@ -25,6 +25,7 @@ from carwise.llm.base import (
     LLMResult,
     LLMUnavailableError,
     Message,
+    SharedBudgetExceededError,
     T,
     Usage,
 )
@@ -180,6 +181,12 @@ class Pipeline:
         turn = _Turn(preferences=preferences or Preferences())
         try:
             answer = self._ask(message.strip(), history, turn)
+        except SharedBudgetExceededError:
+            # The UI server's total over every session (CW-605): a new session (a
+            # refresh) would be refused too, so the reply does not suggest one.
+            turn.flags += ["budget_exceeded", "server_budget_exceeded"]
+            text = guardrails.server_budget_reply(self._settings.llm.max_total_cost_usd)
+            answer = self._reply(turn, text, RefusalReason.BUDGET_EXCEEDED)
         except BudgetExceededError:
             # The cap is per client (one chat session or one eval run): the refused
             # call never reached the provider (nothing to charge), and every later

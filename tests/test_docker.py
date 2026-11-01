@@ -124,3 +124,11 @@ def test_healthcheck_and_first_start_command() -> None:
     assert "HEALTHCHECK" in INSTRUCTIONS and "/_stcore/health" in INSTRUCTIONS
     command = re.findall(r"^CMD\s+(.+)$", INSTRUCTIONS, re.MULTILINE)[-1]
     assert '"--address", "0.0.0.0"' in command and '"--ingest-if-missing"' in command
+
+
+@pytest.mark.parametrize("doc", ["README.md", "docs/docker.md", "Dockerfile"])
+def test_documented_run_command_publishes_on_loopback_only(doc: str) -> None:
+    """CW-605: a bare -p 8501:8501 publishes the unauthenticated UI on every interface."""
+    text = (ROOT / doc).read_text(encoding="utf-8")
+    runs = [line for line in text.splitlines() if "docker run" in line]
+    assert runs and all("-p 127.0.0.1:8501:8501" in line for line in runs), runs

@@ -36,6 +36,7 @@ class LLMConfig(_Strict):
     retries: int
     history_window: int
     max_cost_usd: float
+    max_total_cost_usd: float  # shared by every UI session in one process (CW-605)
 
 
 class Price(_Strict):
