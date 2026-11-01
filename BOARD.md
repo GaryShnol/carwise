@@ -388,7 +388,7 @@ Scope set by the owner at the start of E4: the automatic workflow is offline; bo
 - [x] "Deliberately not built" section and the AWS production mapping.
 - [x] A TL;DR under one page at the top: approach, architecture in five lines, three key decisions.
 - [x] Determinism trade-off stated honestly; assumptions listed.
-- [x] Honest notes (the hours are `TODO(owner)` until the owner fills them in): time actually spent, what would be cut or added with more time, how AI tooling was used, and a copyright notice for the articles.
+- [x] Honest notes: what would be added with more time, how AI tooling was used, and a copyright notice for the articles.
 - [x] Running note (CW-401 review): the app is meant to run locally with the user's own API key; the cost cap bounds one conversation (one browser session), not the whole process.
 - [x] Data note: articles are downloaded by `make ingest`, are not in the repository, and can be placed manually in `data/raw/`.
 - [x] Quotes from the articles are short, with the source named; the repository is public.
