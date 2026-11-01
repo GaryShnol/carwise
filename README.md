@@ -241,7 +241,7 @@ ADRs hold the measurements; [docs/README.md](docs/README.md) indexes them.
 | Recommendations search all cars; named cars are a hint ([ADR 0003](docs/decisions/0003-retrieval-tuning.md), CW-306) | Tuning set 23/23, sources 26/26, MRR 0.631 | Searching only the cars the plan names | — |
 | k and caps unchanged (`top_k` 5, `per_car_cap` 3) ([ADR 0003](docs/decisions/0003-retrieval-tuning.md)) | Every setting in the sweep passed the same questions | `per_car_cap` 2 (17% less chunk text, same hits): picking inside a flat region on 23 questions fits noise | Generation cost matters: it is the first lever |
 | Registry gate as the primary refusal; threshold 0.80 only as an off-topic backstop ([ADR 0003](docs/decisions/0003-retrieval-tuning.md)) | Answerable minimum 0.846, probe minimum 0.847: the score distributions overlap completely | A tuned similarity threshold as the main gate | An embedding model that separates the two groups |
-| Post-check in code (cars and numbers), regenerate once, then a fixed fallback | Clean on every answer of the 3-run `final` eval | Trusting the prompt alone; an LLM claim check at runtime | — |
+| Post-check in code (cars and numbers), regenerate once, then a fixed fallback | Clean on every answer of the 3-run `final` eval (few false positives). Recall on a scripted adversarial set ([report](eval/reports/postcheck-adversarial.md)): 14/23 bad answers caught (one only through the number check), 7/7 controls clean; it misses sibling models of corpus brands, model names with no brand, unlisted brands, a short brand after two prefixes, truncated, small or swapped numbers, and numbers as words | Trusting the prompt alone; an LLM claim check at runtime | — |
 | Generate prompt v3 kept ([ADR 0004](docs/decisions/0004-answer-eval-and-generate-prompt.md)) | v3 64/69, v4 60/69, v5 63/69 and less stable | v4 (made mini name the wrong winner of a range comparison); v5 (brought back "in another article") | A variant passes as many questions and is as stable |
 | `final` profile: nano understands, mini generates | Published numbers on this profile; `dev` (nano for both) is for development | Gemini 2.5 Flash-Lite (cheaper; a second provider and key) | Provider switching becomes a requirement |
 | Own thin `LLMClient` on the OpenAI SDK | One provider, a linear flow, full control of prompts and checks | LiteLLM, LangChain, LangGraph | Several providers, or loops and tools |
@@ -353,7 +353,10 @@ Generate prompt v3, understand on gpt-5.4-nano, generate on gpt-5.4-mini
 - **Stability:** the same behavior in 23/23 questions, the same numbers in 15/23, identical text
   in 28% of answer pairs.
 - **Post-check:** clean on all 60 generated answers. The other 9 runs were refusals (3
-  questions × 3 runs), which never reach generation.
+  questions × 3 runs), which never reach generation. Clean answers show few false positives,
+  not recall; recall is measured on scripted bad answers instead
+  ([report](eval/reports/postcheck-adversarial.md), `uv run python -m eval.postcheck`): 14 of 23
+  caught (one only through the number check), every clean control left clean.
 - **Latency of the graded turn:** p50 2.8 s, p95 4.1 s, from one laptop to the OpenAI API, with
   retrieval on CPU.
 - **Cost:** $0.2447 for answers and $0.2017 for the judge.

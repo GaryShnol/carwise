@@ -181,7 +181,7 @@ Branch: `epic/e6-review-fixes` | Tag: `v1.0.1` (owner, after the merge)
 | CW-616 | ADR 0003 addendum: recommendation spec boxes are unconditional (CR-016) | `docs` | S | P3 | TODO |  |
 | CW-617 | Stale statuses and counts (CR-017) | `docs` | S | P3 | TODO |  |
 | CW-618 | CI doc: retrieval eval is manual, and why (CR-018) | `docs` | S | P3 | TODO |  |
-| CW-619 | Adversarial post-check test set (CR-019) | `test` | S | P2 | TODO | CW-601, CW-603 |
+| CW-619 | Adversarial post-check test set (CR-019) | `test` | S | P2 | DONE | CW-601, CW-603 |
 | CW-620 | Judge and recording caveats (CR-020) | `docs` | S | P3 | TODO |  |
 
 ## Ticket details and acceptance criteria
@@ -429,6 +429,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Date | Change |
 |---|---|
+| 2026-11-01 | CW-619 done: `eval/postcheck_cases.yaml` scripts 23 bad generate outputs and 7 clean controls on synthetic chunks, run through the real pipeline with the fake LLM; each case pins today's outcome. 14/23 caught, 7/7 controls clean; known misses named in `eval/reports/postcheck-adversarial.md`. README states recall next to the clean-run evidence. |
 | 2026-11-01 | CW-611 done: the answer link filter also rejects `](`, `][`, reference definitions (also in quotes and list items), `<scheme:...>` autolinks and e-mail addresses; refusals are shown with every ASCII punctuation mark escaped (`ui.as_literal_markdown`), so a raw `not_covered` name cannot form a link or image. Checked with markdown-it-py (CommonMark). |
 | 2026-11-01 | CW-610 done: `config/corpus.lock.yaml` pins each article's cleaned-text and chunk hashes (hashes and counts only); ingest warns on a mismatch and never fails; new eval reports record the index fingerprint and the manifest hash. |
 | 2026-11-01 | CW-614 done: the pipeline embeds the question once per turn (`Retriever.embed` -> `Query`); retrieval evals identical to the committed reports apart from timing. |
