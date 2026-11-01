@@ -18,8 +18,8 @@ loop. The model writes the answer, and code decides what goes into the model and
 3. Retrieve and gate (no LLM): per-car retrieval. Code refuses a car outside the eight, and
    off-topic messages, before any generation call.
 4. Generate (LLM call 2): JSON with the answer and the ids of the chunks it used. Code checks the
-   ids, the car names and every number against the retrieved chunks. A suspect answer is
-   regenerated once, then replaced by a fixed reply.
+   ids, the car names it knows and the numbers written in digits against the retrieved chunks.
+   A suspect answer is regenerated once, then replaced by a fixed reply.
 5. Telemetry: one JSON line per turn (chunk ids, scores, tokens, cost, latency, check results),
    never the user's words: not the message, and not the unknown car names taken from it
    (counted only).
@@ -30,9 +30,10 @@ loop. The model writes the answer, and code decides what goes into the model and
    ([ADR 0003](docs/decisions/0003-retrieval-tuning.md)), so a car outside the eight is refused
    in code, before generation.
 2. **Post-checks in code.** The car names code can recognize (the eight cars' aliases and a
-   list of outside brands) and every number in an answer must appear in the chunks retrieved
-   for that turn; an answer that fails is regenerated once, then replaced. A car name the code
-   does not know, such as another Kia model, is not seen
+   list of outside brands) and every number written in digits must appear in the chunks
+   retrieved for that turn or in the user's own words; an answer that fails is regenerated
+   once, then replaced. A car name the code does not know, such as another Kia model, is not
+   seen, and a number is checked as a value, not per car
    ([what the checks cover](#guardrails-and-reliability)).
 3. **Measure before changing.** The embedding model, the retrieval settings and the generate
    prompt were each chosen from an eval run, and a prompt change that lost accuracy was rolled
@@ -266,7 +267,7 @@ Retrieval itself is deterministic: the same index and query return the same chun
 | Similarity gate | after retrieval | A best score below 0.80 is refused with suggestions. It is a backstop for off-topic text, not the main refusal (see Key decisions). |
 | Citation check | after generation | The model returns the ids of the chunks it used; ids not retrieved this turn are dropped and flagged. |
 | Car-name post-check | after generation | Checks only names code knows. One of the eight cars (any registry alias) must be retrieved this turn or named in a retrieved chunk (articles mention rivals). A brand from `guardrails.outside_brands`, or another model written on a corpus alias ("Audi S6", "C3 Aircross": another brand right before the alias or a listed model word right after it, CW-601), must be named in a retrieved chunk or be a name the user asked about (the turn's not-covered names). Up to three Hebrew prefixes (ו, ה, ב, כ, ל, מ, ש) are allowed; a Hebrew brand of fewer than four letters takes at most one, from ב, ל, ה, ו (CW-602). Not seen: other models of the corpus brands not built on an alias (Kia EV6, Kia Sorento), model names with no brand, and brands missing from the outside list ([adversarial report](eval/reports/postcheck-adversarial.md)). |
-| Numeric post-check | after generation | Every number must appear in the retrieved chunks or in the user's own words. Formatting is normalized (commas, decimal comma, "אלף", ranges, percent). |
+| Numeric post-check | after generation | Digits only. Each number must be stated in some retrieved chunk (its text, car name or section) or in the user's own words: this message, the user turns in the history window and the preference values, never the understand step's rewrite or an earlier answer (CW-603). The check is per value, not per car: a figure from one retrieved car backs the same figure stated for another, so swapped figures pass (only the eval's attribution check looks at that). The answer may round or cut the source to the precision it writes (5.9 backs "5"). A sum or difference of two chunk-backed numbers in the answer is accepted, within the coarsest unit. Formatting is normalized (commas, decimal comma, "אלף", ranges, percent); 0 is always allowed. |
 | Regenerate once, then fall back | after a failed post-check | One stricter retry that includes the findings. If that is still suspect, a fixed reply built by code says where in the articles the closest information is. At most one extra call per turn. |
 | Prompt-injection hygiene | prompt building | The prompt says article text is data, never instructions. Every outside value (chunk text, attributes, the question, preferences, history) is escaped: `<` and `>`, fake headers, role labels such as "System:". Links and images in an answer are rejected; the only links shown come from the registry. |
 | Input limits | before understand | A message is at most 500 characters. Message plus history window is at most 6,000 characters, with the oldest messages dropped first. |
@@ -559,7 +560,15 @@ From the measurements and the Backlog in [`BOARD.md`](BOARD.md):
   flags 9 of the 15 bad car-name answers, and the number check catches one more
   ([report](eval/reports/postcheck-adversarial.md)). Next: flag a corpus brand followed by a
   model token that is not a registry alias.
-- **Numbers written as words** are not checked by the numeric post-check (digits only).
+- **The numeric post-check is per value and weak on small numbers.** Any retrieved chunk can
+  back a number, whichever car or attribute it belongs to, so figures swapped between two cars
+  pass; the attribution check that would see it runs only in the eval. Truncation is accepted
+  (5.9 backs "5"). Small counts (seats, gears) are almost always stated somewhere: on the
+  current index the eight spec boxes alone state 9 of the integers 1 to 10, against 21 of the
+  901 integers from 100 to 1,000, so the check is strict only for larger figures. Numbers
+  written as words are not checked at all. On the scripted adversarial set it catches 4 of the
+  8 bad number answers ([report](eval/reports/postcheck-adversarial.md)). Next: accept rounding
+  only, and run the attribution check in comparisons.
 - **SDK-level retries are silent, and the slowest turn is long.** The OpenAI SDK retries a
   timed-out request itself (`llm.retries`: 1), so `attempts` stays 1. Nominal bounds, computed
   from the settings, not measured, and assuming each HTTP request ends within `llm.timeout_s`
