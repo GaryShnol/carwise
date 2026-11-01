@@ -72,8 +72,8 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E3 Measurement | none | 4 | 4 | 6 | DONE (PR #4) |
 | E4 Interface and packaging | none | 4 | 4 | 5 | DONE (PR #5) |
 | E5 Documentation and release | `v1.0` | 3 | 2 | 4 | IN REVIEW (tag `v1.0` after the merge) |
-| E6 Review fixes | `v1.0.1` | 20 | 15 | 20 | IN PROGRESS |
-| **Total** |  | **46** | **40** | **58** |  |
+| E6 Review fixes | `v1.0.1` | 20 | 16 | 20 | IN PROGRESS |
+| **Total** |  | **46** | **41** | **58** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -177,7 +177,7 @@ Branch: `epic/e6-review-fixes` | Tag: `v1.0.1` (owner, after the merge)
 | CW-612 | Output-token caps, per-turn deadline, real worst-case bound (CR-012) | `fix` | S | P2 | DONE |  |
 | CW-613 | Telemetry logs only a count of uncovered names; CLI profile label (CR-013) | `fix` | S | P2 | DONE |  |
 | CW-614 | Embed the query once per turn (CR-014) | `refactor` | S | P2 | DONE |  |
-| CW-615 | Backlog: one number-word module (CR-015) | `docs` | S | P3 | TODO |  |
+| CW-615 | Backlog: one number-word module (CR-015) | `docs` | S | P3 | DONE |  |
 | CW-616 | ADR 0003 addendum: recommendation spec boxes are unconditional (CR-016) | `docs` | S | P3 | TODO |  |
 | CW-617 | Stale statuses and counts (CR-017) | `docs` | S | P3 | TODO |  |
 | CW-618 | CI doc: retrieval eval is manual, and why (CR-018) | `docs` | S | P3 | TODO |  |
@@ -424,11 +424,13 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 | Section titles sometimes leak into the answer text (long merged section names in inline citations) | Observed in the CW-203 and CW-303 notes and in the README's UI screenshot (an FAQ heading inside the sentence); answers stay correct, only the wording suffers, and a fix touches chunking or the generate prompt, which would need a new `final` eval run | A citation format that names a short section label is measured on `final` without losing pass rate or stability |
 | Short brands that are also ordinary words: "אופל" (darkness, "באופל"), "צ'רי" (cherry), Latin "Seat" (CW-602 audit) | The CW-602 rule handles prefix collisions only; these are whole-word homonyms, rare in car questions, and behave as before | A real turn shows a false "not covered" note or refusal from one of them |
 | Preference values in the UI side panel rendered as literal text (CW-611 verifier) | Values come from the understand call and go through `as_markdown`, so a user who steers the model could put a link in the panel; it shows only in that user's own session | Preferences are ever shown to anyone other than the person who typed them |
+| One number-word module (CW-615, CR-015) | Number reading lives in three places: `carwise.numbers` (digit tokenizer `_NUMBER`, scale words אלף/מיליון), `carwise.preferences` (its own `_TOKEN` tokenizer and a full number-word grammar, CW-405) and `eval/answer.py` (a word table for 1 to 7 only, `number_words`). A fix in one must be repeated in the others, and grading can read a text differently from grounding. Merging touches the grounding code, which would need the answer eval re-run | A number-word fix is needed in a second place, or the eval and the pipeline disagree on a real answer |
 
 ## Change log
 
 | Date | Change |
 |---|---|
+| 2026-11-01 | CW-615 done: Backlog row for one number-word module (`carwise.numbers`, `carwise.preferences`, `eval/answer.py`; the eval's table covers 1 to 7 only). |
 | 2026-11-01 | CW-609 done: README TL;DR, Numeric post-check row and Known limitations say the check reads digits only, per value not per car (swaps caught only by the eval's attribution check), accepts truncation and sums or differences of chunk-backed numbers, is weak on small numbers (spec boxes state 9 of 1-10, 21 of 901 in 100-1,000, re-measured on the index), and takes user words only from user turns and preferences (CW-603). |
 | 2026-11-01 | CW-607 done: README TL;DR and answer results lead with 62/69 as graded; 64/69 shown beside it as after the one checker fix found on that run (citation split, one comparison 1/3 to 3/3). README and an ADR 0004 addendum state that corrections came only from failing runs and the judge criterion changed after its `dev` verdicts; CW-405 and CW-606 not re-measured. |
 | 2026-11-01 | CW-604 done: README TL;DR, Guardrails row and Known limitations say what the car-name post-check sees (registry aliases with the CW-601 context rule, the outside-brand list, the CW-602 prefix rule) and what it does not (other models of corpus brands, brand-less model names, unlisted brands), with the CW-619 report. Done count of E6 corrected (12 were done, not 10). |
