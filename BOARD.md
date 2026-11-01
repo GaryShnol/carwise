@@ -2,7 +2,7 @@
 
 Living task board for the project, kept in the repository like a lightweight Jira. It is the single source of truth for scope and progress. Rules for updating it are in `CLAUDE.md`, section 19.
 
-**Last updated:** 2026-10-31
+**Last updated:** 2026-11-01
 **Release target:** `v1.0`
 **Effort budget:** the assignment suggests 3 to 5 hours, and the owner accepts more time in exchange for a solid result. Target: all P1 and P2 tickets (37 points, about 6 to 7 hours with Claude Code assistance); P3 only if time allows. Points: S = 1, M = 2, L = 3.
 
@@ -72,8 +72,8 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E3 Measurement | none | 4 | 4 | 6 | DONE (PR #4) |
 | E4 Interface and packaging | none | 4 | 4 | 5 | DONE (PR #5) |
 | E5 Documentation and release | `v1.0` | 3 | 2 | 4 | IN REVIEW (tag `v1.0` after the merge) |
-| E6 Review fixes | `v1.0.1` | 20 | 10 | 20 | IN PROGRESS |
-| **Total** |  | **46** | **35** | **58** |  |
+| E6 Review fixes | `v1.0.1` | 20 | 13 | 20 | IN PROGRESS |
+| **Total** |  | **46** | **38** | **58** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -166,7 +166,7 @@ Branch: `epic/e6-review-fixes` | Tag: `v1.0.1` (owner, after the merge)
 | CW-601 | Short aliases must not route other models of a brand to a corpus car (CR-001) | `fix` | S | P1 | DONE |  |
 | CW-602 | Short Hebrew outside brands must not match ordinary words (CR-002) | `fix` | S | P1 | DONE |  |
 | CW-603 | Numeric check: user words only, not the LLM rewrite (CR-003) | `fix` | S | P1 | DONE |  |
-| CW-604 | README: what the car-name post-check covers (CR-004) | `docs` | S | P1 | TODO | CW-601 |
+| CW-604 | README: what the car-name post-check covers (CR-004) | `docs` | S | P1 | DONE | CW-601 |
 | CW-605 | Docker binds to localhost; process-wide spend cap (CR-005) | `fix` | S | P1 | DONE |  |
 | CW-606 | Code-enforced "covers only the eight cars" statement (CR-006) | `fix` | S | P1 | DONE |  |
 | CW-607 | Headline answer score 62/69; re-scoring bias stated (CR-007) | `docs` | S | P1 | TODO |  |
@@ -429,6 +429,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Date | Change |
 |---|---|
+| 2026-11-01 | CW-604 done: README TL;DR, Guardrails row and Known limitations say what the car-name post-check sees (registry aliases with the CW-601 context rule, the outside-brand list, the CW-602 prefix rule) and what it does not (other models of corpus brands, brand-less model names, unlisted brands), with the CW-619 report. Done count of E6 corrected (12 were done, not 10). |
 | 2026-11-01 | CW-619 done: `eval/postcheck_cases.yaml` scripts 23 bad generate outputs and 7 clean controls on synthetic chunks, run through the real pipeline with the fake LLM; each case pins today's outcome. 14/23 caught, 7/7 controls clean; known misses named in `eval/reports/postcheck-adversarial.md`. README states recall next to the clean-run evidence. |
 | 2026-11-01 | CW-611 done: the answer link filter also rejects `](`, `][`, reference definitions (also in quotes and list items), `<scheme:...>` autolinks and e-mail addresses; refusals are shown with every ASCII punctuation mark escaped (`ui.as_literal_markdown`), so a raw `not_covered` name cannot form a link or image. Checked with markdown-it-py (CommonMark). |
 | 2026-11-01 | CW-610 done: `config/corpus.lock.yaml` pins each article's cleaned-text and chunk hashes (hashes and counts only); ingest warns on a mismatch and never fails; new eval reports record the index fingerprint and the manifest hash. |

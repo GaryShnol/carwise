@@ -29,8 +29,11 @@ loop. The model writes the answer, and code decides what goes into the model and
    similarity scores do not separate answerable questions from unanswerable ones
    ([ADR 0003](docs/decisions/0003-retrieval-tuning.md)), so a car outside the eight is refused
    in code, before generation.
-2. **Post-checks in code.** Every car name and every number in an answer must appear in the
-   chunks retrieved for that turn; an answer that fails is regenerated once, then replaced.
+2. **Post-checks in code.** The car names code can recognize (the eight cars' aliases and a
+   list of outside brands) and every number in an answer must appear in the chunks retrieved
+   for that turn; an answer that fails is regenerated once, then replaced. A car name the code
+   does not know, such as another Kia model, is not seen
+   ([what the checks cover](#guardrails-and-reliability)).
 3. **Measure before changing.** The embedding model, the retrieval settings and the generate
    prompt were each chosen from an eval run, and a prompt change that lost accuracy was rolled
    back ([ADR 0004](docs/decisions/0004-answer-eval-and-generate-prompt.md)).
@@ -261,7 +264,7 @@ Retrieval itself is deterministic: the same index and query return the same chun
 | Intent check | before retrieval | Off-topic messages, even ones that name a car, and chitchat that names no car get a fixed reply saying what the bot can do, with no retrieval. |
 | Similarity gate | after retrieval | A best score below 0.80 is refused with suggestions. It is a backstop for off-topic text, not the main refusal (see Key decisions). |
 | Citation check | after generation | The model returns the ids of the chunks it used; ids not retrieved this turn are dropped and flagged. |
-| Car-name post-check | after generation | Every car named in the answer must be retrieved this turn or appear in a retrieved chunk (articles mention rivals). It normalizes Hebrew prefixes (ב, ל, ה, ו, מ, ש) and also checks the outside-brand list. |
+| Car-name post-check | after generation | Checks only names code knows. One of the eight cars (any registry alias) must be retrieved this turn or named in a retrieved chunk (articles mention rivals). A brand from `guardrails.outside_brands`, or another model written on a corpus alias ("Audi S6", "C3 Aircross": another brand right before the alias or a listed model word right after it, CW-601), must be named in a retrieved chunk or be a name the user asked about (the turn's not-covered names). Up to three Hebrew prefixes (ו, ה, ב, כ, ל, מ, ש) are allowed; a Hebrew brand of fewer than four letters takes at most one, from ב, ל, ה, ו (CW-602). Not seen: other models of the corpus brands not built on an alias (Kia EV6, Kia Sorento), model names with no brand, and brands missing from the outside list ([adversarial report](eval/reports/postcheck-adversarial.md)). |
 | Numeric post-check | after generation | Every number must appear in the retrieved chunks or in the user's own words. Formatting is normalized (commas, decimal comma, "אלף", ranges, percent). |
 | Regenerate once, then fall back | after a failed post-check | One stricter retry that includes the findings. If that is still suspect, a fixed reply built by code says where in the articles the closest information is. At most one extra call per turn. |
 | Prompt-injection hygiene | prompt building | The prompt says article text is data, never instructions. Every outside value (chunk text, attributes, the question, preferences, history) is escaped: `<` and `>`, fake headers, role labels such as "System:". Links and images in an answer are rejected; the only links shown come from the registry. |
@@ -535,6 +538,12 @@ From the measurements and the Backlog in [`BOARD.md`](BOARD.md):
 - **Section titles sometimes leak into the answer text.** Citations name the section, and long
   merged section names (an article's FAQ headings run together) end up inside the sentence, as
   in the UI screenshot above. It is in the Backlog in [`BOARD.md`](BOARD.md).
+- **The car-name post-check sees only names it knows.** It matches the eight cars' aliases and
+  the outside-brand list. Another model of a corpus brand (Kia EV6), a model named without its
+  brand, and a brand missing from the list pass unflagged. On the scripted adversarial set it
+  flags 9 of the 15 bad car-name answers, and the number check catches one more
+  ([report](eval/reports/postcheck-adversarial.md)). Next: flag a corpus brand followed by a
+  model token that is not a registry alias.
 - **Numbers written as words** are not checked by the numeric post-check (digits only).
 - **SDK-level retries are silent, and the slowest turn is long.** The OpenAI SDK retries a
   timed-out request itself (`llm.retries`: 1), so `attempts` stays 1. Nominal bounds, computed
