@@ -72,8 +72,8 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E3 Measurement | none | 4 | 4 | 6 | DONE (PR #4) |
 | E4 Interface and packaging | none | 4 | 4 | 5 | DONE (PR #5) |
 | E5 Documentation and release | `v1.0` | 3 | 2 | 4 | IN REVIEW (tag `v1.0` after the merge) |
-| E6 Review fixes | `v1.0.1` | 20 | 3 | 20 | IN PROGRESS |
-| **Total** |  | **46** | **28** | **58** |  |
+| E6 Review fixes | `v1.0.1` | 20 | 4 | 20 | IN PROGRESS |
+| **Total** |  | **46** | **29** | **58** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -170,7 +170,7 @@ Branch: `epic/e6-review-fixes` | Tag: `v1.0.1` (owner, after the merge)
 | CW-605 | Docker binds to localhost; process-wide spend cap (CR-005) | `fix` | S | P1 | TODO |  |
 | CW-606 | Code-enforced "covers only the eight cars" statement (CR-006) | `fix` | S | P1 | TODO |  |
 | CW-607 | Headline answer score 62/69; re-scoring bias stated (CR-007) | `docs` | S | P1 | TODO |  |
-| CW-608 | Off-topic refusal also when a car is named (CR-008) | `fix` | S | P1 | TODO |  |
+| CW-608 | Off-topic refusal also when a car is named (CR-008) | `fix` | S | P1 | DONE |  |
 | CW-609 | README: what the numeric check covers (CR-009) | `docs` | S | P2 | TODO | CW-603 |
 | CW-610 | Corpus manifest: per-article hashes, warning at ingest, fingerprint in reports (CR-010) | `feat` | S | P2 | TODO |  |
 | CW-611 | Link filter: reference-style links, images, escaped names (CR-011) | `fix` | S | P2 | TODO |  |
@@ -428,6 +428,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Date | Change |
 |---|---|
+| 2026-11-01 | CW-608 done: out_of_scope is refused even when a car is named; only chitchat that names a car goes on to retrieval. README Intent check row reworded to match. |
 | 2026-11-01 | CW-603 done: the numeric post-check accepts only the user's own words (this message, user turns in the history window, preference values), never the understand rewrite; the car-name post-check is unchanged. |
 | 2026-11-01 | CW-602 done: a Hebrew brand of fewer than four letters takes at most one prefix, only ב/ל/ה/ו, so "רנו" no longer hits plural verbs (שמרנו, הכרנו); one rule for the gate, the post-check and the brand-before-alias check. Backlog: whole-word brand homonyms. |
 | 2026-11-01 | CW-601 done: a short alias preceded by another brand or followed by a sibling-model word (registry `brand_names`, `other_models`) is not the corpus car; the gate and the post-check share the matcher. Retrieval evals unchanged. |

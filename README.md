@@ -256,7 +256,7 @@ Retrieval itself is deterministic: the same index and query return the same chun
 | Guardrail | Where | What it does |
 |---|---|---|
 | Registry gate | before retrieval | If the only cars in the message are outside the eight (unrecognized names from the understand call, or a brand from `guardrails.outside_brands`), code returns a templated refusal and never calls generation. It suggests the closest of the eight, using hint words from the user's own messages (body type, powertrain), never the model's knowledge of the unknown car. |
-| Intent check | before retrieval | Chitchat and off-topic messages get a fixed reply saying what the bot can do, with no retrieval. |
+| Intent check | before retrieval | Off-topic messages, even ones that name a car, and chitchat that names no car get a fixed reply saying what the bot can do, with no retrieval. |
 | Similarity gate | after retrieval | A best score below 0.80 is refused with suggestions. It is a backstop for off-topic text, not the main refusal (see Key decisions). |
 | Citation check | after generation | The model returns the ids of the chunks it used; ids not retrieved this turn are dropped and flagged. |
 | Car-name post-check | after generation | Every car named in the answer must be retrieved this turn or appear in a retrieved chunk (articles mention rivals). It normalizes Hebrew prefixes (ב, ל, ה, ו, מ, ש) and also checks the outside-brand list. |

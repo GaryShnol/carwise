@@ -55,8 +55,6 @@ from carwise.schemas import (
 )
 from carwise.telemetry import TurnLogger
 
-NO_RETRIEVAL_INTENTS = (Intent.CHITCHAT, Intent.OUT_OF_SCOPE)
-
 
 @dataclass
 class _Turn:
@@ -217,7 +215,10 @@ class Pipeline:
             suggested = self._suggest(message, history, [])
             text = guardrails.unknown_car_reply(plan.not_covered, self._registry, suggested)
             return self._reply(turn, text, RefusalReason.UNKNOWN_CAR, plan, suggested=suggested)
-        if plan.intent in NO_RETRIEVAL_INTENTS and not plan.cars:
+        # Off-topic is refused even when a car is named ("a poem about the RS3", CR-008);
+        # chitchat that names a car ("thanks for the RS3 info") goes on to retrieval.
+        off_topic = plan.intent is Intent.OUT_OF_SCOPE
+        if off_topic or (plan.intent is Intent.CHITCHAT and not plan.cars):
             text = guardrails.out_of_scope_reply(self._registry)
             return self._reply(turn, text, RefusalReason.OUT_OF_SCOPE, plan)
 

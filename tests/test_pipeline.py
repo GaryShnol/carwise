@@ -11,6 +11,7 @@ from carwise.guardrails import (
     cars_in_text,
     mentioned,
     other_models_in_text,
+    out_of_scope_reply,
     outside_brands_in_text,
 )
 from carwise.llm.base import LLMOutputError
@@ -36,6 +37,7 @@ TEXTS = {
     "mg_s6": ["הטווח בפועל הוא 400 קילומטר בנסיעה רגילה", "המחיר הוא 180 אלף שקל עם אבזור מלא"],
     "aion_ht": ["הטווח בפועל הוא 350 קילומטר בנסיעה רגילה", "המחיר הוא 170 אלף שקל"],
     "kia_ev9": ["צריכת החשמל הממוצעת נמדדה לאורך כל החודש"],
+    "audi_rs3": ["המנוע מפיק 400 כוחות סוס"],
 }
 
 
@@ -345,6 +347,38 @@ def test_chitchat_and_off_topic_skip_retrieval(intent: Intent) -> None:
     answer = pipeline.ask("תכתוב לי שיר על הים", [])
     assert answer.refusal is RefusalReason.OUT_OF_SCOPE and "רכב" in answer.text
     assert retriever.calls == [] and len(llm.calls) == 1
+
+
+RS3_POEM = "תכתוב לי שיר על אודי RS3"
+
+
+def test_off_topic_request_naming_a_car_is_refused_without_retrieval() -> None:
+    # CR-008: a named car does not make a poem a car question.
+    plan = understanding(Intent.OUT_OF_SCOPE, ["audi_rs3"], question="שיר על אודי RS3")
+    pipeline, llm, retriever = make([plan])
+    answer = pipeline.ask(RS3_POEM, [])
+    assert answer.refusal is RefusalReason.OUT_OF_SCOPE
+    assert answer.text == out_of_scope_reply(REGISTRY)  # the same reply as without a car
+    assert retriever.calls == [] and len(llm.calls) == 1
+
+
+def test_normal_question_about_the_same_car_is_answered_as_before() -> None:
+    plan = understanding(Intent.FACT, ["audi_rs3"], question="כמה כוחות סוס יש לאודי RS3?")
+    pipeline, llm, retriever = make(
+        [plan, generation("לאודי RS3 400 כוחות סוס (אודי RS3, פרק 0).", ["audi_rs3:000"])]
+    )
+    answer = pipeline.ask("כמה כוחות סוס יש לאודי RS3?", [])
+    assert answer.refusal is None and retriever.calls == [("search", ["audi_rs3"])]
+    assert len(llm.calls) == 2
+
+
+def test_chitchat_naming_a_car_still_goes_to_retrieval() -> None:
+    plan = understanding(Intent.CHITCHAT, ["audi_rs3"], question="תודה על המידע על אודי RS3")
+    reply = generation("בשמחה! לאודי RS3 400 כוחות סוס (אודי RS3, פרק 0).", ["audi_rs3:000"])
+    pipeline, llm, retriever = make([plan, reply])
+    answer = pipeline.ask("תודה על המידע על אודי RS3!", [])
+    assert answer.refusal is None and retriever.calls == [("search", ["audi_rs3"])]
+    assert len(llm.calls) == 2
 
 
 def test_understand_failure_falls_back_to_the_raw_message() -> None:
