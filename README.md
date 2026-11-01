@@ -123,16 +123,29 @@ uv run --env-file .env python -m app chat
 ### Docker
 
 ```bash
+cp .env.example .env    # then fill in OPENAI_API_KEY, or export it (PowerShell: copy .env.example .env)
+docker compose up --build    # or: make docker-up
+```
+
+Compose reads the key from your shell or from `.env` next to `compose.yaml` (the shell wins),
+and stops with a clear message if it is missing. Open http://localhost:8501; the UI is
+published on the host's loopback address only. The first start fetches the articles, downloads
+the embedding model (2.2 GB) and builds the index into the `carwise-data` volume while the page
+shows a loading message (about 3 minutes, 177 s on the development machine). Later starts reuse
+the volume (17 s). Stop with `docker compose down` (the volume is kept); start over with
+`docker volume rm carwise-data`. Set `CARWISE_PROFILE=final` in the shell or `.env` for the
+`final` profile.
+
+Without compose, with the key set in your shell:
+
+```bash
 docker build -t carwise .
 docker run --rm -e OPENAI_API_KEY -v carwise-data:/app/data -p 127.0.0.1:8501:8501 carwise
 ```
 
-Set `OPENAI_API_KEY` in your shell first. `-e OPENAI_API_KEY` passes it by name, so the key is
-not typed on the command line or stored in the image. Open http://localhost:8501. The first
-start fetches the articles, downloads the embedding model and builds the index into the
-`carwise-data` volume while the page shows a loading message (177 s on the development machine).
-Later starts reuse the volume (17 s). Add `-e CARWISE_PROFILE=final` for the `final` profile.
-Details and measurements: [docs/docker.md](docs/docker.md).
+`-e OPENAI_API_KEY` passes the key by name, so it is not typed on the command line or stored in
+the image. Add `-e CARWISE_PROFILE=final` for the `final` profile. Both ways share the same
+volume. Details and measurements: [docs/docker.md](docs/docker.md).
 
 ### Ollama (optional, not evaluated)
 

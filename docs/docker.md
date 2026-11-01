@@ -2,6 +2,31 @@
 
 ## Run
 
+With Docker Compose (recommended):
+
+```bash
+cp .env.example .env    # then fill in OPENAI_API_KEY, or export it (PowerShell: copy .env.example .env)
+docker compose up --build    # or: make docker-up
+```
+
+- `compose.yaml` takes `OPENAI_API_KEY` from your shell or from `.env` next to it; a shell value
+  overrides the file. The key is never written in `compose.yaml`, and a missing or empty key
+  stops compose before anything starts, with the message
+  `set OPENAI_API_KEY in your shell or in a .env file`.
+- It publishes the UI on `127.0.0.1` only (see the `-p` note below) at http://localhost:8501,
+  mounts the same `carwise-data` volume as the command below, and keeps the image's
+  `HEALTHCHECK`.
+- The first start takes about 3 minutes (177 s measured below: the eight articles, the 2.2 GB
+  model download and the index build); later starts reuse the volume.
+- `docker compose down` stops and removes the container and keeps the volume;
+  `docker volume rm carwise-data` starts over.
+- `CARWISE_PROFILE=final` in the shell or in `.env` selects the `final` profile (default `dev`).
+- Every compose command (`ps`, `logs`, `down`) reads `compose.yaml` and so needs the key too;
+  with the key in `.env` that is automatic. If the volume was first made without compose,
+  compose warns that it "was not created by Docker Compose"; the warning is harmless.
+
+Without compose, with the key set in your shell:
+
 ```bash
 docker build -t carwise .
 docker run --rm -e OPENAI_API_KEY -v carwise-data:/app/data -p 127.0.0.1:8501:8501 carwise
@@ -14,7 +39,7 @@ docker run --rm -e OPENAI_API_KEY -v carwise-data:/app/data -p 127.0.0.1:8501:85
   index. Keep it between runs; delete it (`docker volume rm carwise-data`) to start over.
 - `-p 127.0.0.1:8501:8501` publishes the UI on the host's loopback address only, at
   http://localhost:8501, so other machines on the network cannot reach it. Without the
-  `127.0.0.1:` part (`-p 8501:8501`) Docker publishes the port on every interface of the
+  `127.0.0.1:` part Docker publishes the port on every interface of the
   host, and on Linux its firewall rules bypass ufw. The UI has no login, and every question
   is paid for with your API key. Inside the container Streamlit listens on 0.0.0.0, because
   only the published port is reachable from the host. Outside Docker, `python -m app ui`
