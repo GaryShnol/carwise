@@ -671,3 +671,5 @@ criteria, a Backlog and a change log), following [`CLAUDE.md`](CLAUDE.md).
   hold-out.
 - **AI tooling:** the project was built with Claude Code under my direction and review.
   Decisions, tests and measurements were reviewed by me.
+- **Independent code review:** [docs/review/code-review-2026-11-01.md](docs/review/code-review-2026-11-01.md),
+  a review of `v1.0` by a separate read-only session; the E6 fix status table is at the end.
