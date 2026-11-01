@@ -620,8 +620,9 @@ How this proof of concept would map to a service shared by many teams. None of t
 The work was planned and tracked in [`BOARD.md`](BOARD.md) (epics, tickets with acceptance
 criteria, a Backlog and a change log), following [`CLAUDE.md`](CLAUDE.md).
 
-- Six epics, E0 to E5: scaffold and source check, thin vertical slice, reliability and guardrails,
-  measurement, interface and packaging, documentation and release.
+- Six epics, E0 to E5, up to `v1.0`: scaffold and source check, thin vertical slice, reliability
+  and guardrails, measurement, interface and packaging, documentation and release. A seventh,
+  E6, fixes the findings of a code review of `v1.0`.
 - One branch and one pull request per epic. Merged without squashing, so the per-ticket commits
   (`feat(CW-102): ...`) stay readable in the history.
 - Tags: `v0.1` at the end of the first working vertical slice, `v1.0` for the release; release

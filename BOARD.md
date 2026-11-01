@@ -4,7 +4,7 @@ Living task board for the project, kept in the repository like a lightweight Jir
 
 **Last updated:** 2026-11-01
 **Release target:** `v1.0`
-**Effort budget:** the assignment suggests 3 to 5 hours, and the owner accepts more time in exchange for a solid result. Target: all P1 and P2 tickets (37 points, about 6 to 7 hours with Claude Code assistance); P3 only if time allows. Points: S = 1, M = 2, L = 3.
+**Effort budget:** the assignment suggests 3 to 5 hours, and the owner accepts more time in exchange for a solid result. Target: all P1 and P2 tickets of E0 to E5 (38 points, about 6 to 7 hours with Claude Code assistance); P3 only if time allows. Points: S = 1, M = 2, L = 3.
 
 ## How to use this board
 
@@ -26,9 +26,11 @@ The assignment estimates 3 to 5 hours and asks for clarity and decisions rather 
 
 | Tier | Meaning | Tickets | Points |
 |---|---|---|---|
-| P1 | Everything the assignment asks for, plus the evidence for it | 17 | 28 |
+| P1 | Everything the assignment asks for, plus the evidence for it | 18 | 29 |
 | P2 | Role signals: telemetry, injection hygiene, numeric check, embedding comparison, tuning, Docker, CI, GitHub setup | 8 | 9 |
-| P3 | Nice to have: nothing at present | 0 | 0 |
+| P3 | Nice to have: none before E6 | 0 | 0 |
+
+The table counts E0 to E5 (the `v1.0` scope). E6, the review fixes, adds 8 P1, 7 P2 and 5 P3 tickets, all size S.
 
 A P1 ticket never depends on a P2 or P3 ticket, so cutting from the bottom never breaks the submission.
 
@@ -71,9 +73,9 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E2 Reliability and guardrails | none | 6 | 6 | 9 | DONE (PR #3) |
 | E3 Measurement | none | 4 | 4 | 6 | DONE (PR #4) |
 | E4 Interface and packaging | none | 4 | 4 | 5 | DONE (PR #5) |
-| E5 Documentation and release | `v1.0` | 3 | 2 | 4 | IN REVIEW (tag `v1.0` after the merge) |
-| E6 Review fixes | `v1.0.1` | 20 | 17 | 20 | IN PROGRESS |
-| **Total** |  | **46** | **42** | **58** |  |
+| E5 Documentation and release | `v1.0` | 3 | 3 | 4 | DONE (PR #6, tag `v1.0`) |
+| E6 Review fixes | `v1.0.1` | 20 | 18 | 20 | IN PROGRESS |
+| **Total** |  | **46** | **44** | **58** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -153,7 +155,7 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 |---|---|---|---|---|---|---|
 | CW-501 | README: architecture, decision table, not-built list, AWS mapping | `docs` | M | P1 | DONE | CW-302 |
 | CW-502 | Example conversation and eval results in README | `docs` | S | P1 | DONE | CW-302, CW-501 |
-| CW-503 | Release `v1.0` | `chore` | S | P1 | IN REVIEW | all |
+| CW-503 | Release `v1.0` | `chore` | S | P1 | DONE | all |
 
 ## Epic E6: Review fixes
 
@@ -179,7 +181,7 @@ Branch: `epic/e6-review-fixes` | Tag: `v1.0.1` (owner, after the merge)
 | CW-614 | Embed the query once per turn (CR-014) | `refactor` | S | P2 | DONE |  |
 | CW-615 | Backlog: one number-word module (CR-015) | `docs` | S | P3 | DONE |  |
 | CW-616 | ADR 0003 addendum: recommendation spec boxes are unconditional (CR-016) | `docs` | S | P3 | DONE |  |
-| CW-617 | Stale statuses and counts (CR-017) | `docs` | S | P3 | TODO |  |
+| CW-617 | Stale statuses and counts (CR-017) | `docs` | S | P3 | DONE |  |
 | CW-618 | CI doc: retrieval eval is manual, and why (CR-018) | `docs` | S | P3 | TODO |  |
 | CW-619 | Adversarial post-check test set (CR-019) | `test` | S | P2 | DONE | CW-601, CW-603 |
 | CW-620 | Judge and recording caveats (CR-020) | `docs` | S | P3 | TODO |  |
@@ -401,10 +403,10 @@ Scope set by the owner at the start of E4: the automatic workflow is offline; bo
 ### CW-503 Release `v1.0`
 - [x] All tickets `DONE` or `DEFERRED` with a reason (CW-503 itself closes with the tag).
 - [x] `make ingest`, `make chat`, `make ui`, `make eval` run from a clean checkout. As run: the `python -m app` commands they wrap (`make` is not installed on the Windows development machine), on a fresh clone; see CW-501.
-- [ ] Private archive of the raw articles prepared for the interviewer (outside the public repository). Owner: command in the E5 pull request description.
+- [ ] Private archive of the raw articles prepared for the interviewer (outside the public repository). Owner: command in the E5 pull request description. Open: an owner action outside the repository; the ticket counts as done without it, like the CW-403 branch-protection box.
 - [x] Final scan of the public history for secrets and copied article text: gitleaks 8.28.0 over all commits and the tracked tree, no leaks; a key-pattern grep found only the tests' planted fake keys; no 12-word run of the cleaned articles in any added line; no data, log or `.env` file ever committed.
 - [x] Short cover message for the interviewer drafted (repository link, how to run in three commands, where the TL;DR is). Kept outside the repository; decision D6 stays with the owner.
-- [ ] Tag `v1.0` on `main`. Owner, after the E5 merge.
+- [x] Tag `v1.0` on `main`: on the PR #6 merge commit `1224478`.
 
 ## Backlog (not committed)
 
@@ -430,6 +432,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Date | Change |
 |---|---|
+| 2026-11-01 | CW-617 done: E5 and CW-503 DONE (PR #6 merged, `v1.0` tags `1224478`); tier table corrected to 18 P1 tickets, 29 points (one S ticket was missing; the effort target is 38 points, not 37) and E6 tiers noted; present-tense "75 chunks" comments now say 78 (`config/corpus.lock.yaml`); README lists E6. `docs/docker.md` was already fixed by CW-605. |
 | 2026-11-01 | CW-616 done: ADR 0003 addendum: `retrieval.force_spec_box` gates comparisons only; since CW-306 recommendations always add the named cars' spec boxes, so `false` does not reproduce the step 2 baseline for them. Config comments say the same. |
 | 2026-11-01 | CW-615 done: Backlog row for one number-word module (`carwise.numbers`, `carwise.preferences`, `eval/answer.py`; the eval's table covers 1 to 7 only). |
 | 2026-11-01 | CW-609 done: README TL;DR, Numeric post-check row and Known limitations say the check reads digits only, per value not per car (swaps caught only by the eval's attribution check), accepts truncation and sums or differences of chunk-backed numbers, is weak on small numbers (spec boxes state 9 of 1-10, 21 of 901 in 100-1,000, re-measured on the index), and takes user words only from user turns and preferences (CW-603). |

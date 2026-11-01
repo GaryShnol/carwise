@@ -2,7 +2,7 @@
 
 Why a lexical ranking at all: spec-box chunks ("הרכב הנבחן") are mostly labels and
 numbers, which a sentence embedding represents poorly, while a question about price
-or 0-100 shares exact words with them ("מחיר", "100"). Why pure Python: 75 chunks need
+or 0-100 shares exact words with them ("מחיר", "100"). Why pure Python: 78 chunks need
 no search engine, and a small, readable BM25 keeps the dependency list short.
 
 Why RRF and not a weighted sum of scores: cosine and BM25 scores live on different
