@@ -30,6 +30,18 @@ llm:
   # new session (and a new max_cost_usd), never a new total. 2.5 times the session
   # cap, or about eleven 3-run answer evals on final ($0.2447 + $0.2017 judge, README).
   max_total_cost_usd: 5.0
+  # CW-612: output-token cap per stage (the regeneration uses generate's). Largest
+  # completions seen in logs/turns.jsonl: understand 159, generate 434 (one call), and
+  # 906 for a whole three-call turn; reasoning tokens 0 (reasoning_effort none). Each
+  # cap is at least twice that, so it stops only a runaway reply.
+  max_completion_tokens:
+    understand: 400
+    generate: 2000
+  # CW-612: no new model call starts once a turn has run this long. The turn ends on that
+  # stage's existing "provider unavailable" path: the LLM_ERROR reply before understand or
+  # generate, the code-built unverified reply before a regeneration. A call already
+  # running is bounded only by timeout_s and retries.
+  turn_deadline_s: 90
 
 # USD per 1M tokens, Standard tier. Verified on 2026-10-30 against
 # https://developers.openai.com/api/docs/pricing (CW-104). Reasoning tokens are

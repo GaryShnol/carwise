@@ -28,6 +28,13 @@ class ProfileConfig(_Strict):
     generate_model: str
 
 
+class CompletionCapsConfig(_Strict):
+    """Output-token cap per pipeline stage (CW-612); regenerate shares generate's."""
+
+    understand: int
+    generate: int
+
+
 class LLMConfig(_Strict):
     temperature: float | None
     reasoning_effort: Literal["none", "minimal", "low", "medium", "high"] | None
@@ -37,6 +44,8 @@ class LLMConfig(_Strict):
     history_window: int
     max_cost_usd: float
     max_total_cost_usd: float  # shared by every UI session in one process (CW-605)
+    max_completion_tokens: CompletionCapsConfig
+    turn_deadline_s: float  # no new model call starts after this much of a turn (CW-612)
 
 
 class Price(_Strict):

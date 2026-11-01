@@ -11,7 +11,9 @@ the eval runner all call `Pipeline.ask`; none of them holds logic of its own.
 
 from __future__ import annotations
 
+import math
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from carwise import guardrails
@@ -73,6 +75,8 @@ class _Turn:
     rejected_preferences: list[str] = field(default_factory=list)
 
     calls: list[LLMCall] = field(default_factory=list)
+    # Clock reading after which no model call starts (CW-612); set by Pipeline.ask.
+    deadline: float = math.inf
 
     def charge(self, result: LLMResult[T], stage: str) -> T:
         self.usage += result.usage
@@ -121,6 +125,13 @@ def _call(
     )
 
 
+class TurnDeadlineError(LLMUnavailableError):
+    """The turn ran past llm.turn_deadline_s before a model call (CW-612).
+
+    A subclass of LLMUnavailableError, so each stage takes the path it already has
+    for a provider that does not answer, and no call is made or charged."""
+
+
 @dataclass
 class _Plan:
     """What the understanding step decided, after code checked it against the registry."""
@@ -150,8 +161,10 @@ class Pipeline:
         profile: str | None = None,
         logger: TurnLogger | None = None,
         generate_version: str | None = None,
+        clock: Callable[[], float] = time.monotonic,
     ) -> None:
         self._settings = settings
+        self._clock = clock  # for the turn deadline only; injectable for tests
         # The configured generate prompt unless the eval asks for another version.
         self._generate_system = (
             generate_system(generate_version) if generate_version else GENERATE_SYSTEM
@@ -178,7 +191,8 @@ class Pipeline:
     ) -> Answer:
         """Stateless turn: the caller passes the memory in and keeps what comes back."""
         started = time.perf_counter()
-        turn = _Turn(preferences=preferences or Preferences())
+        deadline = self._clock() + self._settings.llm.turn_deadline_s
+        turn = _Turn(preferences=preferences or Preferences(), deadline=deadline)
         try:
             answer = self._ask(message.strip(), history, turn)
         except SharedBudgetExceededError:
@@ -335,6 +349,7 @@ class Pipeline:
             *({"role": item["role"], "content": escape_text(item["content"])} for item in history),
             {"role": "user", "content": escape_text(message)},
         ]
+        self._before_call(turn)
         started = time.perf_counter()
         try:
             result = self._llm.complete_json(
@@ -342,6 +357,7 @@ class Pipeline:
                 messages,
                 Understanding,
                 model=self._models.understand_model,
+                max_completion_tokens=self._settings.llm.max_completion_tokens.understand,
             )
             understanding = turn.charge(result, "understand")
         except LLMOutputError as error:
@@ -468,10 +484,15 @@ class Pipeline:
                 {"role": "user", "content": regenerate_instruction(findings.problems())},
             ]
         stage = "regenerate" if retry_of else "generate"
+        self._before_call(turn)
         started = time.perf_counter()
         try:
             result = self._llm.complete_json(
-                self._generate_system, messages, Generation, model=self._models.generate_model
+                self._generate_system,
+                messages,
+                Generation,
+                model=self._models.generate_model,
+                max_completion_tokens=self._settings.llm.max_completion_tokens.generate,
             )
             return turn.charge(result, stage)
         finally:
@@ -513,6 +534,15 @@ class Pipeline:
         return self._reply(turn, text, None, plan, hits, sources, dropped, post_check=check)
 
     # --- helpers ------------------------------------------------------------------------
+    def _before_call(self, turn: _Turn) -> None:
+        """Checked before every model call: a call already running is bounded by the
+        SDK timeout and retries, so the deadline only stops the next one from starting."""
+        if self._clock() >= turn.deadline:
+            turn.flags.append("turn_deadline_exceeded")
+            raise TurnDeadlineError(
+                f"the turn ran past llm.turn_deadline_s ({self._settings.llm.turn_deadline_s:g} s)"
+            )
+
     @staticmethod
     def _reply(
         turn: _Turn,

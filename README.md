@@ -267,6 +267,7 @@ Retrieval itself is deterministic: the same index and query return the same chun
 | Input limits | before understand | A message is at most 500 characters. Message plus history window is at most 6,000 characters, with the oldest messages dropped first. |
 | Preference grounding | after understand | A preference value is kept only if it is grounded in the user's current message (number words compared by value). Values lifted from an answer or an article are dropped and flagged. |
 | Cost cap | LLM client | Each call's cost comes from token counts and config prices. A chat session stops at `llm.max_cost_usd` ($2.00) with a fixed Hebrew message; in the UI all sessions of one process together stop at `llm.max_total_cost_usd` ($5.00). Eval runs have their own caps ($0.50 answers, $0.30 judge). |
+| Turn bounds | LLM client and pipeline | Each reply is capped at `llm.max_completion_tokens` (400 understand, 2,000 generate and regenerate), and a reply cut off by the cap is invalid: one corrective retry, then the fallback. No call starts once a turn has run `llm.turn_deadline_s` (90 s): the turn ends with the "something went wrong" reply, or with the code-built unverified reply when the deadline falls before a regeneration. |
 | Secrets | everywhere | The API key comes only from the environment. The turn log never holds the key or the message text (tested with a planted key). |
 
 ## Evaluation
@@ -531,9 +532,17 @@ From the measurements and the Backlog in [`BOARD.md`](BOARD.md):
   merged section names (an article's FAQ headings run together) end up inside the sentence, as
   in the UI screenshot above. It is in the Backlog in [`BOARD.md`](BOARD.md).
 - **Numbers written as words** are not checked by the numeric post-check (digits only).
-- **SDK-level retries are silent.** The OpenAI SDK retries a timed-out request itself, so one
-  slow turn can take about twice `llm.timeout_s`. Next: log `retries_taken` and revisit the
-  timeout.
+- **SDK-level retries are silent, and the slowest turn is long.** The OpenAI SDK retries a
+  timed-out request itself (`llm.retries`: 1), so `attempts` stays 1. Nominal bounds, computed
+  from the settings, not measured, and assuming each HTTP request ends within `llm.timeout_s`
+  (30 s); httpx applies that timeout to each connect, read and write operation, not to the
+  whole request, so a reply that keeps arriving slowly can take longer. On that assumption one
+  request waits 2 × 30 s plus a 0.5 s backoff = 60.5 s; one call makes at most 2 attempts (the
+  corrective retry) = 121 s; a turn makes at most 3 calls (understand, generate, regenerate) =
+  363 s. No call starts after the turn deadline (`llm.turn_deadline_s`, 90 s), so a turn waits
+  about 90 + 121 = 211 s at most. A provider `Retry-After` header, which the SDK honors up to
+  120 s, can raise that to 90 + 2 × (2 × 30 + 120) = 450 s. Next: log `retries_taken` and
+  revisit the timeout.
 
 ## Production path (AWS)
 

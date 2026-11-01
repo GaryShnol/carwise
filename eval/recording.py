@@ -170,7 +170,13 @@ class ReplayClient:
         self.generate_requested = False  # set when the turn reached generation
 
     def complete_json(
-        self, system: str, messages: list[Message], schema: type[T], *, model: str
+        self,
+        system: str,
+        messages: list[Message],
+        schema: type[T],
+        *,
+        model: str,
+        max_completion_tokens: int | None = None,
     ) -> LLMResult[T]:
         if schema is not Understanding:
             self.generate_requested = True
@@ -200,12 +206,20 @@ class RecordingClient:
         self.calls = 0
 
     def complete_json(
-        self, system: str, messages: list[Message], schema: type[T], *, model: str
+        self,
+        system: str,
+        messages: list[Message],
+        schema: type[T],
+        *,
+        model: str,
+        max_completion_tokens: int | None = None,
     ) -> LLMResult[T]:
         if schema is not Understanding and self.skip_generation:
             raise GenerationSkippedError("recording stops before the last generation")
         try:
-            result = self._inner.complete_json(system, messages, schema, model=model)
+            result = self._inner.complete_json(
+                system, messages, schema, model=model, max_completion_tokens=max_completion_tokens
+            )
         except LLMOutputError as error:
             self._spend(error.usage, error.cost_usd, error.attempts)
             if schema is Understanding:

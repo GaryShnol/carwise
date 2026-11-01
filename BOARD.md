@@ -72,8 +72,8 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E3 Measurement | none | 4 | 4 | 6 | DONE (PR #4) |
 | E4 Interface and packaging | none | 4 | 4 | 5 | DONE (PR #5) |
 | E5 Documentation and release | `v1.0` | 3 | 2 | 4 | IN REVIEW (tag `v1.0` after the merge) |
-| E6 Review fixes | `v1.0.1` | 20 | 6 | 20 | IN PROGRESS |
-| **Total** |  | **46** | **31** | **58** |  |
+| E6 Review fixes | `v1.0.1` | 20 | 7 | 20 | IN PROGRESS |
+| **Total** |  | **46** | **32** | **58** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -174,7 +174,7 @@ Branch: `epic/e6-review-fixes` | Tag: `v1.0.1` (owner, after the merge)
 | CW-609 | README: what the numeric check covers (CR-009) | `docs` | S | P2 | TODO | CW-603 |
 | CW-610 | Corpus manifest: per-article hashes, warning at ingest, fingerprint in reports (CR-010) | `feat` | S | P2 | TODO |  |
 | CW-611 | Link filter: reference-style links, images, escaped names (CR-011) | `fix` | S | P2 | TODO |  |
-| CW-612 | Output-token caps, per-turn deadline, real worst-case bound (CR-012) | `fix` | S | P2 | TODO |  |
+| CW-612 | Output-token caps, per-turn deadline, real worst-case bound (CR-012) | `fix` | S | P2 | DONE |  |
 | CW-613 | Telemetry logs only a count of uncovered names; CLI profile label (CR-013) | `fix` | S | P2 | TODO |  |
 | CW-614 | Embed the query once per turn (CR-014) | `refactor` | S | P2 | TODO |  |
 | CW-615 | Backlog: one number-word module (CR-015) | `docs` | S | P3 | TODO |  |
@@ -428,6 +428,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Date | Change |
 |---|---|
+| 2026-11-01 | CW-612 done: per-stage `llm.max_completion_tokens` (understand 400, generate 2000, from the local turn log with at least 2x headroom); a cut-off reply is invalid; per-turn deadline `llm.turn_deadline_s` (90 s); README states the computed nominal worst case. |
 | 2026-11-01 | CW-605 done: Docker run line publishes on 127.0.0.1 only; a process-wide `llm.max_total_cost_usd` ($5) shared by all UI sessions, which a refresh does not reset. |
 | 2026-11-01 | CW-606 done: recommendation and ranking answers that do not state the eight-car scope get a fixed guardrails sentence in code (flag `scope_note_added`); detection checked on 81 logged answers (13 lack it, 0 missed). Not re-measured on the answer eval yet. |
 | 2026-11-01 | CW-608 done: out_of_scope is refused even when a car is named; only chitchat that names a car goes on to retrieval. README Intent check row reworded to match. |

@@ -107,7 +107,17 @@ class LLMResult(Generic[T]):
 
 class LLMClient(Protocol):
     def complete_json(
-        self, system: str, messages: list[Message], schema: type[T], *, model: str
+        self,
+        system: str,
+        messages: list[Message],
+        schema: type[T],
+        *,
+        model: str,
+        max_completion_tokens: int | None = None,
     ) -> LLMResult[T]:
-        """Send one structured-output request and return the validated object."""
+        """Send one structured-output request and return the validated object.
+
+        `max_completion_tokens` caps the reply (None sends no cap). A reply cut off
+        by it is invalid, like one that fails the schema, and is never parsed.
+        """
         ...

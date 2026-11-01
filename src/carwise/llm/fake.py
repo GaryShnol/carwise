@@ -25,6 +25,7 @@ class RecordedCall:
     messages: list[Message]
     schema: type[BaseModel]
     model: str
+    max_completion_tokens: int | None = None
 
 
 class FakeLLMClient:
@@ -36,9 +37,17 @@ class FakeLLMClient:
         self._replies.extend(replies)
 
     def complete_json(
-        self, system: str, messages: list[Message], schema: type[T], *, model: str
+        self,
+        system: str,
+        messages: list[Message],
+        schema: type[T],
+        *,
+        model: str,
+        max_completion_tokens: int | None = None,
     ) -> LLMResult[T]:
-        self.calls.append(RecordedCall(system, list(messages), schema, model))
+        self.calls.append(
+            RecordedCall(system, list(messages), schema, model, max_completion_tokens)
+        )
         if not self._replies:
             raise AssertionError(f"FakeLLMClient: no reply scripted for call {len(self.calls)}")
         reply = self._replies.popleft()
