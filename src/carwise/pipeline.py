@@ -131,6 +131,13 @@ class _Plan:
     not_covered: list[str] = field(default_factory=list)
     question: str = ""
     message: str = ""  # the user's own words, which may state numbers (CW-206)
+    # The user turns in the history window: also the user's own words (CW-603).
+    earlier_user_turns: list[str] = field(default_factory=list)
+
+    def user_texts(self) -> list[str]:
+        """What the user wrote this turn and in the history window. Never the
+        standalone question (the understand model's rewrite) or an assistant turn."""
+        return [*self.earlier_user_turns, self.message]
 
 
 class Pipeline:
@@ -280,9 +287,10 @@ class Pipeline:
         cars = guardrails.unsupported_cars(
             generation.answer, hits, plan.not_covered, self._registry, config.outside_brands
         )
-        # The user's words may state numbers: the question as written and as rewritten,
-        # and the preference values the generate call received.
-        user_texts = [plan.message, plan.question, *(p.value for _, p in turn.preferences.items())]
+        # The user's words may state numbers: this message and the user turns in the
+        # history window, never the rewritten question (CW-603), plus the preference
+        # values the generate call received.
+        user_texts = [*plan.user_texts(), *(p.value for _, p in turn.preferences.items())]
         numbers = guardrails.unsupported_numbers(
             generation.answer, hits, user_texts, self._registry, config.numbers_always_allowed
         )
@@ -336,9 +344,16 @@ class Pipeline:
             understanding = None
         finally:
             turn.latency_ms["understand"] = (time.perf_counter() - started) * 1000
-        return self._plan(message, understanding, turn)
+        earlier = [item["content"] for item in history if item["role"] == "user"]
+        return self._plan(message, earlier, understanding, turn)
 
-    def _plan(self, message: str, understanding: Understanding | None, turn: _Turn) -> _Plan:
+    def _plan(
+        self,
+        message: str,
+        earlier_user_turns: list[str],
+        understanding: Understanding | None,
+        turn: _Turn,
+    ) -> _Plan:
         """Trust the model's car ids only when the registry knows them; add name matches."""
         known = {car.id for car in self._registry.cars}
         question = understanding.standalone_question.strip() if understanding else ""
@@ -368,7 +383,7 @@ class Pipeline:
         else:
             intent = Intent.COMPARE if len(cars) > 1 else Intent.FACT
         not_covered = guardrails.not_covered(unrecognized, [*others, *brands])
-        return _Plan(intent, cars, not_covered, question, message)
+        return _Plan(intent, cars, not_covered, question, message, earlier_user_turns)
 
     def _retrieve(self, plan: _Plan) -> list[RetrievedChunk]:
         """One car: filter on it. Several: each car separately. None: all cars, capped.

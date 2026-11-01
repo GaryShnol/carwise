@@ -261,6 +261,53 @@ def test_number_from_the_users_message_is_not_flagged_in_the_pipeline() -> None:
     assert answer.post_check.outcome is PostCheckOutcome.CLEAN
 
 
+HP_REWRITE = understanding(cars=["mg_s6"], question='כמה כוח סוס יש ל-MG S6 עם 350 כ"ס?')
+HP_ANSWER = generation('ל-MG S6 יש 350 כ"ס (MG S6, פרק 0).')
+
+
+def test_number_only_in_the_rewritten_question_is_flagged() -> None:
+    # CR-003: the standalone question is the understand model's text, not the user's.
+    pipeline, llm, _ = make([HP_REWRITE, HP_ANSWER, HP_ANSWER])
+    answer = pipeline.ask("כמה כוח סוס יש ל-MG S6?", [])
+    assert answer.post_check is not None
+    assert answer.post_check.outcome is PostCheckOutcome.FALLBACK
+    assert [a.numbers for a in answer.post_check.attempts] == [["350"], ["350"]]
+    assert answer.refusal is RefusalReason.UNVERIFIED and len(llm.calls) == 3
+
+
+def test_number_from_an_earlier_user_turn_is_not_flagged() -> None:
+    history = [
+        {"role": "user", "content": 'אני צריך רכב עם 350 כ"ס לפחות'},
+        {"role": "assistant", "content": "על איזה רכב לבדוק?"},
+    ]
+    pipeline, _, _ = make([HP_REWRITE, HP_ANSWER])
+    answer = pipeline.ask("כמה כוח סוס יש ל-MG S6?", history)
+    assert answer.post_check is not None
+    assert answer.post_check.outcome is PostCheckOutcome.CLEAN
+
+
+def test_number_only_in_an_earlier_assistant_answer_is_flagged() -> None:
+    history = [
+        {"role": "user", "content": "כמה כוח סוס יש לאודי RS3?"},
+        {"role": "assistant", "content": 'לאודי RS3 יש 350 כ"ס (אודי RS3, פרק 0).'},
+    ]
+    pipeline, _, _ = make([HP_REWRITE, HP_ANSWER, HP_ANSWER])
+    answer = pipeline.ask("ומה עם MG S6?", history)
+    assert answer.post_check is not None
+    assert answer.post_check.outcome is PostCheckOutcome.FALLBACK
+    assert answer.post_check.attempts[0].numbers == ["350"]
+
+
+def test_number_from_a_user_turn_outside_the_history_window_is_flagged() -> None:
+    window = load_settings().llm.history_window
+    filler = [{"role": "assistant" if i % 2 else "user", "content": "שאלה"} for i in range(window)]
+    history = [{"role": "user", "content": 'אני צריך 350 כ"ס'}, *filler]
+    pipeline, _, _ = make([HP_REWRITE, HP_ANSWER, HP_ANSWER])
+    answer = pipeline.ask("כמה כוח סוס יש ל-MG S6?", history)
+    assert answer.post_check is not None
+    assert answer.post_check.attempts[0].numbers == ["350"]
+
+
 def test_car_and_number_problems_are_both_reported() -> None:
     findings = CheckFindings(cars=["טויוטה"], numbers=["520"])
     assert findings.kinds() == ["postcheck_cars", "postcheck_numbers"]

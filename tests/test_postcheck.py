@@ -102,6 +102,24 @@ def test_brand_the_user_asked_about_may_be_named_as_not_covered() -> None:
     assert check(answer, hits) == ["BMW"]
 
 
+PRICE_ANSWER = generation(
+    "המחיר של MG S6 הוא 180 אלף שקל, ועל BMW X5 אין בכתבות מידע (MG S6, פרק 1).",
+    ids=["mg_s6:001"],
+)
+
+
+def test_car_named_only_in_the_rewritten_question_or_an_answer_is_flagged() -> None:
+    history = [
+        {"role": "user", "content": "מה הכי זול?"},
+        {"role": "assistant", "content": "אין לי מידע על BMW X5."},
+    ]
+    plan = understanding(cars=["mg_s6"], question="כמה עולה MG S6 לעומת BMW X5?")
+    pipeline, _, _ = make([plan, PRICE_ANSWER, PRICE_ANSWER])
+    answer = pipeline.ask("ומה עם MG S6?", history)
+    assert answer.post_check is not None
+    assert answer.post_check.attempts[0].cars == ["BMW"]
+
+
 # --- regenerate or fall back -------------------------------------------------------------
 BAD = generation('הטווח הוא 400 ק"מ, כמו בטויוטה קורולה (MG S6, פרק 0).')
 GOOD = generation()

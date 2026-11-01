@@ -72,8 +72,8 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E3 Measurement | none | 4 | 4 | 6 | DONE (PR #4) |
 | E4 Interface and packaging | none | 4 | 4 | 5 | DONE (PR #5) |
 | E5 Documentation and release | `v1.0` | 3 | 2 | 4 | IN REVIEW (tag `v1.0` after the merge) |
-| E6 Review fixes | `v1.0.1` | 20 | 2 | 20 | IN PROGRESS |
-| **Total** |  | **46** | **27** | **58** |  |
+| E6 Review fixes | `v1.0.1` | 20 | 3 | 20 | IN PROGRESS |
+| **Total** |  | **46** | **28** | **58** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -165,7 +165,7 @@ Branch: `epic/e6-review-fixes` | Tag: `v1.0.1` (owner, after the merge)
 |---|---|---|---|---|---|---|
 | CW-601 | Short aliases must not route other models of a brand to a corpus car (CR-001) | `fix` | S | P1 | DONE |  |
 | CW-602 | Short Hebrew outside brands must not match ordinary words (CR-002) | `fix` | S | P1 | DONE |  |
-| CW-603 | Numeric check: user words only, not the LLM rewrite (CR-003) | `fix` | S | P1 | TODO |  |
+| CW-603 | Numeric check: user words only, not the LLM rewrite (CR-003) | `fix` | S | P1 | DONE |  |
 | CW-604 | README: what the car-name post-check covers (CR-004) | `docs` | S | P1 | TODO | CW-601 |
 | CW-605 | Docker binds to localhost; process-wide spend cap (CR-005) | `fix` | S | P1 | TODO |  |
 | CW-606 | Code-enforced "covers only the eight cars" statement (CR-006) | `fix` | S | P1 | TODO |  |
@@ -428,6 +428,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Date | Change |
 |---|---|
+| 2026-11-01 | CW-603 done: the numeric post-check accepts only the user's own words (this message, user turns in the history window, preference values), never the understand rewrite; the car-name post-check is unchanged. |
 | 2026-11-01 | CW-602 done: a Hebrew brand of fewer than four letters takes at most one prefix, only ב/ל/ה/ו, so "רנו" no longer hits plural verbs (שמרנו, הכרנו); one rule for the gate, the post-check and the brand-before-alias check. Backlog: whole-word brand homonyms. |
 | 2026-11-01 | CW-601 done: a short alias preceded by another brand or followed by a sibling-model word (registry `brand_names`, `other_models`) is not the corpus car; the gate and the post-check share the matcher. Retrieval evals unchanged. |
 | 2026-11-01 | E6 started on `epic/e6-review-fixes`: 20 tickets (CW-601 to CW-620) from the code review of `v1.0`. |
