@@ -5,7 +5,7 @@
 | Workflow | Trigger | What | Network | Secrets |
 |---|---|---|---|---|
 | `ci.yml` | push to `main` or `epic/**`, pull request to `main` | `ruff check`, `ruff format --check`, `mypy`, `pytest` on Python 3.11 and 3.13 | package install only; tests are offline (`HF_HUB_OFFLINE=1`) | none |
-| `eval.yml`, level `retrieval` | manual (`workflow_dispatch`) | ingest, the tests that need the articles or the real model, the retrieval eval | fetches the articles and the model on a cache miss | none |
+| `eval.yml`, level `retrieval` | manual (`workflow_dispatch`); [why](#why-the-retrieval-eval-is-manual) | ingest, the tests that need the articles or the real model, the retrieval eval | fetches the articles and the model on a cache miss | none |
 | `eval.yml`, level `answer` | manual (`workflow_dispatch`) | ingest, the answer eval on `dev` or `final` | as above, plus the OpenAI API | `OPENAI_API_KEY`, only in the eval step |
 | `docker.yml` | manual (`workflow_dispatch`) | build the image, then inside it (`--network none`, no environment) load `config/settings.yaml` and `config/cars.yaml` | base images and packages for the build only | none |
 
@@ -21,6 +21,24 @@
   `eval/runs/` holds answer text and is never uploaded.
 - Linux installs take the CPU build of torch (`[tool.uv.sources]` in `pyproject.toml`), which
   keeps about 3 GB of CUDA libraries out of CI and the Docker image.
+
+## Why the retrieval eval is manual
+
+CLAUDE.md (sections 13 and 14) says the retrieval eval runs in CI, and allows unit tests only if
+the publisher's site blocks the runner. This repository deviates: the retrieval eval runs only
+when dispatched by hand. The site did not block anything; no blocked run is recorded. The reason
+is a scope decision the owner made at the start of E4 (CW-403 in `BOARD.md`): the automatic
+workflow stays offline, so every push is fast, free and needs no secret.
+
+- What a run needs that the offline job does not: the eight articles, fetched from auto.co.il on
+  a cache miss, and the pinned embedding model (about 2.2 GB) on a cache miss. Every change to
+  `config/cars.yaml` is a cache miss for the articles, so a push-triggered job would fetch from
+  the publisher's site from CI.
+- The cost of the choice: a change that makes retrieval worse can merge with green CI. It is
+  caught only if someone runs the eval: locally (`uv run python -m app eval`, free) or by
+  dispatching this workflow. The committed retrieval reports were produced locally.
+- When it would change: as soon as more than one person merges, run the job on pull requests
+  to `main`; with the articles and the model cached, a repeat run downloads nothing.
 
 ## Security choices
 

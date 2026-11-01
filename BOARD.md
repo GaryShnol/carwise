@@ -74,8 +74,8 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E3 Measurement | none | 4 | 4 | 6 | DONE (PR #4) |
 | E4 Interface and packaging | none | 4 | 4 | 5 | DONE (PR #5) |
 | E5 Documentation and release | `v1.0` | 3 | 3 | 4 | DONE (PR #6, tag `v1.0`) |
-| E6 Review fixes | `v1.0.1` | 20 | 18 | 20 | IN PROGRESS |
-| **Total** |  | **46** | **44** | **58** |  |
+| E6 Review fixes | `v1.0.1` | 20 | 19 | 20 | IN PROGRESS |
+| **Total** |  | **46** | **45** | **58** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -182,7 +182,7 @@ Branch: `epic/e6-review-fixes` | Tag: `v1.0.1` (owner, after the merge)
 | CW-615 | Backlog: one number-word module (CR-015) | `docs` | S | P3 | DONE |  |
 | CW-616 | ADR 0003 addendum: recommendation spec boxes are unconditional (CR-016) | `docs` | S | P3 | DONE |  |
 | CW-617 | Stale statuses and counts (CR-017) | `docs` | S | P3 | DONE |  |
-| CW-618 | CI doc: retrieval eval is manual, and why (CR-018) | `docs` | S | P3 | TODO |  |
+| CW-618 | CI doc: retrieval eval is manual, and why (CR-018) | `docs` | S | P3 | DONE |  |
 | CW-619 | Adversarial post-check test set (CR-019) | `test` | S | P2 | DONE | CW-601, CW-603 |
 | CW-620 | Judge and recording caveats (CR-020) | `docs` | S | P3 | TODO |  |
 
@@ -432,6 +432,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Date | Change |
 |---|---|
+| 2026-11-01 | CW-618 done: `docs/ci.md` says the retrieval eval is manual by the owner's E4 scope decision (CW-403: offline, free, secret-free pushes), not a blocked site; notes the deviation from CLAUDE.md sections 13 and 14 and its cost (a retrieval regression can merge with green CI). |
 | 2026-11-01 | CW-617 done: E5 and CW-503 DONE (PR #6 merged, `v1.0` tags `1224478`); tier table corrected to 18 P1 tickets, 29 points (one S ticket was missing; the effort target is 38 points, not 37) and E6 tiers noted; present-tense "75 chunks" comments now say 78 (`config/corpus.lock.yaml`); README lists E6. `docs/docker.md` was already fixed by CW-605. |
 | 2026-11-01 | CW-616 done: ADR 0003 addendum: `retrieval.force_spec_box` gates comparisons only; since CW-306 recommendations always add the named cars' spec boxes, so `false` does not reproduce the step 2 baseline for them. Config comments say the same. |
 | 2026-11-01 | CW-615 done: Backlog row for one number-word module (`carwise.numbers`, `carwise.preferences`, `eval/answer.py`; the eval's table covers 1 to 7 only). |
