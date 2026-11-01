@@ -82,8 +82,8 @@ def format_answer(answer: Answer, *, show_cost: bool, max_section_chars: int) ->
 
 def run(args: argparse.Namespace) -> int:
     settings = load_settings()
-    profile_name = getattr(args, "profile", None)
-    profile = settings.profile(profile_name)
+    profile_name = settings.profile_name(getattr(args, "profile", None))
+    profile = settings.profiles[profile_name]
     try:
         retriever = open_retriever(settings)
         llm = OpenAIClient(settings, profile)
@@ -92,7 +92,7 @@ def run(args: argparse.Namespace) -> int:
         return 1
     logger = TurnLogger(
         Path(settings.paths.log_dir),
-        profile=profile_name or settings.default_profile,
+        profile=profile_name,
         models={"understand": profile.understand_model, "generate": profile.generate_model},
     )
     pipeline = Pipeline(

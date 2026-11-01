@@ -4,13 +4,16 @@ Why these fields: they are what answers "why did the bot say that, and what
 did it cost?" afterwards: intent, cars, chunk ids with scores, which ids the
 answer used, the gate decision, flags, tokens, cost and latency per stage.
 Why no text: the user's message is theirs and the chunk text is the
-publisher's, so the log keeps lengths and ids only. Secrets never pass through
-here (the API key lives inside the SDK client).
+publisher's, so the log keeps lengths, counts and ids only. That includes what
+the models copy from the message: unknown car names are counted, and a cited id
+that is not in chunk-id form is counted, not written (CW-613). Secrets never
+pass through here (the API key lives inside the SDK client).
 """
 
 from __future__ import annotations
 
 import json
+import re
 import threading
 from dataclasses import asdict
 from datetime import UTC, datetime
@@ -20,6 +23,8 @@ from carwise.prompts import PROMPT_VERSIONS
 from carwise.schemas import Answer
 
 LOG_FILE = "turns.jsonl"
+# The form ingest gives every chunk id ("<car id>:<three-digit index>", carwise.ingest.chunk).
+CHUNK_ID = re.compile(r"[a-z0-9_]+:\d{3,}")
 
 
 def turn_record(
@@ -45,14 +50,18 @@ def turn_record(
         "message_chars": message_chars,
         "intent": answer.intent.value if answer.intent else None,
         "cars": answer.cars,
-        "not_covered": answer.not_covered,
+        # Raw names from the user's message, chosen by the understand model: counted only.
+        "not_covered_count": len(answer.not_covered),
         "suggested_cars": answer.suggested_cars,
         "refusal": answer.refusal.value if answer.refusal else None,
         "retrieved": [
             {"chunk_id": hit.chunk.chunk_id, "score": hit.score} for hit in answer.retrieved
         ],
         "used_chunk_ids": [source.chunk_id for source in answer.sources],
-        "dropped_chunk_ids": answer.dropped_chunk_ids,
+        # Cited ids the turn did not retrieve are the generate model's free text: an id in
+        # chunk-id form is kept (a useful diagnostic), anything else is only counted.
+        "dropped_chunk_ids": [i for i in answer.dropped_chunk_ids if CHUNK_ID.fullmatch(i)],
+        "dropped_other_ids": sum(not CHUNK_ID.fullmatch(i) for i in answer.dropped_chunk_ids),
         "flags": answer.flags,
         # Field names only: the values and their source messages are the user's words.
         "preferences": answer.preferences.field_names(),

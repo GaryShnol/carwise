@@ -65,5 +65,5 @@ connection), 2026-10-31:
   `app/`, `eval/`, `config/`), and inside it excludes `.env*`, keys, `data/`, `logs/`,
   `eval/runs/`, `.git/`, `.venv/` and caches. `tests/test_docker.py` checks these rules, the
   non-root user, the missing build arguments and the command, without Docker.
-- Turn logs go to `/app/logs` inside the container (lost with it); they hold no message text
-  and no key.
+- Turn logs go to `/app/logs` inside the container (lost with it); they hold no user words
+  (no message text, unknown car names only as a count) and no key.

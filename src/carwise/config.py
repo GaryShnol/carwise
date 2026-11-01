@@ -146,13 +146,20 @@ class Settings(_Strict):
     eval: EvalConfig
     paths: PathsConfig
 
-    def profile(self, name: str | None = None) -> ProfileConfig:
-        """Resolve a profile: explicit name, then CARWISE_PROFILE, then the default."""
+    def profile_name(self, name: str | None = None) -> str:
+        """The profile in use: explicit name, then CARWISE_PROFILE, then the default.
+
+        The one resolver behind `profile()` and every log or report label, so a label
+        always names the models that ran (CW-613)."""
         chosen = name or os.environ.get("CARWISE_PROFILE") or self.default_profile
         if chosen not in self.profiles:
             known = ", ".join(sorted(self.profiles))
             raise ValueError(f"Unknown profile '{chosen}'. Known profiles: {known}.")
-        return self.profiles[chosen]
+        return chosen
+
+    def profile(self, name: str | None = None) -> ProfileConfig:
+        """Resolve a profile the way `profile_name` does."""
+        return self.profiles[self.profile_name(name)]
 
 
 def load_settings(path: Path | None = None) -> Settings:

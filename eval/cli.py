@@ -333,8 +333,8 @@ def _answer(
     answer_cap = settings.eval.answer_max_cost_usd
     judge_cap = settings.eval.judge_max_cost_usd
     answer_settings = with_cost_cap(settings, answer_cap)
-    profile = answer_settings.profile(profile_name)
-    name = profile_name or settings.default_profile
+    name = settings.profile_name(profile_name)  # the label names the models that run (CW-613)
+    profile = answer_settings.profiles[name]
     try:
         answer_client = OpenAIClient(answer_settings, profile)
         judge_client = OpenAIClient(with_cost_cap(settings, judge_cap), profile)

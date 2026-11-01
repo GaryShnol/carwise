@@ -87,10 +87,11 @@ def load_resources(settings: Settings, *, ingest_if_missing: bool = False) -> Re
             ) from None
         retriever = open_retriever(settings, embedder)
     retriever.warm_up()
-    profile = settings.profile()
+    profile_name = settings.profile_name()
+    profile = settings.profiles[profile_name]
     logger = TurnLogger(
         Path(settings.paths.log_dir),
-        profile=os.environ.get("CARWISE_PROFILE") or settings.default_profile,
+        profile=profile_name,
         models={"understand": profile.understand_model, "generate": profile.generate_model},
     )
     # Shared by every browser session's thread: one retrieval at a time.

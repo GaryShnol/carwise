@@ -21,7 +21,8 @@ loop. The model writes the answer, and code decides what goes into the model and
    ids, the car names and every number against the retrieved chunks. A suspect answer is
    regenerated once, then replaced by a fixed reply.
 5. Telemetry: one JSON line per turn (chunk ids, scores, tokens, cost, latency, check results),
-   never the message text.
+   never the user's words: not the message, and not the unknown car names taken from it
+   (counted only).
 
 **Three key decisions.**
 1. **The registry gate, not a similarity threshold, does the refusing.** On this corpus,
@@ -268,7 +269,7 @@ Retrieval itself is deterministic: the same index and query return the same chun
 | Preference grounding | after understand | A preference value is kept only if it is grounded in the user's current message (number words compared by value). Values lifted from an answer or an article are dropped and flagged. |
 | Cost cap | LLM client | Each call's cost comes from token counts and config prices. A chat session stops at `llm.max_cost_usd` ($2.00) with a fixed Hebrew message; in the UI all sessions of one process together stop at `llm.max_total_cost_usd` ($5.00). Eval runs have their own caps ($0.50 answers, $0.30 judge). |
 | Turn bounds | LLM client and pipeline | Each reply is capped at `llm.max_completion_tokens` (400 understand, 2,000 generate and regenerate), and a reply cut off by the cap is invalid: one corrective retry, then the fallback. No call starts once a turn has run `llm.turn_deadline_s` (90 s): the turn ends with the "something went wrong" reply, or with the code-built unverified reply when the deadline falls before a regeneration. |
-| Secrets | everywhere | The API key comes only from the environment. The turn log never holds the key or the message text (tested with a planted key). |
+| Secrets | everywhere | The API key comes only from the environment. The turn log never holds the key or the user's words: the message, unknown car names taken from it and cited ids not in chunk-id form are left out or only counted (tested with a planted key and a planted word). |
 
 ## Evaluation
 
