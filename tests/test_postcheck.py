@@ -59,6 +59,23 @@ def test_rival_named_in_a_retrieved_chunk_is_allowed() -> None:
     assert check(answer, hits) == []
 
 
+def test_sibling_model_in_the_answer_is_not_read_as_the_retrieved_car() -> None:
+    hits = [hit("aion_ht", "הטווח בפועל הוא 350 קילומטר")]
+    answer = 'לאיון HT טווח של 350 ק"מ, ול-Aion Y טווח ארוך יותר (GAC איון HT, פרק).'
+    assert check(answer, hits) == ["Aion Y"]
+    assert check(answer, hits, ["GAC Aion Y"]) == []  # the user asked about it
+
+
+def test_other_brand_before_a_code_is_not_the_corpus_car_in_the_answer() -> None:
+    hits = [hit("audi_rs3", "ההספק הוא 400 כוחות סוס")]
+    assert check("לאודי RS3 400 כוחות סוס, כמו לאאודי S6 (אודי RS3, פרק).", hits) == ["אאודי S6"]
+
+
+def test_sibling_model_named_in_a_retrieved_chunk_is_allowed() -> None:
+    hits = [hit("genesis_gv80", "המערכת קיימת גם ב-GV80 קופה")]
+    assert check("המערכת קיימת גם ב-GV80 קופה (ג'נסיס GV80, פרק).", hits) == []
+
+
 def test_brand_the_user_asked_about_may_be_named_as_not_covered() -> None:
     hits = [hit("mg_s6", "המחיר הוא 180 אלף שקל")]
     answer = "אין בכתבות מידע על BMW X5. המחיר של MG S6 הוא 180 אלף שקל (MG S6, פרק)."

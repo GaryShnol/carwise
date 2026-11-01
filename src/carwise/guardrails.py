@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import re
 import unicodedata
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
+from dataclasses import dataclass
 from decimal import Decimal
+from functools import lru_cache
 from itertools import combinations, product
 from typing import TYPE_CHECKING, TypeVar
 
@@ -25,6 +27,8 @@ _K = TypeVar("_K", BodyType, Powertrain)
 # Hebrew attaches up to a few one-letter prefixes to a name: "לאודי", "ובטויוטה".
 HEBREW_PREFIXES = "והבכלמש"
 _MAX_PREFIXES = 3
+# What may stand between a name and the brand before it or the model word after it.
+_JOIN = r"[\s\-־]+"
 # Geresh and gershayim have look-alikes (׳ ’ ` and ״ ”); one form makes names comparable.
 _APOSTROPHES = str.maketrans({"׳": "'", "’": "'", "`": "'", "״": '"', "“": '"', "”": '"'})
 
@@ -111,10 +115,27 @@ def normalize(text: str) -> str:
     return " ".join(text.casefold().split())
 
 
+def _words(name: str) -> str:
+    return r"\s+".join(re.escape(word) for word in normalize(name).split())
+
+
+@lru_cache(maxsize=1024)
 def _name_pattern(name: str) -> re.Pattern[str]:
-    words = r"\s+".join(re.escape(word) for word in normalize(name).split())
     prefixes = f"[{HEBREW_PREFIXES}]{{0,{_MAX_PREFIXES}}}"
-    return re.compile(rf"(?<!\w){prefixes}{words}(?!\w)")
+    return re.compile(rf"(?<!\w){prefixes}{_words(name)}(?!\w)")
+
+
+@lru_cache(maxsize=1024)
+def _before_pattern(brand: str) -> re.Pattern[str]:
+    """The brand as the last word before a name: "אאודי S6", "לאאודי S6"."""
+    return re.compile(rf"{_name_pattern(brand).pattern}{_JOIN}$")
+
+
+@lru_cache(maxsize=1024)
+def _after_pattern(word: str) -> re.Pattern[str]:
+    """A model word right after a name, without a prefix: "C3 איירקרוס", "Aion-Y".
+    A prefix would make it a second car ("C3 והאיירקרוס" is "C3 and the Aircross")."""
+    return re.compile(rf"^{_JOIN}{_words(word)}(?!\w)")
 
 
 def mentioned(text: str, names: Iterable[str]) -> list[str]:
@@ -123,35 +144,95 @@ def mentioned(text: str, names: Iterable[str]) -> list[str]:
     return [name for name in names if _name_pattern(name).search(haystack)]
 
 
-def car_mentions(text: str, registry: Registry) -> list[tuple[int, int, str]]:
-    """Every car name in an already normalized text: (start, end, car id), in text order.
+@dataclass(frozen=True)
+class _Mention:
+    start: int
+    end: int
+    car_id: str
+    other_model: str | None  # set when the alias names another model, not this car
 
-    Where two names overlap ("GAC איון HT" and "איון HT"), the longer one wins.
+
+def _first(text: str, words: Iterable[str], pattern: Callable[[str], re.Pattern[str]]) -> str:
+    return next((word for word in words if pattern(word).search(text)), "")
+
+
+def _scan(text: str, registry: Registry, outside_brands: Iterable[str]) -> list[_Mention]:
+    """Every car name in a normalized text, in text order; of two overlapping, the longer wins.
+
+    Why the context check (CW-601): short aliases ("S6", "C3", "Aion", "אלנטרה")
+    are also parts of other models' names. A name is the corpus car only when no
+    other brand (another car's `brand_names`, or an outside brand) stands right
+    before it ("אאודי S6"), and none of the car's `other_models` words follows it
+    ("C3 איירקרוס"). Otherwise it names another model, which callers treat as a
+    car the articles do not cover. Ordinary words after it ("C3 החדשה") do not block.
     """
-    found: list[tuple[int, int, str]] = []
+    found: list[tuple[int, int, Car, str]] = []
     for car in registry.cars:
-        for name in (car.display_name, *car.aliases):
-            found += [(m.start(), m.end(), car.id) for m in _name_pattern(name).finditer(text)]
-    kept: list[tuple[int, int, str]] = []
-    for start, end, car_id in sorted(found, key=lambda item: (item[0], -item[1])):
-        if not kept or start >= kept[-1][1]:
-            kept.append((start, end, car_id))
-    return kept
+        for name in car.aliases:
+            found += [(m.start(), m.end(), car, name) for m in _name_pattern(name).finditer(text)]
+    brands = list(outside_brands)
+    mentions: list[_Mention] = []
+    for start, end, car, name in sorted(found, key=lambda item: (item[0], -item[1])):
+        if mentions and start < mentions[-1].end:
+            continue
+        others = [brand for c in registry.cars if c is not car for brand in c.brand_names]
+        before = _first(text[:start], [*others, *brands], _before_pattern)
+        after = _first(text[end:], car.other_models, _after_pattern)
+        other = None
+        if before or after:
+            brand = before or _first(text[:start], car.brand_names, _before_pattern)
+            other = " ".join(part for part in (brand, name, after) if part)
+        mentions.append(_Mention(start, end, car.id, other))
+    return mentions
 
 
-def cars_in_text(text: str, registry: Registry) -> list[str]:
+def car_mentions(
+    text: str, registry: Registry, outside_brands: Iterable[str] = ()
+) -> list[tuple[int, int, str]]:
+    """Every corpus car name in an already normalized text: (start, end, car id), in text order.
+
+    Where two names overlap ("GAC איון HT" and "איון HT"), the longer one wins. A
+    name of another model ("אאודי S6", "Aion Y") is left out.
+    """
+    return [
+        (m.start, m.end, m.car_id)
+        for m in _scan(text, registry, outside_brands)
+        if m.other_model is None
+    ]
+
+
+def cars_in_text(text: str, registry: Registry, outside_brands: Iterable[str] = ()) -> list[str]:
     """Registry car ids named in the text by any alias, in registry order."""
-    return [car.id for car in registry.cars if mentioned(text, car.aliases)]
+    named = {car_id for _, _, car_id in car_mentions(normalize(text), registry, outside_brands)}
+    return [car.id for car in registry.cars if car.id in named]
+
+
+def other_models_in_text(
+    text: str, registry: Registry, outside_brands: Iterable[str] = ()
+) -> list[str]:
+    """Names built on a corpus alias that name another model ("אאודי S6", "C3 איירקרוס").
+
+    Spelled from the config (brand, alias, model word), because matching sees the
+    text case-folded.
+    """
+    names = [m.other_model for m in _scan(normalize(text), registry, outside_brands)]
+    return list(dict.fromkeys(name for name in names if name))
+
+
+def _other_model_cars(text: str, registry: Registry, outside_brands: list[str]) -> set[str]:
+    """The corpus cars whose aliases the text uses for another model."""
+    return {m.car_id for m in _scan(normalize(text), registry, outside_brands) if m.other_model}
 
 
 def outside_brands_in_text(text: str, brands: Iterable[str]) -> list[str]:
     return mentioned(text, brands)
 
 
-def not_covered(llm_names: list[str], brand_hits: list[str]) -> list[str]:
-    """Unknown car names for the reply: the model's raw names, plus brands it missed."""
+def not_covered(llm_names: list[str], code_hits: list[str]) -> list[str]:
+    """Unknown car names for the reply: the model's raw names, plus names code found
+    that the model missed (other models on a corpus alias, then outside brands)."""
     names = [name.strip() for name in llm_names if name.strip()]
-    for brand in brand_hits:
+    for brand in code_hits:
         if not any(normalize(brand) in normalize(name) for name in names):
             names.append(brand)
     return list(dict.fromkeys(names))
@@ -172,18 +253,27 @@ def unsupported_cars(
     a retrieved chunk that names it, or by the user's own question (`not_covered`,
     where the answer is expected to say the articles do not cover it). Anything
     else came from the model's own knowledge, which is what this check exists for.
+    Another model named on a corpus alias ("Aion Y", "אאודי S6") is not the corpus
+    car; it is backed like an outside car, by a chunk or the question naming another
+    model on that alias (in any spelling: "Audi S6" asked backs "אאודי S6" answered).
     Limit: a model name with no registry alias and no listed brand is not caught.
     """
     hits = list(hits)
     sources = "\n".join(hit.chunk.text for hit in hits)
     retrieved = {hit.chunk.car for hit in hits}
     asked = "\n".join(not_covered)
+    outside_brands = list(outside_brands)
+    in_sources = cars_in_text(sources, registry, outside_brands)
     problems = [
-        car.display_name
-        for car in registry.cars
-        if car.id not in retrieved
-        and mentioned(answer, car.aliases)
-        and not mentioned(sources, car.aliases)
+        registry.get(car_id).display_name
+        for car_id in cars_in_text(answer, registry, outside_brands)
+        if car_id not in retrieved and car_id not in in_sources
+    ]
+    backed = _other_model_cars(f"{sources}\n{asked}", registry, outside_brands)
+    problems += [
+        name
+        for name in other_models_in_text(answer, registry, outside_brands)
+        if not _other_model_cars(name, registry, outside_brands) <= backed
     ]
     problems += [
         brand

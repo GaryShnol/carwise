@@ -72,7 +72,8 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E3 Measurement | none | 4 | 4 | 6 | DONE (PR #4) |
 | E4 Interface and packaging | none | 4 | 4 | 5 | DONE (PR #5) |
 | E5 Documentation and release | `v1.0` | 3 | 2 | 4 | IN REVIEW (tag `v1.0` after the merge) |
-| **Total** |  | **26** | **25** | **38** |  |
+| E6 Review fixes | `v1.0.1` | 20 | 1 | 20 | IN PROGRESS |
+| **Total** |  | **46** | **26** | **58** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -153,6 +154,35 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 | CW-501 | README: architecture, decision table, not-built list, AWS mapping | `docs` | M | P1 | DONE | CW-302 |
 | CW-502 | Example conversation and eval results in README | `docs` | S | P1 | DONE | CW-302, CW-501 |
 | CW-503 | Release `v1.0` | `chore` | S | P1 | IN REVIEW | all |
+
+## Epic E6: Review fixes
+
+Goal: fix every finding of the 2026-11-01 code review (CR-001 to CR-020; CR-0NN maps to CW-6NN). Each fix is made by one agent and checked by an independent verifier (reproduction before and after, a mutation check, adversarial cases) before it is committed.
+
+Branch: `epic/e6-review-fixes` | Tag: `v1.0.1` (owner, after the merge)
+
+| ID | Ticket | Type | Size | Pri | Status | Depends on |
+|---|---|---|---|---|---|---|
+| CW-601 | Short aliases must not route other models of a brand to a corpus car (CR-001) | `fix` | S | P1 | DONE |  |
+| CW-602 | Short Hebrew outside brands must not match ordinary words (CR-002) | `fix` | S | P1 | TODO |  |
+| CW-603 | Numeric check: user words only, not the LLM rewrite (CR-003) | `fix` | S | P1 | TODO |  |
+| CW-604 | README: what the car-name post-check covers (CR-004) | `docs` | S | P1 | TODO | CW-601 |
+| CW-605 | Docker binds to localhost; process-wide spend cap (CR-005) | `fix` | S | P1 | TODO |  |
+| CW-606 | Code-enforced "covers only the eight cars" statement (CR-006) | `fix` | S | P1 | TODO |  |
+| CW-607 | Headline answer score 62/69; re-scoring bias stated (CR-007) | `docs` | S | P1 | TODO |  |
+| CW-608 | Off-topic refusal also when a car is named (CR-008) | `fix` | S | P1 | TODO |  |
+| CW-609 | README: what the numeric check covers (CR-009) | `docs` | S | P2 | TODO | CW-603 |
+| CW-610 | Corpus manifest: per-article hashes, warning at ingest, fingerprint in reports (CR-010) | `feat` | S | P2 | TODO |  |
+| CW-611 | Link filter: reference-style links, images, escaped names (CR-011) | `fix` | S | P2 | TODO |  |
+| CW-612 | Output-token caps, per-turn deadline, real worst-case bound (CR-012) | `fix` | S | P2 | TODO |  |
+| CW-613 | Telemetry logs only a count of uncovered names; CLI profile label (CR-013) | `fix` | S | P2 | TODO |  |
+| CW-614 | Embed the query once per turn (CR-014) | `refactor` | S | P2 | TODO |  |
+| CW-615 | Backlog: one number-word module (CR-015) | `docs` | S | P3 | TODO |  |
+| CW-616 | ADR 0003 addendum: recommendation spec boxes are unconditional (CR-016) | `docs` | S | P3 | TODO |  |
+| CW-617 | Stale statuses and counts (CR-017) | `docs` | S | P3 | TODO |  |
+| CW-618 | CI doc: retrieval eval is manual, and why (CR-018) | `docs` | S | P3 | TODO |  |
+| CW-619 | Adversarial post-check test set (CR-019) | `test` | S | P2 | TODO | CW-601, CW-603 |
+| CW-620 | Judge and recording caveats (CR-020) | `docs` | S | P3 | TODO |  |
 
 ## Ticket details and acceptance criteria
 
@@ -397,6 +427,8 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Date | Change |
 |---|---|
+| 2026-11-01 | CW-601 done: a short alias preceded by another brand or followed by a sibling-model word (registry `brand_names`, `other_models`) is not the corpus car; the gate and the post-check share the matcher. Retrieval evals unchanged. |
+| 2026-11-01 | E6 started on `epic/e6-review-fixes`: 20 tickets (CW-601 to CW-620) from the code review of `v1.0`. |
 | 2026-10-31 | Backlog: section titles leaking into the answer text (from the CW-203 and CW-303 notes and the README screenshot). |
 | 2026-10-31 | E5 in review: `CHANGELOG.md` for v1.0; CW-503 waits for the merge, the tag, the private archive and D6 (owner). |
 | 2026-10-31 | CW-501 done: README, checked on a clean clone; `.env.example` bug fixed (an empty `OPENAI_BASE_URL` broke every call). Hygiene scan clean (gitleaks over all commits, no article text, no data or logs). |

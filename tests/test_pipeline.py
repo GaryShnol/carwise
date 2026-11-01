@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 
 from carwise.config import Settings, load_settings
-from carwise.guardrails import answer_text_problem, mentioned
+from carwise.guardrails import answer_text_problem, cars_in_text, mentioned, other_models_in_text
 from carwise.llm.base import LLMOutputError
 from carwise.llm.fake import FakeLLMClient
 from carwise.pipeline import Pipeline
@@ -369,6 +369,69 @@ def test_name_matching_handles_prefixes_and_apostrophe_variants() -> None:
     assert mentioned("ומה עם הג׳נסיס GV80", ["ג'נסיס GV80"]) == ["ג'נסיס GV80"]
     assert mentioned("רכב משפחתי", ["רנו"]) == []  # no match inside other words
     assert mentioned("bmw x5", ["BMW"]) == ["BMW"]
+
+
+BRANDS = load_settings().guardrails.outside_brands
+
+
+@pytest.mark.parametrize(
+    ("text", "other"),
+    [
+        ("כמה עולה אאודי S6?", "אאודי S6"),  # another corpus brand before the code
+        ("Audi S6 or MG?", "Audi S6"),
+        ("ומה עם לאאודי S6", "אאודי S6"),  # the brand takes Hebrew prefixes
+        ("טויוטה C3", "טויוטה C3"),  # an outside brand before the code
+        ("מה דעתך על GAC Aion Y?", "GAC Aion Y"),  # a sibling model word after the alias
+        ("סיטרואן C3 איירקרוס", "סיטרואן C3 איירקרוס"),
+        ("Citroen C3 Aircross", "Citroen C3 Aircross"),
+        ("יונדאי אלנטרה היברידית", "יונדאי אלנטרה היברידית"),
+        ("אלנטרה N ליין", "אלנטרה N ליין"),
+        ("S6 Avant", "S6 Avant"),
+    ],
+)
+def test_an_alias_naming_another_model_is_not_the_corpus_car(text: str, other: str) -> None:
+    assert cars_in_text(text, REGISTRY, BRANDS) == []
+    assert other_models_in_text(text, REGISTRY, BRANDS) == [other]
+
+
+@pytest.mark.parametrize(
+    ("text", "car"),
+    [
+        ("כמה עולה ה-S6?", "mg_s6"),
+        ("S6", "mg_s6"),
+        ("MG S6", "mg_s6"),
+        ("C3", "citroen_c3"),
+        ("ה-C3 החדשה", "citroen_c3"),  # an ordinary Hebrew word after the code
+        ("כמה כוח סוס יש לסיטרואן C3 החדשה?", "citroen_c3"),
+        ("Citroen C3", "citroen_c3"),  # the car's own brand before the code
+        ("אלנטרה N", "hyundai_elantra_n"),
+        ("יונדאי אלנטרה N הידנית", "hyundai_elantra_n"),
+        ("איון HT", "aion_ht"),
+        ("GAC Aion", "aion_ht"),
+        ("מה ההבדל בין אודי RS3 ל-S6?", "mg_s6"),  # a brand two words back is another car
+    ],
+)
+def test_short_aliases_still_name_the_corpus_car(text: str, car: str) -> None:
+    assert car in cars_in_text(text, REGISTRY, BRANDS)
+    assert other_models_in_text(text, REGISTRY, BRANDS) == []
+
+
+def test_corpus_car_and_sibling_model_together_is_answered_with_a_note() -> None:
+    # The model missed the sibling; the code still lists it as not covered.
+    plan = understanding(cars=["mg_s6"], question="השווה טווח MG S6 ו-GAC Aion Y")
+    pipeline, llm, _ = make([plan, generation()])
+    answer = pipeline.ask("מה ההבדל בטווח בין MG S6 ל-GAC Aion Y?", [])
+    assert answer.refusal is None and answer.not_covered == ["GAC Aion Y"]
+    assert "Cars the articles do not cover: GAC Aion Y" in llm.calls[1].messages[0]["content"]
+
+
+def test_sibling_model_alone_is_refused_without_a_generation_call() -> None:
+    plan = understanding(question="כמה עולה יונדאי אלנטרה היברידית?")
+    pipeline, llm, retriever = make([plan])
+    answer = pipeline.ask("כמה עולה יונדאי אלנטרה היברידית?", [])
+    assert answer.refusal is RefusalReason.UNKNOWN_CAR
+    assert answer.not_covered == ["יונדאי אלנטרה היברידית"]
+    assert len(llm.calls) == 1 and retriever.calls == []
 
 
 def test_outside_brands_never_shadow_a_car_in_the_corpus() -> None:

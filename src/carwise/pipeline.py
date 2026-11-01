@@ -347,11 +347,12 @@ class Pipeline:
         invented = [car for car in llm_cars if car not in known]
         if invented:
             turn.flags.append("understand_unknown_ids")
-        matched = guardrails.cars_in_text(f"{message}\n{question}", self._registry)
+        outside_brands = self._settings.guardrails.outside_brands
+        matched = guardrails.cars_in_text(f"{message}\n{question}", self._registry, outside_brands)
         cars = list(dict.fromkeys([*(c for c in llm_cars if c in known), *matched]))
-        brands = guardrails.outside_brands_in_text(
-            message, self._settings.guardrails.outside_brands
-        )
+        # "אאודי S6", "C3 איירקרוס": an alias naming another model is a car not covered.
+        others = guardrails.other_models_in_text(message, self._registry, outside_brands)
+        brands = guardrails.outside_brands_in_text(message, outside_brands)
         unrecognized = understanding.unrecognized_cars if understanding else []
         if understanding:
             intent = understanding.intent
@@ -366,7 +367,7 @@ class Pipeline:
             turn.flags += merged.flags
         else:
             intent = Intent.COMPARE if len(cars) > 1 else Intent.FACT
-        not_covered = guardrails.not_covered(unrecognized, brands)
+        not_covered = guardrails.not_covered(unrecognized, [*others, *brands])
         return _Plan(intent, cars, not_covered, question, message)
 
     def _retrieve(self, plan: _Plan) -> list[RetrievedChunk]:

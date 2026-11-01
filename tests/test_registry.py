@@ -88,3 +88,15 @@ def test_load_from_custom_path(tmp_path: Path) -> None:
 
 def test_url_slug() -> None:
     assert url_slug("https://www.auto.co.il/articles/test-drives/road-tests/mg-s6/") == "mg-s6"
+
+
+def test_every_car_names_its_brand() -> None:
+    for car in load_registry().cars:
+        assert car.brand_names, car.id
+
+
+def test_brand_name_that_is_also_an_alias_is_rejected() -> None:
+    with pytest.raises(ValidationError, match="brand"):
+        Registry.model_validate(
+            {"cars": [_car("a1", brand_names=["X"]), _car("b2", aliases_latin=["x"])]}
+        )
