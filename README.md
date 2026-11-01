@@ -394,8 +394,17 @@ of inventing one.
 - **The threshold does not separate probes from answerable questions.** Every threshold probe
   scored at or above the lowest answerable question. A known car asked about a missing detail
   always reaches generation, and the "not mentioned in the articles" rule has to handle it.
-- **The judge is a model too.** It grades seven questions against stated criteria, and its
-  verdicts are kept with reasons in `eval/runs/` for review.
+- **The judge is a model too, and not calibrated.** It grades seven questions against stated
+  criteria. It is gpt-5.4, the same vendor and family as the generator (gpt-5.4-mini), so it
+  may share its blind spots. Its output puts `passed` before `reason`
+  ([`eval/judge.py`](eval/judge.py)), so the verdict comes before the justification. No
+  human-labelled set measures how often it agrees with a person; its verdicts are kept with
+  reasons in `eval/runs/` for review. Changing the schema would need a new judged run.
+- **The retrieval eval replays one sample of the understand step.** The understand outputs
+  (gpt-5.4-nano, 43 cases) were recorded once, and every retrieval run replays them, so its
+  numbers are deterministic but hold for those plans only: another sample of the same call
+  could name other cars or rewrite the question differently. The answer eval makes fresh
+  understand calls.
 - **Grading was corrected only after failures.** Each checker fix and the one judge-criterion
   change came from reading failing runs, so they could only raise the score; 62/69 is the
   number before the last of them.

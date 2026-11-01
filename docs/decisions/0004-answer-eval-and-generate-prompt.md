@@ -210,3 +210,11 @@ The v3 / v4 / v5 decision above is unaffected: it compares re-scored numbers pro
 checks for all three prompts. The hold-out (15/18) was graded once and not re-scored. Later code
 changes that would touch these answers (CW-405 preference grounding, CW-606 the eight-cars
 statement added in code) were not measured: the answer eval was not re-run.
+
+## Addendum (2026-11-01, CW-620): judge caveats
+
+Three limits of the judge, stated here and in the README Caveats, not changed, because a change
+would need a new judged run: the judge (gpt-5.4) is the same vendor and family as the generator
+(gpt-5.4-mini); its `Verdict` schema in `eval/judge.py` emits `passed` before `reason`, so the
+verdict is written before its justification; and no human-labelled set measures its agreement
+with a person.
