@@ -6,7 +6,13 @@ from typing import Any
 import pytest
 
 from carwise.config import Settings, load_settings
-from carwise.guardrails import answer_text_problem, cars_in_text, mentioned, other_models_in_text
+from carwise.guardrails import (
+    answer_text_problem,
+    cars_in_text,
+    mentioned,
+    other_models_in_text,
+    outside_brands_in_text,
+)
 from carwise.llm.base import LLMOutputError
 from carwise.llm.fake import FakeLLMClient
 from carwise.pipeline import Pipeline
@@ -434,6 +440,72 @@ def test_sibling_model_alone_is_refused_without_a_generation_call() -> None:
     assert len(llm.calls) == 1 and retriever.calls == []
 
 
+EVERYDAY_WORDS = [
+    *["שמרנו", "הכרנו", "מכרנו", "שכרנו", "בחרנו", "הפרנו", "פרנו"],  # from CR-002
+    *["שברנו", "שרנו", "ושרנו", "כשרנו", "מהרנו", "הבהרנו", "המרנו", "כרנו"],
+    *["והכרנו", "ששמרנו", "ומכרנו", "שהכרנו", "בשרנו", "כששכרנו"],
+]
+
+
+@pytest.mark.parametrize("word", EVERYDAY_WORDS)
+def test_everyday_words_are_not_an_outside_brand(word: str) -> None:
+    assert outside_brands_in_text(f"{word} את הרכב, מה כדאי עכשיו?", BRANDS) == []
+
+
+@pytest.mark.parametrize(
+    ("text", "brand"),
+    [
+        ("רנו קליאו", "רנו"),
+        ("מה עם רנו?", "רנו"),
+        ("ומה המחיר של רנו?", "רנו"),
+        ("Renault", "Renault"),
+        ("לRenault Clio", "Renault"),  # Latin names keep their Hebrew prefixes
+        ("כמה עולה הטסלה?", "טסלה"),  # four letters or more keep their prefixes
+        ("ולב.מ.וו", "ב.מ.וו"),
+        # A short Hebrew brand takes one prefix from ב, ל, ה, ו.
+        ("כמה עולה לרנו קליאו?", "רנו"),
+        ("ברנו", "רנו"),
+        ("המחיר של הרנו", "רנו"),
+        ("ורנו", "רנו"),
+        ("לצ'רי טיגו", "צ'רי"),
+        ("בצ'רי", "צ'רי"),
+        ("לב.מ.ו X5", "ב.מ.ו"),
+    ],
+)
+def test_short_hebrew_brands_still_match_as_whole_words(text: str, brand: str) -> None:
+    assert brand in outside_brands_in_text(text, BRANDS)
+
+
+@pytest.mark.parametrize("text", ["שרנו", "מרנו", "כרנו", "ולרנו", "שהרנו", "מהרנו"])
+def test_short_hebrew_brand_after_sh_k_m_or_two_prefixes_is_not_matched(text: str) -> None:
+    # The accepted loss: these forms can mean "that/from the Renault", but they are
+    # also verbs ("שרנו" we sang, "מהרנו" we hurried). The gate leaves them to the
+    # understand call's unrecognized_cars; the post-check does not catch them.
+    assert outside_brands_in_text(text, BRANDS) == []
+
+
+def test_short_corpus_brand_before_an_alias_takes_one_prefix() -> None:
+    assert cars_in_text("לקיה S6", REGISTRY, BRANDS) == []
+    assert other_models_in_text("לקיה S6", REGISTRY, BRANDS) == ["קיה S6"]
+
+
+@pytest.mark.parametrize(
+    ("text", "car"), [("מכרנו C3 ישנה", "citroen_c3"), ("שמרנו S6 בחניה", "mg_s6")]
+)
+def test_a_verb_before_an_alias_is_not_another_brand(text: str, car: str) -> None:
+    assert cars_in_text(text, REGISTRY, BRANDS) == [car]
+    assert other_models_in_text(text, REGISTRY, BRANDS) == []
+    assert outside_brands_in_text(text, BRANDS) == []
+
+
+def test_plural_verbs_without_a_car_are_not_refused_as_unknown_car() -> None:
+    message = "בחרנו בינתיים מה הכי חסכוני? כבר הכרנו כמה"
+    plan = understanding(Intent.RECOMMEND, question="איזה רכב הכי חסכוני?")
+    pipeline, _, _ = make([plan, generation(ids=["mg_s6:000"])])
+    answer = pipeline.ask(message, [])
+    assert answer.refusal is not RefusalReason.UNKNOWN_CAR and answer.not_covered == []
+
+
 def test_outside_brands_never_shadow_a_car_in_the_corpus() -> None:
     brands = load_settings().guardrails.outside_brands
     for car in REGISTRY.cars:
@@ -454,3 +526,10 @@ def test_telemetry_line_has_ids_and_costs_but_no_text(tmp_path: Path) -> None:
     assert {"understand", "generate", "total"} <= record["latency_ms"].keys()
     raw = logger.path.read_text(encoding="utf-8")
     assert "כמה טווח" not in raw and TEXTS["mg_s6"][0] not in raw  # no message, no chunk text
+
+
+def test_short_brand_with_one_prefix_is_refused_even_when_the_model_misses_it() -> None:
+    pipeline, llm, _ = make([understanding(question="כמה עולה רנו קליאו?")])
+    answer = pipeline.ask("כמה עולה לרנו קליאו?", [])
+    assert answer.refusal is RefusalReason.UNKNOWN_CAR and answer.not_covered == ["רנו"]
+    assert len(llm.calls) == 1

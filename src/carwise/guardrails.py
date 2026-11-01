@@ -27,6 +27,11 @@ _K = TypeVar("_K", BodyType, Powertrain)
 # Hebrew attaches up to a few one-letter prefixes to a name: "לאודי", "ובטויוטה".
 HEBREW_PREFIXES = "והבכלמש"
 _MAX_PREFIXES = 3
+# A brand with fewer Hebrew letters than this is "short" (CW-602): it takes at most one
+# prefix, and only one of _SHORT_BRAND_PREFIXES. With ש, כ, מ or stacked prefixes a short
+# brand forms ordinary words: "שמרנו", "הכרנו", "מכרנו", "שברנו" all end in "רנו".
+_MIN_LETTERS_FOR_PREFIXES = 4
+_SHORT_BRAND_PREFIXES = "בלהו"
 # What may stand between a name and the brand before it or the model word after it.
 _JOIN = r"[\s\-־]+"
 # Geresh and gershayim have look-alikes (׳ ’ ` and ״ ”); one form makes names comparable.
@@ -120,15 +125,35 @@ def _words(name: str) -> str:
 
 
 @lru_cache(maxsize=1024)
-def _name_pattern(name: str) -> re.Pattern[str]:
-    prefixes = f"[{HEBREW_PREFIXES}]{{0,{_MAX_PREFIXES}}}"
+def _name_pattern(
+    name: str, letters: str = HEBREW_PREFIXES, max_prefixes: int = _MAX_PREFIXES
+) -> re.Pattern[str]:
+    prefixes = f"[{letters}]{{0,{max_prefixes}}}"
     return re.compile(rf"(?<!\w){prefixes}{_words(name)}(?!\w)")
+
+
+def _brand_pattern(brand: str) -> re.Pattern[str]:
+    """A brand as a whole word, with fewer prefixes allowed on a short Hebrew brand.
+
+    A brand with fewer than _MIN_LETTERS_FOR_PREFIXES Hebrew letters ("רנו", "צ'רי",
+    "ב.מ.ו", "קיה") takes at most one prefix, from ב, ל, ה, ו: "לרנו", "ברנו", "הרנו",
+    "ורנו" match; "שמרנו", "הכרנו", "מכרנו", "שהרנו", "ולרנו" do not. Given up: the
+    short brand after ש, כ or מ, or after two prefixes ("שרנו" as "that Renault",
+    "מרנו", "ולרנו"). The gate then relies on the understand call's unrecognized_cars;
+    the post-check does not catch those forms. Every other brand, Hebrew or Latin,
+    keeps up to _MAX_PREFIXES of any prefix letter, so a longer Hebrew brand can still
+    match an ordinary word ("באופל", "in the dark").
+    """
+    hebrew = len(_HEBREW_LETTER.findall(brand))
+    if 0 < hebrew < _MIN_LETTERS_FOR_PREFIXES:
+        return _name_pattern(brand, _SHORT_BRAND_PREFIXES, 1)
+    return _name_pattern(brand)
 
 
 @lru_cache(maxsize=1024)
 def _before_pattern(brand: str) -> re.Pattern[str]:
     """The brand as the last word before a name: "אאודי S6", "לאאודי S6"."""
-    return re.compile(rf"{_name_pattern(brand).pattern}{_JOIN}$")
+    return re.compile(rf"{_brand_pattern(brand).pattern}{_JOIN}$")
 
 
 @lru_cache(maxsize=1024)
@@ -225,7 +250,9 @@ def _other_model_cars(text: str, registry: Registry, outside_brands: list[str]) 
 
 
 def outside_brands_in_text(text: str, brands: Iterable[str]) -> list[str]:
-    return mentioned(text, brands)
+    """The brands that occur in the text, under the short-brand rule of `_brand_pattern`."""
+    haystack = normalize(text)
+    return [brand for brand in brands if _brand_pattern(brand).search(haystack)]
 
 
 def not_covered(llm_names: list[str], code_hits: list[str]) -> list[str]:
@@ -277,8 +304,9 @@ def unsupported_cars(
     ]
     problems += [
         brand
-        for brand in mentioned(answer, outside_brands)
-        if not mentioned(sources, [brand]) and not mentioned(asked, [brand])
+        for brand in outside_brands_in_text(answer, outside_brands)
+        if not outside_brands_in_text(sources, [brand])
+        and not outside_brands_in_text(asked, [brand])
     ]
     return problems
 

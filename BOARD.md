@@ -72,8 +72,8 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E3 Measurement | none | 4 | 4 | 6 | DONE (PR #4) |
 | E4 Interface and packaging | none | 4 | 4 | 5 | DONE (PR #5) |
 | E5 Documentation and release | `v1.0` | 3 | 2 | 4 | IN REVIEW (tag `v1.0` after the merge) |
-| E6 Review fixes | `v1.0.1` | 20 | 1 | 20 | IN PROGRESS |
-| **Total** |  | **46** | **26** | **58** |  |
+| E6 Review fixes | `v1.0.1` | 20 | 2 | 20 | IN PROGRESS |
+| **Total** |  | **46** | **27** | **58** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -164,7 +164,7 @@ Branch: `epic/e6-review-fixes` | Tag: `v1.0.1` (owner, after the merge)
 | ID | Ticket | Type | Size | Pri | Status | Depends on |
 |---|---|---|---|---|---|---|
 | CW-601 | Short aliases must not route other models of a brand to a corpus car (CR-001) | `fix` | S | P1 | DONE |  |
-| CW-602 | Short Hebrew outside brands must not match ordinary words (CR-002) | `fix` | S | P1 | TODO |  |
+| CW-602 | Short Hebrew outside brands must not match ordinary words (CR-002) | `fix` | S | P1 | DONE |  |
 | CW-603 | Numeric check: user words only, not the LLM rewrite (CR-003) | `fix` | S | P1 | TODO |  |
 | CW-604 | README: what the car-name post-check covers (CR-004) | `docs` | S | P1 | TODO | CW-601 |
 | CW-605 | Docker binds to localhost; process-wide spend cap (CR-005) | `fix` | S | P1 | TODO |  |
@@ -422,11 +422,13 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 | Remove the remaining "excerpts" wording (8 of 69 v3 answers) | v4 and v5 removed it but cost accuracy or brought back "another article" (ADR 0004) | A wording that names only the articles is measured on `final` without losing pass rate or stability |
 | Make SDK-level retries visible (`retries_taken`) and revisit `llm.timeout_s` | The SDK retries a timed-out request silently, so a 30 s timeout can cost about 60 s while `attempts` stays 1 (seen once in CW-206) | More than an occasional turn exceeds 10 s in the eval or the demo |
 | Section titles sometimes leak into the answer text (long merged section names in inline citations) | Observed in the CW-203 and CW-303 notes and in the README's UI screenshot (an FAQ heading inside the sentence); answers stay correct, only the wording suffers, and a fix touches chunking or the generate prompt, which would need a new `final` eval run | A citation format that names a short section label is measured on `final` without losing pass rate or stability |
+| Short brands that are also ordinary words: "אופל" (darkness, "באופל"), "צ'רי" (cherry), Latin "Seat" (CW-602 audit) | The CW-602 rule handles prefix collisions only; these are whole-word homonyms, rare in car questions, and behave as before | A real turn shows a false "not covered" note or refusal from one of them |
 
 ## Change log
 
 | Date | Change |
 |---|---|
+| 2026-11-01 | CW-602 done: a Hebrew brand of fewer than four letters takes at most one prefix, only ב/ל/ה/ו, so "רנו" no longer hits plural verbs (שמרנו, הכרנו); one rule for the gate, the post-check and the brand-before-alias check. Backlog: whole-word brand homonyms. |
 | 2026-11-01 | CW-601 done: a short alias preceded by another brand or followed by a sibling-model word (registry `brand_names`, `other_models`) is not the corpus car; the gate and the post-check share the matcher. Retrieval evals unchanged. |
 | 2026-11-01 | E6 started on `epic/e6-review-fixes`: 20 tickets (CW-601 to CW-620) from the code review of `v1.0`. |
 | 2026-10-31 | Backlog: section titles leaking into the answer text (from the CW-203 and CW-303 notes and the README screenshot). |

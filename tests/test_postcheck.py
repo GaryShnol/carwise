@@ -76,6 +76,25 @@ def test_sibling_model_named_in_a_retrieved_chunk_is_allowed() -> None:
     assert check("המערכת קיימת גם ב-GV80 קופה (ג'נסיס GV80, פרק).", hits) == []
 
 
+def test_plural_verbs_in_the_answer_are_not_an_outside_brand() -> None:
+    hits = [hit("mg_s6", "הטווח בפועל הוא 400 קילומטר")]
+    assert check("שמרנו לך את הנתונים, והכרנו את הטווח: 400 קילומטר (MG S6, פרק).", hits) == []
+
+
+def test_short_brand_in_the_answer_is_flagged_bare_or_with_one_prefix() -> None:
+    hits = [hit("mg_s6", "הטווח בפועל הוא 400 קילומטר")]
+    assert check("ל-MG S6 טווח של 400 קילומטר, כמו רנו קליאו (MG S6, פרק).", hits) == ["רנו"]
+    assert check("ל-MG S6 טווח של 400 קילומטר, בדומה לרנו קליאו.", hits) == ["רנו"]
+    assert check("ל-MG S6 טווח של 400 קילומטר, כמו בצ'רי טיגו.", hits) == ["צ'רי"]
+    assert check("ל-MG S6 טווח של 400 קילומטר, כמו בב.מ.ו.", hits) == ["ב.מ.ו"]
+
+
+def test_short_brand_after_two_prefixes_is_not_caught_in_the_answer() -> None:
+    # The accepted loss of the short-brand rule (see guardrails._brand_pattern).
+    hits = [hit("mg_s6", "הטווח בפועל הוא 400 קילומטר")]
+    assert check("ל-MG S6 טווח של 400 קילומטר, ולרנו קליאו פחות.", hits) == []
+
+
 def test_brand_the_user_asked_about_may_be_named_as_not_covered() -> None:
     hits = [hit("mg_s6", "המחיר הוא 180 אלף שקל")]
     answer = "אין בכתבות מידע על BMW X5. המחיר של MG S6 הוא 180 אלף שקל (MG S6, פרק)."
