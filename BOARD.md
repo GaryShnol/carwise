@@ -173,7 +173,7 @@ Branch: `epic/e6-review-fixes` | Tag: `v1.0.1` (owner, after the merge)
 | CW-608 | Off-topic refusal also when a car is named (CR-008) | `fix` | S | P1 | DONE |  |
 | CW-609 | README: what the numeric check covers (CR-009) | `docs` | S | P2 | TODO | CW-603 |
 | CW-610 | Corpus manifest: per-article hashes, warning at ingest, fingerprint in reports (CR-010) | `feat` | S | P2 | DONE |  |
-| CW-611 | Link filter: reference-style links, images, escaped names (CR-011) | `fix` | S | P2 | TODO |  |
+| CW-611 | Link filter: reference-style links, images, escaped names (CR-011) | `fix` | S | P2 | DONE |  |
 | CW-612 | Output-token caps, per-turn deadline, real worst-case bound (CR-012) | `fix` | S | P2 | DONE |  |
 | CW-613 | Telemetry logs only a count of uncovered names; CLI profile label (CR-013) | `fix` | S | P2 | DONE |  |
 | CW-614 | Embed the query once per turn (CR-014) | `refactor` | S | P2 | DONE |  |
@@ -423,11 +423,13 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 | Make SDK-level retries visible (`retries_taken`) and revisit `llm.timeout_s` | The SDK retries a timed-out request silently, so a 30 s timeout can cost about 60 s while `attempts` stays 1 (seen once in CW-206) | More than an occasional turn exceeds 10 s in the eval or the demo |
 | Section titles sometimes leak into the answer text (long merged section names in inline citations) | Observed in the CW-203 and CW-303 notes and in the README's UI screenshot (an FAQ heading inside the sentence); answers stay correct, only the wording suffers, and a fix touches chunking or the generate prompt, which would need a new `final` eval run | A citation format that names a short section label is measured on `final` without losing pass rate or stability |
 | Short brands that are also ordinary words: "אופל" (darkness, "באופל"), "צ'רי" (cherry), Latin "Seat" (CW-602 audit) | The CW-602 rule handles prefix collisions only; these are whole-word homonyms, rare in car questions, and behave as before | A real turn shows a false "not covered" note or refusal from one of them |
+| Preference values in the UI side panel rendered as literal text (CW-611 verifier) | Values come from the understand call and go through `as_markdown`, so a user who steers the model could put a link in the panel; it shows only in that user's own session | Preferences are ever shown to anyone other than the person who typed them |
 
 ## Change log
 
 | Date | Change |
 |---|---|
+| 2026-11-01 | CW-611 done: the answer link filter also rejects `](`, `][`, reference definitions (also in quotes and list items), `<scheme:...>` autolinks and e-mail addresses; refusals are shown with every ASCII punctuation mark escaped (`ui.as_literal_markdown`), so a raw `not_covered` name cannot form a link or image. Checked with markdown-it-py (CommonMark). |
 | 2026-11-01 | CW-610 done: `config/corpus.lock.yaml` pins each article's cleaned-text and chunk hashes (hashes and counts only); ingest warns on a mismatch and never fails; new eval reports record the index fingerprint and the manifest hash. |
 | 2026-11-01 | CW-614 done: the pipeline embeds the question once per turn (`Retriever.embed` -> `Query`); retrieval evals identical to the committed reports apart from timing. |
 | 2026-11-01 | CW-613 done: the turn log keeps a count of unknown car names, not the names, and only cited ids in chunk-id form; one profile resolver (`Settings.profile_name`) labels CLI, UI and answer-eval runs. |

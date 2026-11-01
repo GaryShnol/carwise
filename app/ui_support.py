@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import string
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -244,6 +245,29 @@ def preference_rows(preferences: Preferences) -> list[tuple[str, str, str]]:
 def as_markdown(text: str) -> str:
     """Text for st.markdown: "$" would otherwise start LaTeX ("$0.5" in the budget reply)."""
     return text.replace("$", "\\$")
+
+
+def as_literal_markdown(text: str) -> str:
+    """Text for st.markdown that must render exactly as written: no link, image,
+    autolink, emphasis or LaTeX can form (CW-611).
+
+    Why every ASCII punctuation mark: CommonMark lets each one be escaped with a
+    backslash and shows it as is, so nothing else changes. Hebrew letters and
+    spaces are left alone, so the right-to-left line reads the same. The escaped
+    "." and ":" also break a bare "www." or "https://" that GFM would link.
+    It replaces `as_markdown` (which escapes only "$"); never apply both.
+    """
+    return "".join("\\" + char if char in string.punctuation else char for char in text)
+
+
+def answer_markdown(answer: Answer) -> str:
+    """A refusal is code-built plain text that can carry names straight from the
+    understand call (`not_covered`), so it is shown literally. A generated answer
+    keeps its markdown (bold, lists); `guardrails.answer_text_problem` has already
+    rejected any link or image in it."""
+    if answer.refusal is not None:
+        return as_literal_markdown(answer.text)
+    return as_markdown(answer.text)
 
 
 # --- `python -m app ui` --------------------------------------------------------------

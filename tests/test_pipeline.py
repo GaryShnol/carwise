@@ -308,6 +308,19 @@ def test_cited_ids_that_were_not_retrieved_are_dropped() -> None:
         "ראו [את הכתבה](https://example.org)",
         "ראו [את הכתבה](/article/1)",
         "![תמונה של הרכב](car.png) הנה הרכב",
+        # CR-011 (CW-611): reference-style links and images, which an inline-only
+        # pattern let through; CommonMark renders each as a link or image.
+        "לפרטים [לחצו כאן][1]\n\n[1]: //evil.example/x",
+        "תמונה ![a][i]\n\n[i]: //evil.example/p.png",
+        "קישור [כאן][]\n\n[כאן]: //evil.example",  # collapsed reference
+        "קישור [כאן][1]",  # "][" alone: the definition may arrive in a later part
+        "קישור [כאן]\n\n[כאן]: //evil.example",  # shortcut reference needs a definition
+        "קישור [כאן]\n\n   [כאן]: //evil.example",  # indented definition
+        "קישור [כאן]\n\n> [כאן]: //evil.example",  # definition inside a quote
+        "קישור [כאן]\n\n- [כאן]: //evil.example",  # definition inside a list item
+        "ראו [את [הכתבה] המלאה](//evil.example)",  # nested brackets in the link text
+        "ראו <ftp://evil.example/x>",  # autolink
+        "כתבו ל-a@evil.example",  # an e-mail address is linked bare
     ],
 )
 def test_answer_guard_rejects_field_names_ids_and_non_hebrew(text: str) -> None:
@@ -327,6 +340,10 @@ def test_answer_guard_accepts_hebrew_with_latin_car_names() -> None:
         'הכתבה באתר auto.co.il מציינת טווח של 400 ק"מ.',  # a site name is not a link
         "המחיר [לפי הכתבה] הוא 180 אלף שקל.",  # brackets alone are not a link
         "ההאצה (0-100) היא 6 שניות.",
+        "המחיר [לפי הכתבה] (בשקלים) הוא 180 אלף.",  # bracket, space, parenthesis
+        "יש שתי גרסאות: [בסיס] ו-[ספורט].",
+        'הנתון החשוב [לפי הכתבה]: 400 כ"ס.',  # "]:" mid-line is no definition
+        "**MG S6** חסכונית יותר (MG S6, צריכה) - אני מתייחס רק לשמונה הרכבים.",
     ],
 )
 def test_answer_guard_accepts_site_names_and_brackets(text: str) -> None:

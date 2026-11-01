@@ -47,7 +47,7 @@ def shared_resources() -> ui.Resources:
 
 
 def render_answer(answer: Answer, settings: Settings, registry: Registry) -> None:
-    text = ui.as_markdown(answer.text)
+    text = ui.answer_markdown(answer)
     style = ui.refusal_style(answer)
     if style == "info":
         st.info(text, icon="ℹ️")

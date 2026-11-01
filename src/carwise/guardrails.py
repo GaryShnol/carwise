@@ -44,10 +44,20 @@ _FIELD_ASSIGNMENT = re.compile(r"\b[a-z]+(?:_[a-z]+)+\s*[=:]")
 _OWN_FIELD_NAMES = re.compile(r"\b(?:used_chunk_ids|answer)\b")
 _CHUNK_ID = re.compile(r"\b[a-z0-9]+(?:_[a-z0-9]+)*:\d{3}\b")
 _HEBREW_LETTER = re.compile("[א-ת]")
-# Links and images (CW-401): a URL, "www." (which markdown renders as a link), or
-# markdown link and image syntax. The UI renders answers as markdown, so a link
+# Links and images (CW-401, CW-611): the UI renders answers as markdown, so a link
 # the model wrote would be clickable; the only links shown come from the registry.
-_LINK = re.compile(r"https?://|\bwww\.|!?\[[^\]]*\]\([^)]*\)", re.IGNORECASE)
+# Caught: a URL or "www." (GFM links both bare); "](" and "][" (inline, full and
+# collapsed reference links and images, nested brackets included); a reference
+# definition ("[1]: //host"), also inside a quote or list item, which a shortcut
+# reference "[1]" needs; an autolink "<scheme:...>"; an e-mail address (GFM links
+# it bare). Brackets alone ("[לפי הכתבה]") and "[x]: y" mid-line still pass.
+_LINK = re.compile(
+    r"https?://|\bwww\.|\]\(|\]\["
+    r"|^(?:[ \t]*(?:>|[-*+](?=[ \t])|\d{1,9}[.)](?=[ \t])))*[ \t]*\[(?:[^\]\\]|\\.)+\]:"
+    r"|<[a-z][a-z0-9+.\-]{1,31}:[^\s<>]*>"
+    r"|[\w.+\-]+@[\w\-]+\.[\w.\-]+",
+    re.IGNORECASE | re.MULTILINE,
+)
 
 
 def answer_text_problem(text: str) -> str | None:

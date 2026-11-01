@@ -30,7 +30,7 @@ from carwise.llm.fake import FakeLLMClient
 from carwise.preferences import EMPTY_PREFERENCES, RESET_REPLY
 from carwise.retrieval.retriever import SerializedRetriever
 from carwise.retrieval.store import IndexNotReadyError
-from carwise.schemas import Intent, PreferenceUpdate, Understanding
+from carwise.schemas import Intent, PreferenceUpdate, RefusalReason, Understanding
 from tests.test_pipeline import REGISTRY, SpyRetriever, _settings, generation, make, understanding
 
 QUESTION = "כמה טווח יש ל-MG S6?"
@@ -86,6 +86,48 @@ def test_startup_messages_are_hebrew_and_never_the_exception_text() -> None:
 
 def test_dollar_does_not_start_latex() -> None:
     assert ui.as_markdown("עד $0.5 לשיחה") == "עד \\$0.5 לשיחה"
+
+
+# Names the understand call returned as "unrecognized cars" (CR-011): raw model output
+# that the refusal template embeds, so each must render as plain text.
+LINK_NAMES = [
+    "[לחצו כאן][1]\n\n[1]: //evil.example/x",
+    "![a][i]\n\n[i]: //evil.example/p.png",
+    "[כאן](//evil.example)",
+    "<https://evil.example>",
+    "www.evil.example",
+    "a@evil.example",
+]
+
+
+def _render(markdown: str) -> str:
+    """CommonMark HTML; Streamlit's frontend renderer (react-markdown) follows CommonMark."""
+    markdown_it = pytest.importorskip("markdown_it")
+    return str(markdown_it.MarkdownIt("commonmark").render(markdown))
+
+
+def test_literal_markdown_escapes_punctuation_only_and_once() -> None:
+    assert ui.as_literal_markdown("אין לי מידע על ![a][i]: $5.") == (
+        "אין לי מידע על \\!\\[a\\]\\[i\\]\\: \\$5\\."
+    )
+    assert ui.as_literal_markdown("טויוטה קורולה") == "טויוטה קורולה"
+
+
+@pytest.mark.parametrize("name", LINK_NAMES)
+def test_unknown_car_names_cannot_form_links_or_images(name: str) -> None:
+    pipeline, _, _ = make([understanding(unrecognized=[name], question=TOYOTA)])
+    answer = pipeline.ask(TOYOTA, [])
+    assert answer.refusal is RefusalReason.UNKNOWN_CAR and name.split("\n")[0] in answer.text
+    html = _render(ui.answer_markdown(answer))
+    assert "<a " not in html and "<img" not in html
+    assert "evil.example" in html  # shown as text, not dropped
+    assert "\\" not in html  # every escape was consumed: no stray backslash on screen
+
+
+def test_generated_answer_keeps_its_markdown() -> None:
+    pipeline, _, _ = make([understanding(cars=["mg_s6"]), generation()])
+    answer = pipeline.ask(QUESTION, [])
+    assert answer.refusal is None and ui.answer_markdown(answer) == ui.as_markdown(answer.text)
 
 
 # --- smoke test of app/ui.py -------------------------------------------------------------
@@ -161,7 +203,7 @@ def test_refusal_has_its_own_style(run_app: Callable[..., AppTest]) -> None:
 def test_llm_outage_is_a_hebrew_warning_not_a_trace(run_app: Callable[..., AppTest]) -> None:
     app = run_app([LLMUnavailableError("down")])
     app.chat_input[0].set_value(QUESTION).run()
-    assert not app.exception and app.warning[0].value == ui.as_markdown(LLM_ERROR_REPLY)
+    assert not app.exception and app.warning[0].value == ui.as_literal_markdown(LLM_ERROR_REPLY)
 
 
 def test_cost_cap_stops_the_conversation(run_app: Callable[..., AppTest]) -> None:
