@@ -569,6 +569,10 @@ How this proof of concept would map to a service shared by many teams. None of t
   3 s between requests, respects `robots.txt`, retries once, and never works around a block.
 - If the download fails, the command says so. You can then place the eight HTML files in
   `data/raw/` by hand and run `ingest` again.
+- `config/corpus.lock.yaml` pins the corpus with a SHA-256 of each cleaned article and of the
+  chunk list (hashes only, no text). `ingest` warns, without failing, when an article differs,
+  and every new eval report records this manifest's hash and the index fingerprint. After a
+  deliberate re-pin, run `python -m app ingest --write-manifest`.
 - Committed eval reports hold chunk ids and metrics, never chunk or answer text. Quotes in the
   documentation are a few words, with the source named.
 - No secrets are in the repository. `.env`, `data/`, `logs/` and `eval/runs/` are gitignored, and

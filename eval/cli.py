@@ -40,6 +40,7 @@ from eval.report import (
     REPORTS_DIR,
     RetrievalReport,
     comparison_markdown,
+    corpus_stamp,
     load_report,
     spread_rows,
     summary_rows,
@@ -213,6 +214,7 @@ def retrieval_report(
     ]
     latencies = [ms for result in results for ms in result.retrieve_ms]
     embedder = settings.embeddings
+    stamp = corpus_stamp(settings)
     return RetrievalReport(
         created=datetime.now(UTC).isoformat(timespec="seconds"),
         embedder={
@@ -235,6 +237,8 @@ def retrieval_report(
         scores=score_spreads(results, probe_results),
         questions=results,
         probes=probe_results,
+        index_fingerprint=stamp.index_fingerprint,
+        corpus_manifest_sha256=stamp.corpus_manifest_sha256,
     )
 
 

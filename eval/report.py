@@ -9,10 +9,13 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import NamedTuple
 
 from pydantic import BaseModel, ConfigDict
 
-from carwise.config import RetrievalConfig
+from carwise.config import RetrievalConfig, Settings
+from carwise.ingest.manifest import manifest_sha256
+from carwise.retrieval.store import stored_fingerprint
 from eval.retrieval import (
     CategorySummary,
     ProbeResult,
@@ -42,6 +45,37 @@ class RetrievalReport(BaseModel):
     probes: list[ProbeResult]
     # CW-305 candidate runs: index build, token window, size and memory (empty otherwise).
     resources: dict[str, float | int | str | None] = {}
+    # CW-610: which index and which pinned corpus the run used (None in older reports).
+    index_fingerprint: str | None = None
+    corpus_manifest_sha256: str | None = None
+
+
+class CorpusStamp(NamedTuple):
+    index_fingerprint: str | None
+    corpus_manifest_sha256: str | None
+
+
+def corpus_stamp(settings: Settings) -> CorpusStamp:
+    """Index fingerprint and corpus manifest hash for a report header (CW-610).
+
+    Why both: the fingerprint names the exact chunks and embedder the run searched;
+    the manifest hash names the committed article hashes `ingest` checked them against.
+    """
+    return CorpusStamp(
+        index_fingerprint=stored_fingerprint(Path(settings.paths.index_dir)),
+        corpus_manifest_sha256=manifest_sha256(Path(settings.paths.corpus_manifest)),
+    )
+
+
+def corpus_line(index_fingerprint: str | None, manifest: str | None) -> list[str]:
+    """The header line naming the corpus; nothing for a report made before CW-610."""
+    if index_fingerprint is None and manifest is None:
+        return []
+    return [
+        f"Corpus: manifest sha256 {manifest or 'missing'}, "
+        f"index fingerprint {index_fingerprint or 'missing'}.",
+        "",
+    ]
 
 
 def report_name(report: RetrievalReport) -> str:
@@ -119,6 +153,7 @@ def markdown(report: RetrievalReport) -> str:
         "",
         f"Settings: {_settings(report)}.",
         "",
+        *corpus_line(report.index_fingerprint, report.corpus_manifest_sha256),
         "## Summary",
         "",
         *summary_rows(report.summary),

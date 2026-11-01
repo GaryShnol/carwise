@@ -8,6 +8,7 @@ names through it; chunk text is made up (the repository is public).
 from __future__ import annotations
 
 from datetime import date
+from pathlib import Path
 
 import pytest
 
@@ -386,6 +387,61 @@ def test_markdown_report_holds_metrics_and_no_chunk_text() -> None:
     assert "| neg-behavior | behavior | answer | fact |" in text
     assert "| threshold_probes | 0 |" in text
     assert SECRET_TEXT not in text
+
+
+def test_retrieval_report_header_names_the_index_and_the_corpus_manifest() -> None:
+    """CW-610: the new fields render in the header; an older report renders without them."""
+    q = question("q", ["מה הטווח של MG S6?"], sources=[Source(car="mg_s6", section="הטווח")])
+    result = grade(q, [_graded(q, understanding("הטווח של MG S6", ["mg_s6"]))], RETRIEVER)
+    report = RetrievalReport(
+        created="2026-10-30T00:00:00+00:00",
+        embedder={"provider": "fake", "model": "fake", "revision": None},
+        retrieval=SETTINGS.retrieval,
+        chunking=SETTINGS.chunking.model_dump(),
+        recording={"model": MODEL, "understand_prompt": "v1", "recorded_at": "x", "cost_usd": 0},
+        runs=1,
+        warm_up_s=0.0,
+        latency_ms={"p50": 1.0, "p95": 2.0},
+        summary=by_category([result]),
+        scores=score_spreads([result], []),
+        questions=[result],
+        probes=[],
+    )
+    assert "Corpus:" not in markdown(report)  # older reports load and render unchanged
+    stamped = report.model_copy(
+        update={"index_fingerprint": "a" * 64, "corpus_manifest_sha256": "b" * 64}
+    )
+    header = markdown(stamped).split("## Summary")[0]
+    assert f"Corpus: manifest sha256 {'b' * 64}, index fingerprint {'a' * 64}." in header
+    loaded = RetrievalReport.model_validate_json(stamped.model_dump_json())
+    assert loaded.index_fingerprint == "a" * 64
+
+
+def test_retrieval_report_is_stamped_with_this_index_and_manifest(tmp_path: Path) -> None:
+    """CW-610: the report the CLI writes carries the stamp of the configured paths."""
+    from carwise.ingest.manifest import build_manifest, write_manifest
+    from carwise.retrieval.store import build_index, stored_fingerprint
+    from eval.cli import retrieval_report
+    from eval.report import corpus_stamp
+
+    paths = SETTINGS.paths.model_copy(
+        update={
+            "index_dir": str(tmp_path / "index"),
+            "corpus_manifest": str(tmp_path / "corpus.lock.yaml"),
+        }
+    )
+    settings = SETTINGS.model_copy(update={"paths": paths})
+    chunks = _chunks()
+    build_index(chunks, FakeEmbedder(), settings.chunking, tmp_path / "index")
+    write_manifest(build_manifest([], chunks), tmp_path / "corpus.lock.yaml")
+    q = question("q", ["מה הטווח של MG S6?"], sources=[Source(car="mg_s6", section="הטווח")])
+    rec = recording_for({"q": recorded(understanding("הטווח של MG S6", ["mg_s6"]), turns=q.turns)})
+    report = retrieval_report(settings, RETRIEVER, make_pipeline, rec, [q], [], 1)
+    stamp = corpus_stamp(settings)
+    assert stamp.index_fingerprint == stored_fingerprint(tmp_path / "index") is not None
+    assert stamp.corpus_manifest_sha256 is not None
+    assert report.index_fingerprint == stamp.index_fingerprint
+    assert report.corpus_manifest_sha256 == stamp.corpus_manifest_sha256
 
 
 # ---------------------------------------------------------------- incremental recording

@@ -72,8 +72,8 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E3 Measurement | none | 4 | 4 | 6 | DONE (PR #4) |
 | E4 Interface and packaging | none | 4 | 4 | 5 | DONE (PR #5) |
 | E5 Documentation and release | `v1.0` | 3 | 2 | 4 | IN REVIEW (tag `v1.0` after the merge) |
-| E6 Review fixes | `v1.0.1` | 20 | 9 | 20 | IN PROGRESS |
-| **Total** |  | **46** | **34** | **58** |  |
+| E6 Review fixes | `v1.0.1` | 20 | 10 | 20 | IN PROGRESS |
+| **Total** |  | **46** | **35** | **58** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -172,7 +172,7 @@ Branch: `epic/e6-review-fixes` | Tag: `v1.0.1` (owner, after the merge)
 | CW-607 | Headline answer score 62/69; re-scoring bias stated (CR-007) | `docs` | S | P1 | TODO |  |
 | CW-608 | Off-topic refusal also when a car is named (CR-008) | `fix` | S | P1 | DONE |  |
 | CW-609 | README: what the numeric check covers (CR-009) | `docs` | S | P2 | TODO | CW-603 |
-| CW-610 | Corpus manifest: per-article hashes, warning at ingest, fingerprint in reports (CR-010) | `feat` | S | P2 | TODO |  |
+| CW-610 | Corpus manifest: per-article hashes, warning at ingest, fingerprint in reports (CR-010) | `feat` | S | P2 | DONE |  |
 | CW-611 | Link filter: reference-style links, images, escaped names (CR-011) | `fix` | S | P2 | TODO |  |
 | CW-612 | Output-token caps, per-turn deadline, real worst-case bound (CR-012) | `fix` | S | P2 | DONE |  |
 | CW-613 | Telemetry logs only a count of uncovered names; CLI profile label (CR-013) | `fix` | S | P2 | DONE |  |
@@ -428,6 +428,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Date | Change |
 |---|---|
+| 2026-11-01 | CW-610 done: `config/corpus.lock.yaml` pins each article's cleaned-text and chunk hashes (hashes and counts only); ingest warns on a mismatch and never fails; new eval reports record the index fingerprint and the manifest hash. |
 | 2026-11-01 | CW-614 done: the pipeline embeds the question once per turn (`Retriever.embed` -> `Query`); retrieval evals identical to the committed reports apart from timing. |
 | 2026-11-01 | CW-613 done: the turn log keeps a count of unknown car names, not the names, and only cited ids in chunk-id form; one profile resolver (`Settings.profile_name`) labels CLI, UI and answer-eval runs. |
 | 2026-11-01 | CW-612 done: per-stage `llm.max_completion_tokens` (understand 400, generate 2000, from the local turn log with at least 2x headroom); a cut-off reply is invalid; per-turn deadline `llm.turn_deadline_s` (90 s); README states the computed nominal worst case. |

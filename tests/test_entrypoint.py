@@ -41,6 +41,7 @@ def _settings_with_raw_dir(tmp_path: Path, raw_dir: Path) -> Path:
     settings = yaml.safe_load(DEFAULT_CONFIG_PATH.read_text(encoding="utf-8"))
     settings["paths"]["raw_dir"] = raw_dir.as_posix()
     settings["paths"]["index_dir"] = (tmp_path / "index").as_posix()
+    settings["paths"]["corpus_manifest"] = (tmp_path / "corpus.lock.yaml").as_posix()
     settings["embeddings"]["provider"] = "fake"  # no model download in unit tests
     path = tmp_path / "settings.yaml"
     path.write_text(yaml.safe_dump(settings, allow_unicode=True), encoding="utf-8")
@@ -76,6 +77,75 @@ def test_ingest_reports_counts_from_the_cache_without_body_text(
 
     assert main(["ingest"]) == 0
     assert "index up to date" in capsys.readouterr().out
+
+
+def test_ingest_warns_when_an_article_changed_but_does_not_fail(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _cache_fixture_for_every_car(tmp_path, monkeypatch)
+    assert main(["ingest"]) == 0
+    assert "no corpus manifest at" in capsys.readouterr().out
+    assert not (tmp_path / "corpus.lock.yaml").exists()  # only --write-manifest writes it
+
+    assert main(["ingest", "--write-manifest"]) == 0
+    assert "manifest written: " in capsys.readouterr().out
+    assert main(["ingest"]) == 0
+    assert "corpus matches the manifest" in capsys.readouterr().out
+
+    edited = tmp_path / "raw" / f"{load_registry().cars[0].slug}.html"
+    html = edited.read_text(encoding="utf-8")
+    assert "פסקת פתיחה" in html
+    edited.write_text(html.replace("פסקת פתיחה", "פסקת פתיחה ערוכה", 1), encoding="utf-8")
+    assert main(["ingest"]) == 0  # a warning, never a failure
+    out = capsys.readouterr().out
+    assert "WARNING: the corpus differs from the manifest" in out
+    assert f"[{load_registry().cars[0].id}] article text differs" in out
+    assert "פסקת פתיחה" not in out  # the warning names the car, never the text
+
+
+def test_volatile_page_markup_leaves_the_corpus_hash_unchanged(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Why the manifest hashes cleaned text: scripts, ads and meta tags change per fetch."""
+    _cache_fixture_for_every_car(tmp_path, monkeypatch)
+    assert main(["ingest", "--write-manifest"]) == 0
+    capsys.readouterr()
+
+    cached = tmp_path / "raw" / f"{load_registry().cars[0].slug}.html"
+    html = cached.read_text(encoding="utf-8")
+    html = html.replace("</head>", '<meta name="build" content="a1b2c3"></head>', 1)
+    html = html.replace("<main>", '<div class="ad-slot">פרסומת מתחלפת 42</div><main>', 1)
+    html = html.replace("</body>", "<script>var token = 'x9y8z7';</script></body>", 1)
+    cached.write_text(html, encoding="utf-8")
+    assert main(["ingest"]) == 0
+    out = capsys.readouterr().out
+    assert "corpus matches the manifest" in out and "WARNING" not in out
+
+
+def test_write_manifest_refuses_a_partial_corpus(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from carwise.ingest import fetch
+
+    _cache_fixture_for_every_car(tmp_path, monkeypatch)
+    (tmp_path / "raw" / f"{load_registry().cars[0].slug}.html").unlink()
+    monkeypatch.setattr(fetch, "http_get", lambda url, config, **_: fetch.HttpResponse(None, ""))
+
+    assert main(["ingest", "--write-manifest"]) == 1
+    assert "manifest not written" in capsys.readouterr().out
+    assert not (tmp_path / "corpus.lock.yaml").exists()
+
+
+def test_unreadable_manifest_is_a_warning_not_a_crash(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _cache_fixture_for_every_car(tmp_path, monkeypatch)
+    (tmp_path / "corpus.lock.yaml").mkdir()  # a directory where the file should be
+
+    assert main(["ingest"]) == 0
+    out = capsys.readouterr().out
+    assert "WARNING: the corpus differs from the manifest" in out
+    assert "cannot be read" in out
 
 
 def test_search_prints_metadata_without_text(

@@ -128,6 +128,7 @@ class PathsConfig(_Strict):
     raw_dir: str
     index_dir: str
     log_dir: str
+    corpus_manifest: str  # committed hashes of the cleaned articles (CW-610)
 
 
 class Settings(_Strict):

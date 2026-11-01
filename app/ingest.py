@@ -8,9 +8,12 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+from pathlib import Path
 from statistics import median
 
+from carwise.config import load_settings
 from carwise.ingest.clean import BlockKind, Document
+from carwise.ingest.manifest import write_manifest
 from carwise.ingest.run import IngestResult, ingest
 from carwise.schemas import Chunk
 
@@ -67,6 +70,13 @@ def format_index(result: IngestResult) -> str:
     return f"index built: {index.chunks} chunks in {index.seconds:.1f}s"
 
 
+def format_corpus(result: IngestResult) -> str:
+    if not result.corpus_warnings:
+        return "corpus matches the manifest"
+    lines = ["WARNING: the corpus differs from the manifest; published numbers may not reproduce"]
+    return "\n".join(lines + [f"  {warning}" for warning in result.corpus_warnings])
+
+
 def format_report(result: IngestResult) -> str:
     statuses = Counter(fetch.status.value for fetch in result.fetches)
     summary = ", ".join(f"{count} {status}" for status, count in sorted(statuses.items()))
@@ -77,10 +87,27 @@ def format_report(result: IngestResult) -> str:
         lines += ["", result.fallback]
     lines.append(f"cleaned {len(result.documents)} of {len(result.fetches)} articles")
     lines += ["", format_chunk_stats(result.chunks), "", format_index(result)]
+    lines += ["", format_corpus(result)]
     return "\n".join(lines)
 
 
+def add_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--write-manifest",
+        action="store_true",
+        help="pin the current corpus: rewrite the committed hash manifest (CW-610)",
+    )
+
+
 def run(args: argparse.Namespace) -> int:
-    result = ingest()
+    settings = load_settings()
+    result = ingest(settings)
     print(format_report(result))
+    if getattr(args, "write_manifest", False):
+        if result.manifest is None or result.fallback or result.errors:
+            print("manifest not written: every article must be cleaned first")
+            return 1
+        path = Path(settings.paths.corpus_manifest)
+        write_manifest(result.manifest, path)
+        print(f"manifest written: {path} ({len(result.manifest.articles)} articles)")
     return 0 if result.ok else 1

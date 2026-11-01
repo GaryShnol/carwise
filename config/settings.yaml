@@ -199,3 +199,5 @@ paths:
   raw_dir: data/raw
   index_dir: data/index
   log_dir: logs
+  # Committed, unlike data/: SHA-256 per cleaned article, no text (CW-610).
+  corpus_manifest: config/corpus.lock.yaml
