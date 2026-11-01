@@ -38,8 +38,9 @@ loop. The model writes the answer, and code decides what goes into the model and
    prompt were each chosen from an eval run, and a prompt change that lost accuracy was rolled
    back ([ADR 0004](docs/decisions/0004-answer-eval-and-generate-prompt.md)).
 
-On the `final` profile, 3 runs of 23 tuning questions passed 64 of 69, and 6 questions written
-after tuning passed 15 of 18 (details under [Evaluation](#evaluation)).
+On the `final` profile, 3 runs of 23 tuning questions passed 62 of 69 as graded (64 after a
+grading fix found by reading the failures, which could only raise the score), and 6 questions
+written after tuning passed 15 of 18 (details under [Evaluation](#evaluation)).
 
 ## Contents
 
@@ -245,7 +246,7 @@ ADRs hold the measurements; [docs/README.md](docs/README.md) indexes them.
 | k and caps unchanged (`top_k` 5, `per_car_cap` 3) ([ADR 0003](docs/decisions/0003-retrieval-tuning.md)) | Every setting in the sweep passed the same questions | `per_car_cap` 2 (17% less chunk text, same hits): picking inside a flat region on 23 questions fits noise | Generation cost matters: it is the first lever |
 | Registry gate as the primary refusal; threshold 0.80 only as an off-topic backstop ([ADR 0003](docs/decisions/0003-retrieval-tuning.md)) | Answerable minimum 0.846, probe minimum 0.847: the score distributions overlap completely | A tuned similarity threshold as the main gate | An embedding model that separates the two groups |
 | Post-check in code (cars and numbers), regenerate once, then a fixed fallback | Clean on every answer of the 3-run `final` eval (few false positives). Recall on a scripted adversarial set ([report](eval/reports/postcheck-adversarial.md)): 14/23 bad answers caught (one only through the number check), 7/7 controls clean; it misses sibling models of corpus brands, model names with no brand, unlisted brands, a short brand after two prefixes, truncated, small or swapped numbers, and numbers as words | Trusting the prompt alone; an LLM claim check at runtime | — |
-| Generate prompt v3 kept ([ADR 0004](docs/decisions/0004-answer-eval-and-generate-prompt.md)) | v3 64/69, v4 60/69, v5 63/69 and less stable | v4 (made mini name the wrong winner of a range comparison); v5 (brought back "in another article") | A variant passes as many questions and is as stable |
+| Generate prompt v3 kept ([ADR 0004](docs/decisions/0004-answer-eval-and-generate-prompt.md)) | v3 64/69, v4 60/69, v5 63/69 and less stable (all three re-scored with the same checks) | v4 (made mini name the wrong winner of a range comparison); v5 (brought back "in another article") | A variant passes as many questions and is as stable |
 | `final` profile: nano understands, mini generates | Published numbers on this profile; `dev` (nano for both) is for development | Gemini 2.5 Flash-Lite (cheaper; a second provider and key) | Provider switching becomes a requirement |
 | Own thin `LLMClient` on the OpenAI SDK | One provider, a linear flow, full control of prompts and checks | LiteLLM, LangChain, LangGraph | Several providers, or loops and tools |
 | Local Chroma | 78 chunks; no server to run | A hosted vector database | Many corpora or teams (see the production path) |
@@ -329,30 +330,41 @@ top speed), ranked fourth within its car against a cap of 3.
 
 ### Answer level (`final` profile, 3 runs)
 
-Generate prompt v3, understand on gpt-5.4-nano, generate on gpt-5.4-mini
+Generate prompt v3, understand on gpt-5.4-nano, generate on gpt-5.4-mini. One run of the eval,
+graded twice: as run ([report](eval/reports/answer/final/v3/answer-tuning-final.md)), and
+re-scored from the logged answers after a checker fix
 ([report](eval/reports/answer/final/v3/answer-tuning-rescored-final.md)):
 
-| Category | Passed |
-|---|---|
-| single_fact | 12/12 |
-| comparison | 17/18 |
-| recommendation | 4/6 |
-| ranking | 4/6 |
-| follow_up | 6/6 |
-| trap | 21/21 |
-| **total** | **64/69 (93%)** |
+| Category | As graded | After the checker fix |
+|---|---|---|
+| single_fact | 12/12 | 12/12 |
+| comparison | 15/18 | 17/18 |
+| recommendation | 4/6 | 4/6 |
+| ranking | 4/6 | 4/6 |
+| follow_up | 6/6 | 6/6 |
+| trap | 21/21 | 21/21 |
+| **total** | **62/69 (90%)** | 64/69 (93%) |
 
-- **Failures (5 runs):** one range comparison declined (Kia EV9 against Aion HT), two rankings
-  missing the "only the eight reviewed cars" statement, and two runs of the family scenario where
-  the passenger count was not stored. The recommendation itself passed the judge both times.
-  The cause was the preference grounding check, which rejected a count normalized to digits
-  when the user wrote it as a word. CW-405 fixed that check after this run; the published
-  numbers were not re-run. None of the failures was a retrieval failure or a post-check
-  fallback, and no trap failed.
-- **Re-scoring:** the reported number is re-scored. Reading the failures turned up four grading
-  corrections: three checker bugs, fixed with tests, and one judge criterion aligned with the
-  question's own keyword check. The logged answers were then graded again, with no new model
-  calls. The report before re-scoring says 62/69; both reports are committed.
+- **Headline: 62/69.** The 64/69 is not an independent second measurement. Its one change is a
+  price comparison (Elantra N against Link & Co 01) going from 1/3 to 3/3: the attribution
+  check split a citation at the "?" ending a section name and read the car names in it as
+  claims. Reading this run's failures found that bug; it was fixed with a test and the logged
+  answers were graded again, with no new model calls.
+- **The corrections went one way.** Only failing runs were read, so passing runs were never
+  checked for false passes, and a correction could only raise the score. Three earlier
+  corrections were found the same way on `dev` runs and were already in place for this run,
+  including a judge criterion for the Kia/Aion range question that was changed after its
+  verdicts on `dev` were seen ([ADR 0004](docs/decisions/0004-answer-eval-and-generate-prompt.md)).
+  The prompt comparison (v3, v4, v5) uses re-scored numbers for all three, so it is like for
+  like.
+- **Failures (5 runs after the fix):** one range comparison declined (Kia EV9 against Aion HT),
+  two rankings missing the "only the eight reviewed cars" statement, and two runs of the family
+  scenario where the passenger count was not stored. The recommendation itself passed the judge
+  both times. The cause was the preference grounding check, which rejected a count normalized
+  to digits when the user wrote it as a word. CW-405 fixed that check after this run, and
+  CW-606 now adds the eight-cars statement in code when a recommendation or ranking lacks it;
+  the answer eval was not re-run after either, so these failures stay in the published numbers.
+  None of the failures was a retrieval failure or a post-check fallback, and no trap failed.
 - **Stability:** the same behavior in 23/23 questions, the same numbers in 15/23, identical text
   in 28% of answer pairs.
 - **Post-check:** clean on all 60 generated answers. The other 9 runs were refusals (3
@@ -383,6 +395,9 @@ of inventing one.
   always reaches generation, and the "not mentioned in the articles" rule has to handle it.
 - **The judge is a model too.** It grades seven questions against stated criteria, and its
   verdicts are kept with reasons in `eval/runs/` for review.
+- **Grading was corrected only after failures.** Each checker fix and the one judge-criterion
+  change came from reading failing runs, so they could only raise the score; 62/69 is the
+  number before the last of them.
 
 ## Example conversation
 

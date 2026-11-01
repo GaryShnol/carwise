@@ -72,8 +72,8 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E3 Measurement | none | 4 | 4 | 6 | DONE (PR #4) |
 | E4 Interface and packaging | none | 4 | 4 | 5 | DONE (PR #5) |
 | E5 Documentation and release | `v1.0` | 3 | 2 | 4 | IN REVIEW (tag `v1.0` after the merge) |
-| E6 Review fixes | `v1.0.1` | 20 | 13 | 20 | IN PROGRESS |
-| **Total** |  | **46** | **38** | **58** |  |
+| E6 Review fixes | `v1.0.1` | 20 | 14 | 20 | IN PROGRESS |
+| **Total** |  | **46** | **39** | **58** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -169,7 +169,7 @@ Branch: `epic/e6-review-fixes` | Tag: `v1.0.1` (owner, after the merge)
 | CW-604 | README: what the car-name post-check covers (CR-004) | `docs` | S | P1 | DONE | CW-601 |
 | CW-605 | Docker binds to localhost; process-wide spend cap (CR-005) | `fix` | S | P1 | DONE |  |
 | CW-606 | Code-enforced "covers only the eight cars" statement (CR-006) | `fix` | S | P1 | DONE |  |
-| CW-607 | Headline answer score 62/69; re-scoring bias stated (CR-007) | `docs` | S | P1 | TODO |  |
+| CW-607 | Headline answer score 62/69; re-scoring bias stated (CR-007) | `docs` | S | P1 | DONE |  |
 | CW-608 | Off-topic refusal also when a car is named (CR-008) | `fix` | S | P1 | DONE |  |
 | CW-609 | README: what the numeric check covers (CR-009) | `docs` | S | P2 | TODO | CW-603 |
 | CW-610 | Corpus manifest: per-article hashes, warning at ingest, fingerprint in reports (CR-010) | `feat` | S | P2 | DONE |  |
@@ -429,6 +429,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Date | Change |
 |---|---|
+| 2026-11-01 | CW-607 done: README TL;DR and answer results lead with 62/69 as graded; 64/69 shown beside it as after the one checker fix found on that run (citation split, one comparison 1/3 to 3/3). README and an ADR 0004 addendum state that corrections came only from failing runs and the judge criterion changed after its `dev` verdicts; CW-405 and CW-606 not re-measured. |
 | 2026-11-01 | CW-604 done: README TL;DR, Guardrails row and Known limitations say what the car-name post-check sees (registry aliases with the CW-601 context rule, the outside-brand list, the CW-602 prefix rule) and what it does not (other models of corpus brands, brand-less model names, unlisted brands), with the CW-619 report. Done count of E6 corrected (12 were done, not 10). |
 | 2026-11-01 | CW-619 done: `eval/postcheck_cases.yaml` scripts 23 bad generate outputs and 7 clean controls on synthetic chunks, run through the real pipeline with the fake LLM; each case pins today's outcome. 14/23 caught, 7/7 controls clean; known misses named in `eval/reports/postcheck-adversarial.md`. README states recall next to the clean-run evidence. |
 | 2026-11-01 | CW-611 done: the answer link filter also rejects `](`, `][`, reference definitions (also in quotes and list items), `<scheme:...>` autolinks and e-mail addresses; refusals are shown with every ASCII punctuation mark escaped (`ui.as_literal_markdown`), so a raw `not_covered` name cannot form a link or image. Checked with markdown-it-py (CommonMark). |

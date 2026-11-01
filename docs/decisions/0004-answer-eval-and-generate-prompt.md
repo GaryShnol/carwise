@@ -190,3 +190,23 @@ again because the default did not change.
 > stayed: changes are kept only when the measurement says so. An eval-only check for answers that
 > wrongly say a figure is "not mentioned" found one such case in 207 answers. The samples are
 > small; numbers are reported per run and per question.
+
+## Addendum (2026-11-01, CW-607): which number is the headline
+
+The published headline for generate v3 on `final` is now **62/69, as graded**; 64/69 is reported
+next to it as "after a checker fix". The README note above, which leads with 64, is superseded.
+
+Why: all four corrections listed above were found by reading failing runs only. Passing runs were
+never audited for false passes, so each correction could only raise a score. When they came in:
+
+- Corrections 1, 2 and 4 (the judge criterion for the Kia/Aion question, changed after its
+  verdicts on `dev` runs were seen) were made on `dev` runs, before the `final` runs. The `final`
+  v3 run was graded with them in place: 62/69 (`final/v3/answer-tuning-final.md`).
+- Correction 3 (sentences split inside citations) was found by reading that run's failures. It
+  changes one question, `compare-pricier-elantra-link`, from 1/3 to 3/3: 64/69
+  (`final/v3/answer-tuning-rescored-final.md`).
+
+The v3 / v4 / v5 decision above is unaffected: it compares re-scored numbers produced by the same
+checks for all three prompts. The hold-out (15/18) was graded once and not re-scored. Later code
+changes that would touch these answers (CW-405 preference grounding, CW-606 the eight-cars
+statement added in code) were not measured: the answer eval was not re-run.
