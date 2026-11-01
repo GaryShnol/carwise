@@ -269,12 +269,15 @@ def comparison_markdown(reports: dict[str, RetrievalReport]) -> str:
             f"{_share_above(probe_scores, good.median)} | {_num(gap)} |"
         )
 
+    # The chunk count comes from the reports, so a rebuilt corpus is labelled by its own size.
+    counts = {r.resources.get("chunks") for r in reports.values()} - {None}
+    build = f"Index build s ({counts.pop()} chunks)" if len(counts) == 1 else "Index build s"
     lines += [
         "",
         "## Cost and size (CPU)",
         "",
         "| Candidate | Token window | Chunks over window (max tokens) | Model load s | "
-        "Index build s (75 chunks) | Query p50 / p95 ms | Disk MB | Weights MB | Peak RSS MB |",
+        f"{build} | Query p50 / p95 ms | Disk MB | Weights MB | Peak RSS MB |",
         "|---|---|---|---|---|---|---|---|---|",
     ]
     for name, report in reports.items():
