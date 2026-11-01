@@ -8,9 +8,13 @@ only (the repository is public); car ids come from the registry.
 
 from __future__ import annotations
 
+import re
 from datetime import date
 from typing import Any
 
+import pytest
+
+from carwise import guardrails
 from carwise.config import load_settings
 from carwise.llm.fake import FakeLLMClient
 from carwise.pipeline import Pipeline
@@ -18,7 +22,14 @@ from carwise.preferences import Session
 from carwise.registry import load_registry
 from carwise.retrieval.embedder import FakeEmbedder, Vector
 from carwise.retrieval.retriever import Retriever
-from carwise.schemas import Chunk, Generation, Intent, RetrievedChunk, Understanding
+from carwise.schemas import (
+    Chunk,
+    Generation,
+    Intent,
+    RefusalReason,
+    RetrievedChunk,
+    Understanding,
+)
 
 REGISTRY = load_registry()
 LOADED = load_settings()
@@ -168,3 +179,136 @@ def test_fact_and_compare_still_restrict_to_the_named_cars() -> None:
     assert retriever.calls == ["search", "search_per_car"]
     assert {h.chunk.car for h in fact.retrieved} == {"kia_ev9"}
     assert {h.chunk.car for h in compare.retrieved} == {"kia_ev9", "link_and_co_01"}
+
+
+# --- CW-606: a recommendation or ranking says it covers only the eight cars ------------
+SCOPED = [
+    "מבין שמונה הרכבים שנבחנו, MG S6 הכי מתאים.",
+    "MG S6 הכי מהיר מבין 8 הרכבים בכתבות.",
+    "מתוך שמונת הדגמים שנבחנו, איון HT הכי זול.",
+    "לפי שמונה כתבות המבחן, MG S6 מתאים.",
+    "בין שמונה כלי הרכב שנבחנו, MG S6 מתאים.",
+    "מבין השמונה שנבחנו, איון HT הכי זול.",
+    "מתוך שמונת שנסקרו, MG S6 מתאים.",
+    "MG S6 הכי מתאים מבין השמונה.",
+    "מתוך ה-8, איון HT הכי זול.",
+    "מכל הרכבים השמונה, MG S6 הכי מהיר.",
+    "בין השמונה שבכתבות, איון HT מתאים.",
+    "הזול ביותר מהשמונה הוא סיטרואן C3.",
+    "הכי מהיר מהשמונה: אודי RS3.",
+    "מתוך השמונה – MG S6 הכי מתאים.",
+    "MG S6 הכי מתאים מבין ה-8",
+    "**שמונה** הרכבים שנבחנו כוללים את MG S6.",
+    'מבין "שמונה" הרכבים, MG S6 מתאים.',
+    "ומבין השמונה, MG S6 הכי מתאים.",
+    "לכל השמונה יש מסך מגע.",
+    guardrails.SCOPE_NOTE,
+]
+UNSCOPED = [
+    "MG S6 הכי מתאים למשפחה (MG S6, פרק).",
+    "לאיון HT יש תיבה בת שמונה הילוכים.",
+    "MG S6 מאיץ בשמונה שניות.",
+    "שמונים רכבים נמכרו.",
+    "18 רכבים נבדקו.",
+    "יש לו שמונה מושבים.",
+    "ברכב 8 כריות אוויר.",
+    "ניתנות שמונה שנות אחריות.",
+    "השמונה שניות האלה מרשימות.",
+    "בשמונה שעבר הוא נמכר.",
+    "כל השמונה שניות עברו מהר.",
+    "בין השמונה לתשע שניות.",
+    "רוב הרכבים מאיצים בין השמונה לעשר שניות.",
+    "מבין השמונה שניות, רוב הזמן הוא בהילוך ראשון.",
+    "כל ה-8 שניות עברו מהר.",
+    "בין ה-8 ל-9 שניות.",
+    "מבין ה-8 שניות, שתיים בהילוך ראשון.",
+    'מתוך ה-8 קמ"ש הראשונים.',
+    "בין ה-8-9 שניות.",
+    "בין ה-8.5 ל-9 שניות.",
+    "בשמונה שניות.",
+]
+
+
+@pytest.mark.parametrize("text", SCOPED)
+def test_scope_statement_is_detected_in_several_phrasings(text: str) -> None:
+    assert guardrails.states_scope(text)
+
+
+@pytest.mark.parametrize("text", UNSCOPED)
+def test_eight_of_something_else_is_not_a_scope_statement(text: str) -> None:
+    assert not guardrails.states_scope(text)
+
+
+def test_scope_note_cannot_trip_the_post_check() -> None:
+    brands = SETTINGS.guardrails.outside_brands
+    note = guardrails.SCOPE_NOTE
+    assert not re.search(r"\d", note) and guardrails.answer_text_problem(note) is None
+    assert guardrails.cars_in_text(note, REGISTRY, brands) == []
+    assert guardrails.unsupported_cars(note, [], [], REGISTRY, brands) == []
+    allowed = SETTINGS.guardrails.numbers_always_allowed
+    assert guardrails.unsupported_numbers(note, [], [], REGISTRY, allowed) == []
+
+
+def test_recommendation_without_the_statement_gets_it_once() -> None:
+    pipeline, llm, _ = _pipeline()
+    text = "MG S6 הכי מתאים למשפחה (MG S6, פרק)."
+    llm.add(plan(Intent.RECOMMEND, []), Generation(answer=text, used_chunk_ids=["mg_s6:000"]))
+    answer = pipeline.ask(f"{FAMILY}?", [])
+    assert answer.text == f"{guardrails.SCOPE_NOTE}\n\n{text}"
+    assert answer.text.count(guardrails.SCOPE_NOTE) == 1
+    assert [source.chunk_id for source in answer.sources] == ["mg_s6:000"]
+    assert answer.refusal is None and "scope_note_added" in answer.flags
+    assert answer.post_check is not None and not answer.post_check.attempts[0].suspect
+
+
+def test_ranking_follow_up_does_not_stack_the_note() -> None:
+    """Each turn is checked on its own answer: a second ranking turn gets one note too."""
+    pipeline, llm, _ = _pipeline()
+    session = Session(history_window=SETTINGS.llm.history_window)
+    llm.add(
+        plan(Intent.RECOMMEND, []),
+        reply("הכי מהיר: MG S6."),
+        plan(Intent.RECOMMEND, []),
+        reply("הכי זול: איון HT."),
+    )
+    pipeline.answer("מה הכי מהיר?", session)
+    second = pipeline.answer("ומה הכי זול?", session)
+    assert second.text.count(guardrails.SCOPE_NOTE) == 1
+
+
+# The digit form is detected too, but the numeric check flags "8" in a model answer.
+@pytest.mark.parametrize("text", [SCOPED[0], *SCOPED[2:6]])
+def test_recommendation_that_states_the_scope_is_unchanged(text: str) -> None:
+    pipeline, llm, _ = _pipeline()
+    llm.add(plan(Intent.RECOMMEND, []), reply(text))
+    answer = pipeline.ask(f"{FAMILY}?", [])
+    assert answer.text == text and "scope_note_added" not in answer.flags
+
+
+@pytest.mark.parametrize(
+    ("intent", "cars"), [(Intent.FACT, ["kia_ev9"]), (Intent.COMPARE, NAMED[:2])]
+)
+def test_fact_and_compare_answers_never_get_the_note(intent: Intent, cars: list[str]) -> None:
+    pipeline, llm, _ = _pipeline()
+    llm.add(plan(intent, cars), reply("תשובה קצרה (קיה EV9, פרק)."))
+    answer = pipeline.ask("כמה טווח לקיה EV9?", [])
+    assert guardrails.SCOPE_NOTE not in answer.text and "scope_note_added" not in answer.flags
+
+
+def test_fallback_after_a_failed_post_check_does_not_get_the_note() -> None:
+    pipeline, llm, _ = _pipeline()
+    invented = reply("MG S6 עולה 999 אלף שקל.")  # a number no chunk states, twice
+    llm.add(plan(Intent.RECOMMEND, []), invented, invented)
+    answer = pipeline.ask(f"{FAMILY}?", [])
+    assert answer.refusal is RefusalReason.UNVERIFIED
+    assert guardrails.SCOPE_NOTE not in answer.text
+
+
+def test_clarifying_question_of_a_recommendation_also_gets_the_note() -> None:
+    """Deliberate: rule 8 replaces the recommendation, not the scope, with the question,
+    and the user learns the scope before answering it."""
+    pipeline, llm, _ = _pipeline()
+    question = "מה התקציב שלך?"
+    llm.add(plan(Intent.RECOMMEND, []), reply(question))
+    answer = pipeline.ask("איזה רכב כדאי לי?", [])
+    assert answer.text == f"{guardrails.SCOPE_NOTE}\n\n{question}"

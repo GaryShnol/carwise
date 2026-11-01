@@ -544,5 +544,48 @@ def budget_reply(max_cost_usd: float) -> str:
     )
 
 
+# --- scope of a recommendation (CW-606) ------------------------------------------------
+# Prompt rule 8 asks every recommendation or ranking to say it covers only the eight
+# reviewed cars; the eval showed the model leaving it out, so code adds it when missing.
+# No digits and no car names: the post-check could never count it as a claim.
+SCOPE_NOTE = "אני מתייחס רק לשמונה הרכבים שנבחנו בכתבות."
+# "Eight" stated about the reviewed cars, in the phrasings answers use (up to three
+# prefixes on "eight": "מבין שמונה", "לשמונת", "מ-8", "השמונה"):
+# - eight, then a word for the cars or their articles: "שמונה הרכבים", "8 כתבות";
+# - eight, then a relative clause about the review: "השמונה שנבחנו", "שמונת שבכתבות";
+# - the cars, then eight: "הרכבים השמונה";
+# - "among the eight" with no noun ("מבין השמונה", "מתוך ה-8", "מהשמונה"), only where
+#   the phrase ends: punctuation, the end of the text, a review clause, or a pronoun or
+#   "יש"/"אין" that starts the next clause ("הזול מהשמונה הוא ..."). So "בין השמונה
+#   לתשע שניות" or "כל ה-8 שניות" is not a scope statement. Attached ב is left out:
+#   "בשמונה" is "in eight", as in "בשמונה שניות".
+# A bare "שמונה" is not enough: "שמונה הילוכים", "בשמונה שניות" or "שמונה שנות
+# אחריות" say nothing about the scope. The clause verbs are listed, not any word
+# starting with ש, because "שניות", "שנים" and "שעות" start with it too.
+# Accepted limits (they only leave the note out): an "eight cars" phrase about
+# something else, such as "8 רכבים נמכרו" or "שמונה דגמים של מותג אחר".
+_EIGHT = rf"(?<!\w)[{HEBREW_PREFIXES}]{{0,{_MAX_PREFIXES}}}[-־]?(?:שמונה|שמונת|8)"
+_FLEET = r"ה?(?:רכבים|רכבי|מכוניות|דגמים|דגמי|כתבות|מבחנים|מבחני)|כלי\s+ה?רכב"
+_REVIEWED = r"ש(?:נבחנו|נסקרו|נבדקו|הוצגו|נכללו|מופיעים|מופיעות|בכתבות|במבחנים|במבחן|במאגר)"
+_FLEET_FIRST = rf"(?<!\w)[{HEBREW_PREFIXES}]{{0,{_MAX_PREFIXES}}}ה(?:רכבים|מכוניות|דגמים|כתבות)"
+_AMONG = r"(?<!\w)ו?(?:(?:מבין|מתוך|בין|מכל|לכל|כל)\s+|מ)ה[-־]?(?:שמונה|8)"
+# A decimal point is not the end of a phrase ("ה-8.5"), and a dash ends it only with a
+# space before it: "8-9" and "8–9" are ranges.
+_NEXT_CLAUSE = rf"(?:{_REVIEWED}|הוא|היא|הם|הן|זה|זו|יש|אין)(?!\w)"
+_PHRASE_END = rf"(?=\s*(?:[.,](?!\d)|[:;!?)])|\s+[-–—]|\s*$|\s+{_NEXT_CLAUSE})"
+_EIGHT_CARS = re.compile(
+    rf"{_EIGHT}\s+(?:{_FLEET}|{_REVIEWED})(?!\w)"
+    rf"|{_FLEET_FIRST}\s+ה[-־]?(?:שמונה|8)(?!\w)"
+    rf"|{_AMONG}{_PHRASE_END}"
+)
+# Markdown emphasis and quotes may sit inside the phrase: "**שמונה** הרכבים".
+_EMPHASIS = str.maketrans("", "", '*"')
+
+
+def states_scope(answer: str) -> bool:
+    """True when the answer already says it covers only the eight reviewed cars."""
+    return bool(_EIGHT_CARS.search(normalize(answer).translate(_EMPHASIS)))
+
+
 EMPTY_REPLY = "לא התקבלה שאלה. על איזה רכב אפשר לעזור?"
 LLM_ERROR_REPLY = "משהו השתבש ביצירת התשובה. אפשר לנסות שוב בעוד רגע?"

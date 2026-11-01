@@ -478,7 +478,9 @@ class Pipeline:
         generation: Generation,
         check: PostCheck,
     ) -> Answer:
-        """Citations are checked in code: an id the model did not receive is dropped."""
+        """Citations are checked in code: an id the model did not receive is dropped.
+        A recommendation or ranking (both are Intent.RECOMMEND) that does not say it
+        covers only the eight reviewed cars gets guardrails.SCOPE_NOTE first (CW-606)."""
         by_id = {hit.chunk.chunk_id: hit.chunk for hit in hits}
         cited = list(dict.fromkeys(generation.used_chunk_ids))
         dropped = [chunk_id for chunk_id in cited if chunk_id not in by_id]
@@ -494,9 +496,14 @@ class Pipeline:
             )
             for chunk in (by_id[chunk_id] for chunk_id in cited if chunk_id in by_id)
         ]
-        return self._reply(
-            turn, generation.answer, None, plan, hits, sources, dropped, post_check=check
-        )
+        text = generation.answer
+        # Added after the post-check, which judges only the model's words; the note
+        # has no number or car name, and refusals and the fallback never get it. A blank
+        # line keeps it its own paragraph, so an answer opening with a list still renders.
+        if plan.intent is Intent.RECOMMEND and not guardrails.states_scope(text):
+            text = f"{guardrails.SCOPE_NOTE}\n\n{text}"
+            turn.flags.append("scope_note_added")
+        return self._reply(turn, text, None, plan, hits, sources, dropped, post_check=check)
 
     # --- helpers ------------------------------------------------------------------------
     @staticmethod
