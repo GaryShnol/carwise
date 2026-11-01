@@ -41,7 +41,7 @@ from carwise.prompts import (
     understand_system,
 )
 from carwise.registry import Registry
-from carwise.retrieval.retriever import ChunkRetriever
+from carwise.retrieval.retriever import ChunkRetriever, Query
 from carwise.schemas import (
     Answer,
     CheckFindings,
@@ -414,33 +414,37 @@ class Pipeline:
 
         A recommendation (or ranking) always searches all cars (CW-306): the cars the
         plan names, often carried over from earlier answers, are only a hint, so a
-        car the user never mentioned can still be the best match.
+        car the user never mentioned can still be the best match. The question is
+        embedded once and reused by the spec-box search (CW-614).
         """
         config = self._settings.retrieval
+        query = self._retriever.embed(plan.question)
         if plan.intent is Intent.RECOMMEND:
             hits = self._retriever.search_all(
-                plan.question, config.cross_car_top_k, config.cross_car_per_car_cap
+                query, config.cross_car_top_k, config.cross_car_per_car_cap
             )
             # The hint: each named car's spec box joins the candidates, never filters them.
-            return self._with_spec_boxes(plan, hits) if plan.cars else hits
+            return self._with_spec_boxes(query, plan, hits) if plan.cars else hits
         if len(plan.cars) > 1:
-            hits = self._retriever.search_per_car(plan.question, plan.cars, config.per_car_cap)
+            hits = self._retriever.search_per_car(query, plan.cars, config.per_car_cap)
         elif plan.cars:
-            hits = self._retriever.search(plan.question, plan.cars, config.top_k)
+            hits = self._retriever.search(query, plan.cars, config.top_k)
         else:
             return self._retriever.search_all(
-                plan.question, config.cross_car_top_k, config.cross_car_per_car_cap
+                query, config.cross_car_top_k, config.cross_car_per_car_cap
             )
         if config.force_spec_box and plan.intent is Intent.COMPARE:
             # Option B: comparisons need each car's price and figures, which sit in its
             # spec box, whatever its similarity to the wording of the question.
-            hits = self._with_spec_boxes(plan, hits)
+            hits = self._with_spec_boxes(query, plan, hits)
         return hits
 
-    def _with_spec_boxes(self, plan: _Plan, hits: list[RetrievedChunk]) -> list[RetrievedChunk]:
+    def _with_spec_boxes(
+        self, query: Query, plan: _Plan, hits: list[RetrievedChunk]
+    ) -> list[RetrievedChunk]:
         """The hits, then each named car's spec box that is not among them yet."""
         have = {hit.chunk.chunk_id for hit in hits}
-        extra = self._retriever.spec_boxes(plan.question, plan.cars)
+        extra = self._retriever.spec_boxes(query, plan.cars)
         return hits + [hit for hit in extra if hit.chunk.chunk_id not in have]
 
     def _suggest(
