@@ -30,7 +30,7 @@ The assignment estimates 3 to 5 hours and asks for clarity and decisions rather 
 | P2 | Role signals: telemetry, injection hygiene, numeric check, embedding comparison, tuning, Docker, CI, GitHub setup | 8 | 9 |
 | P3 | Nice to have: none before E6 | 0 | 0 |
 
-The table counts E0 to E5 (the `v1.0` scope). E6, the review fixes, adds 9 P1, 10 P2 and 6 P3 tickets, all size S (CW-621 to CW-624 were added after the review: Docker compose, the review document, the post-review eval and the release notes; CW-625 onward are display and documentation polish after `v1.0.1`, on `fix/display-polish`).
+The table counts E0 to E5 (the `v1.0` scope). E6, the review fixes, adds 9 P1, 10 P2 and 7 P3 tickets, all size S (CW-621 to CW-624 were added after the review: Docker compose, the review document, the post-review eval and the release notes; CW-625 onward are display and documentation polish after `v1.0.1`, on `fix/display-polish`).
 
 A P1 ticket never depends on a P2 or P3 ticket, so cutting from the bottom never breaks the submission.
 
@@ -74,8 +74,8 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E3 Measurement | none | 4 | 4 | 6 | DONE (PR #4) |
 | E4 Interface and packaging | none | 4 | 4 | 5 | DONE (PR #5) |
 | E5 Documentation and release | `v1.0` | 3 | 3 | 4 | DONE (PR #6, tag `v1.0`) |
-| E6 Review fixes | `v1.0.1` | 25 | 25 | 25 | DONE (PR #7, tag `v1.0.1`; CW-625 onward on `fix/display-polish`) |
-| **Total** |  | **51** | **51** | **63** |  |
+| E6 Review fixes | `v1.0.1` | 26 | 26 | 26 | DONE (PR #7, tag `v1.0.1`; CW-625 onward on `fix/display-polish`) |
+| **Total** |  | **52** | **52** | **64** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -190,6 +190,7 @@ Branch: `epic/e6-review-fixes` | Tag: `v1.0.1` (owner, after the merge)
 | CW-623 | Post-review answer eval, frozen checker and judge | `test` | S | P1 | DONE | CW-606 |
 | CW-624 | CHANGELOG `v1.0.1`, E6 to IN REVIEW, PR description | `docs` | S | P2 | DONE | CW-623 |
 | CW-625 | Remove a stray comma in the greeting | `fix` | S | P3 | DONE |  |
+| CW-626 | README: exclusivity claims built from absence | `docs` | S | P3 | DONE |  |
 
 ## Ticket details and acceptance criteria
 
@@ -437,6 +438,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Date | Change |
 |---|---|
+| 2026-11-02 | CW-626 done: README Known limitations notes exclusivity claims built from absence ("only X offers Y" when retrieval missed Y for the other cars); same cause as the wrong "not mentioned", next step named. |
 | 2026-11-02 | CW-625 done: the greeting reads "על רכבים רק לפי כתבות המבחן" (stray comma removed); a test in `tests/test_pipeline.py` guards it. |
 | 2026-11-02 | E6 merged (PR #7) and released as v1.0.1. |
 | 2026-11-02 | CW-621 to CW-624 added to E6 (24 tickets, all DONE); E6 IN REVIEW. CW-623: post-review answer eval on `final` (tuning 64/69, hold-out 16/18, $0.5233), reports committed, README and ADR 0004 addendum; changes within run-to-run noise. CW-624: CHANGELOG `v1.0.1`. |

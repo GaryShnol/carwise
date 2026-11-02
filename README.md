@@ -585,6 +585,12 @@ From the measurements and the Backlog in [`BOARD.md`](BOARD.md):
   in 207 that said a figure was missing while a retrieved chunk stated it. A first version had
   8 false positives in 9 flags. Next: promote it to the post-check (a regenerate on a hit) once
   a longer run shows it is precise.
+- **Exclusivity claims built from absence.** In a filtered recommendation the bot can state 'only X
+  offers Y' when the retrieved chunks do not mention Y for the other cars (seen in a manual run: it
+  said only the Elantra N is offered with a manual gearbox, but the Citroën C3 article lists a
+  manual version, and it called the gearbox 'not mentioned' for cars whose articles name it). Same
+  cause as the wrong 'not mentioned' above: retrieval returns a few chunks per car. Next: check an
+  exclusivity claim against all chunks of the other cars.
 - **"In another article" phrasing, rarely.** Generate v3 produced none in 69 eval answers, but
   v5 produced it twice, v3 still calls sources "excerpts" in 8 of 69 answers, and the UI
   screenshot above shows a near variant ("בגרסה אחרת"). Next: measure a
