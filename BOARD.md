@@ -30,7 +30,7 @@ The assignment estimates 3 to 5 hours and asks for clarity and decisions rather 
 | P2 | Role signals: telemetry, injection hygiene, numeric check, embedding comparison, tuning, Docker, CI, GitHub setup | 8 | 9 |
 | P3 | Nice to have: none before E6 | 0 | 0 |
 
-The table counts E0 to E5 (the `v1.0` scope). E6, the review fixes, adds 8 P1, 7 P2 and 5 P3 tickets, all size S.
+The table counts E0 to E5 (the `v1.0` scope). E6, the review fixes, adds 9 P1, 10 P2 and 5 P3 tickets, all size S (CW-621 to CW-624 were added after the review: Docker compose, the review document, the post-review eval and the release notes).
 
 A P1 ticket never depends on a P2 or P3 ticket, so cutting from the bottom never breaks the submission.
 
@@ -74,8 +74,8 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E3 Measurement | none | 4 | 4 | 6 | DONE (PR #4) |
 | E4 Interface and packaging | none | 4 | 4 | 5 | DONE (PR #5) |
 | E5 Documentation and release | `v1.0` | 3 | 3 | 4 | DONE (PR #6, tag `v1.0`) |
-| E6 Review fixes | `v1.0.1` | 20 | 20 | 20 | IN PROGRESS |
-| **Total** |  | **46** | **46** | **58** |  |
+| E6 Review fixes | `v1.0.1` | 24 | 24 | 24 | IN REVIEW |
+| **Total** |  | **50** | **50** | **62** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -185,6 +185,10 @@ Branch: `epic/e6-review-fixes` | Tag: `v1.0.1` (owner, after the merge)
 | CW-618 | CI doc: retrieval eval is manual, and why (CR-018) | `docs` | S | P3 | DONE |  |
 | CW-619 | Adversarial post-check test set (CR-019) | `test` | S | P2 | DONE | CW-601, CW-603 |
 | CW-620 | Judge and recording caveats (CR-020) | `docs` | S | P3 | DONE |  |
+| CW-621 | One-command Docker start with `compose.yaml` | `feat` | S | P2 | DONE | CW-605 |
+| CW-622 | The v1.0 code review in `docs/review/` with an E6 status table | `docs` | S | P2 | DONE |  |
+| CW-623 | Post-review answer eval, frozen checker and judge | `test` | S | P1 | DONE | CW-606 |
+| CW-624 | CHANGELOG `v1.0.1`, E6 to IN REVIEW, PR description | `docs` | S | P2 | DONE | CW-623 |
 
 ## Ticket details and acceptance criteria
 
@@ -432,6 +436,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Date | Change |
 |---|---|
+| 2026-11-02 | CW-621 to CW-624 added to E6 (24 tickets, all DONE); E6 IN REVIEW. CW-623: post-review answer eval on `final` (tuning 64/69, hold-out 16/18, $0.5233), reports committed, README and ADR 0004 addendum; changes within run-to-run noise. CW-624: CHANGELOG `v1.0.1`. |
 | 2026-11-01 | Verifier follow-ups to CW-607, CW-609, CW-617: the README architecture line counts the user's own words as number sources; the re-score note says it also ran the false "not mentioned" check (no pass changed); the candidates report header takes its chunk count from the reports. |
 | 2026-11-01 | CW-620 done: README Caveats and an ADR 0004 addendum: the judge is the generator's vendor and family, emits `passed` before `reason`, and has no human-labelled calibration; the retrieval eval replays one recorded understand sample (43 cases), so its numbers hold for those plans. Judge schema unchanged. |
 | 2026-11-01 | CW-618 done: `docs/ci.md` says the retrieval eval is manual by the owner's E4 scope decision (CW-403: offline, free, secret-free pushes), not a blocked site; notes the deviation from CLAUDE.md sections 13 and 14 and its cost (a retrieval regression can merge with green CI). |

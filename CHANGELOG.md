@@ -3,6 +3,35 @@
 Release notes per tag. Tickets and their acceptance criteria are in [BOARD.md](BOARD.md);
 measurements are in the ADRs under [docs/decisions/](docs/decisions/).
 
+## v1.0.1 (2026-11-02)
+
+Fixes from the independent code review of `v1.0`
+([docs/review/](docs/review/), CR-001 to CR-020 map to CW-601 to CW-620).
+
+### E6: Review fixes
+
+- Car-name matching: a short alias next to another brand or a sibling-model word is not the
+  corpus car (CW-601); a short Hebrew outside brand no longer matches ordinary words (CW-602).
+- Numeric post-check accepts only the user's own words, never the understand rewrite (CW-603).
+- "Covers only the eight reviewed cars" is added in code to recommendations and rankings
+  that lack it (CW-606); off-topic requests are refused even when they name a car (CW-608).
+- Docker binds to localhost only, with a process-wide spend cap (CW-605); one-command start
+  with `compose.yaml` (CW-621).
+- Link filter handles reference-style links, images and escaped names (CW-611); output-token
+  caps and a per-turn deadline (CW-612); the query is embedded once per turn (CW-614);
+  telemetry logs only a count of uncovered names (CW-613).
+- Corpus manifest with per-article hashes, a warning at ingest, and the fingerprint in every
+  report (CW-610); adversarial post-check test set (CW-619).
+- Docs: headline answer score 62/69 with the re-scoring bias stated (CW-607), what the car-name
+  and numeric checks cover (CW-604, CW-609), judge caveats (CW-620), CI and ADR notes and stale
+  counts (CW-615 to CW-618), and the review itself with a status table (CW-622).
+- Post-review answer eval on `final`, 3 runs, frozen checker and judge (CW-623): tuning 64/69
+  (single_fact 12/12, comparison 17/18, recommendation 4/6, ranking 4/6, follow_up 6/6,
+  trap 21/21), hold-out 16/18 (9/9, 5/6, 2/3), $0.5233, tuning graded turn p50 2445 ms / p95 4659 ms,
+  same behavior 23/23, same numbers 12/23, post-check clean on 60 + 18 answers. The changes
+  against `v1.0` are within run-to-run noise
+  ([ADR 0004](docs/decisions/0004-answer-eval-and-generate-prompt.md)).
+
 ## v1.0 (2026-10-31)
 
 The first complete release: a Hebrew chatbot grounded in eight auto.co.il road-test articles,
