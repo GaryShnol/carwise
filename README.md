@@ -361,6 +361,18 @@ re-scored from the logged answers after a checker fix (the re-score also ran the
 | trap | 21/21 | 21/21 |
 | **total** | **62/69 (90%)** | 64/69 (93%) |
 
+**Post-review run (2026-11-01), frozen checker and judge**, a fresh 3-run eval after the E6
+fixes, CW-405 and CW-606 included ([report](eval/reports/answer/final/v3-post-review/answer-tuning-final.md),
+[diff](eval/reports/answer/final/v3-post-review/diff-v3-post-review.md)): tuning **64/69**
+(single_fact 12/12, comparison 17/18, recommendation 4/6, ranking 4/6, follow_up 6/6,
+trap 21/21); hold-out **16/18** (single_fact 9/9, comparison 5/6, ranking 2/3); cost $0.5233 for
+both sets, judge included; graded turn p50 2445 ms, p95 4659 ms; stability: same behavior in
+23/23, same numbers in 12/23; post-check clean on all 60 + 18 generated answers. Against the
+re-scored 64/69, two questions went down and two went up; that is within the run-to-run noise,
+not an improvement or a regression. No run failed on the eight-cars statement or the passenger
+count this time; the five failed runs were three attribution flags, one false "not mentioned"
+and one judge verdict.
+
 - **Headline: 62/69.** The 64/69 is not an independent second measurement. Its one change is a
   price comparison (Elantra N against Link & Co 01) going from 1/3 to 3/3: the attribution
   check split a citation at the "?" ending a section name and read the car names in it as
@@ -379,7 +391,7 @@ re-scored from the logged answers after a checker fix (the re-score also ran the
   both times. The cause was the preference grounding check, which rejected a count normalized
   to digits when the user wrote it as a word. CW-405 fixed that check after this run, and
   CW-606 now adds the eight-cars statement in code when a recommendation or ranking lacks it;
-  the answer eval was not re-run after either, so these failures stay in the published numbers.
+  these failures stay in this run's numbers, and the post-review run above measured both fixes.
   None of the failures was a retrieval failure or a post-check fallback, and no trap failed.
 - **Stability:** the same behavior in 23/23 questions, the same numbers in 15/23, identical text
   in 28% of answer pairs.
@@ -396,7 +408,11 @@ re-scored from the logged answers after a checker fix (the re-score also ran the
 ([report](eval/reports/answer/final/holdout-v3/answer-holdout-final.md)): **15/18**. Single facts
 9/9, comparisons 3/6, ranking 3/3; post-check clean on all 18; $0.0409. All three misses are the
 prose-only MG S6 top speed: the answer says the figure is not mentioned in the articles instead
-of inventing one.
+of inventing one. The post-review run
+([report](eval/reports/answer/holdout-post-review/answer-holdout-final.md)) scored **16/18**: the
+MG S6 top speed passed in 2 of 3 runs, because those rewrites of the question retrieved the
+chunk with the figure, not because of a fix; one run of the most-expensive ranking missed a
+required keyword.
 
 ### Caveats
 

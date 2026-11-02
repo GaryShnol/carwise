@@ -209,7 +209,8 @@ never audited for false passes, so each correction could only raise a score. Whe
 The v3 / v4 / v5 decision above is unaffected: it compares re-scored numbers produced by the same
 checks for all three prompts. The hold-out (15/18) was graded once and not re-scored. Later code
 changes that would touch these answers (CW-405 preference grounding, CW-606 the eight-cars
-statement added in code) were not measured: the answer eval was not re-run.
+statement added in code) were not measured in that run; the post-review run in the addendum
+below measured them.
 
 ## Addendum (2026-11-01, CW-620): judge caveats
 
@@ -218,3 +219,19 @@ would need a new judged run: the judge (gpt-5.4) is the same vendor and family a
 (gpt-5.4-mini); its `Verdict` schema in `eval/judge.py` emits `passed` before `reason`, so the
 verdict is written before its justification; and no human-labelled set measures its agreement
 with a person.
+
+## Addendum (2026-11-01, CW-623): post-review answer eval
+
+A fresh 3-run eval of generate v3 on `final`, after the E6 fixes (CW-405 and CW-606 included),
+with the checker and judge frozen (judge criteria v3). Reports:
+`final/v3-post-review/answer-tuning-final.md` and `holdout-post-review/answer-holdout-final.md`.
+
+- Tuning: **64/69** (single_fact 12/12, comparison 17/18, recommendation 4/6, ranking 4/6,
+  follow_up 6/6, trap 21/21). Hold-out: **16/18** (single_fact 9/9, comparison 5/6, ranking 2/3).
+- Cost $0.5233 for both sets, judge included. Graded turn p50 2445 ms, p95 4659 ms.
+- Stability: same behavior in 23/23, same numbers in 12/23. Post-check clean on 60 + 18 answers.
+- Against the re-scored 64/69, two questions went down and two went up: run-to-run noise, not a
+  change in the system. The hold-out gain on the MG S6 top speed comes from variation in how the
+  question was rewritten (two of three rewrites retrieved the chunk with the figure), not from a fix.
+
+The decision to keep v3 stands.
