@@ -2,7 +2,7 @@
 
 Living task board for the project, kept in the repository like a lightweight Jira. It is the single source of truth for scope and progress. Rules for updating it are in `CLAUDE.md`, section 19.
 
-**Last updated:** 2026-11-01
+**Last updated:** 2026-11-02
 **Release target:** `v1.0`
 **Effort budget:** the assignment suggests 3 to 5 hours, and the owner accepts more time in exchange for a solid result. Target: all P1 and P2 tickets of E0 to E5 (38 points, about 6 to 7 hours with Claude Code assistance); P3 only if time allows. Points: S = 1, M = 2, L = 3.
 
@@ -74,7 +74,7 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E3 Measurement | none | 4 | 4 | 6 | DONE (PR #4) |
 | E4 Interface and packaging | none | 4 | 4 | 5 | DONE (PR #5) |
 | E5 Documentation and release | `v1.0` | 3 | 3 | 4 | DONE (PR #6, tag `v1.0`) |
-| E6 Review fixes | `v1.0.1` | 24 | 24 | 24 | IN REVIEW |
+| E6 Review fixes | `v1.0.1` | 24 | 24 | 24 | DONE (PR #7, tag `v1.0.1`) |
 | **Total** |  | **50** | **50** | **62** |  |
 
 ## Epic E0: Scaffold and source check
@@ -436,6 +436,7 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Date | Change |
 |---|---|
+| 2026-11-02 | E6 merged (PR #7) and released as v1.0.1. |
 | 2026-11-02 | CW-621 to CW-624 added to E6 (24 tickets, all DONE); E6 IN REVIEW. CW-623: post-review answer eval on `final` (tuning 64/69, hold-out 16/18, $0.5233), reports committed, README and ADR 0004 addendum; changes within run-to-run noise. CW-624: CHANGELOG `v1.0.1`. |
 | 2026-11-01 | Verifier follow-ups to CW-607, CW-609, CW-617: the README architecture line counts the user's own words as number sources; the re-score note says it also ran the false "not mentioned" check (no pass changed); the candidates report header takes its chunk count from the reports. |
 | 2026-11-01 | CW-620 done: README Caveats and an ADR 0004 addendum: the judge is the generator's vendor and family, emits `passed` before `reason`, and has no human-labelled calibration; the retrieval eval replays one recorded understand sample (43 cases), so its numbers hold for those plans. Judge schema unchanged. |
