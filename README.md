@@ -366,11 +366,11 @@ fixes, CW-405 and CW-606 included ([report](eval/reports/answer/final/v3-post-re
 [diff](eval/reports/answer/final/v3-post-review/diff-v3-post-review.md)): tuning **64/69**
 (single_fact 12/12, comparison 17/18, recommendation 4/6, ranking 4/6, follow_up 6/6,
 trap 21/21); hold-out **16/18** (single_fact 9/9, comparison 5/6, ranking 2/3); cost $0.5233 for
-both sets, judge included; graded turn p50 2445 ms, p95 4659 ms; stability: same behavior in
+both sets, judge included; tuning graded turn p50 2445 ms, p95 4659 ms; stability: same behavior in
 23/23, same numbers in 12/23; post-check clean on all 60 + 18 generated answers. Against the
 re-scored 64/69, two questions went down and two went up; that is within the run-to-run noise,
-not an improvement or a regression. No run failed on the eight-cars statement or the passenger
-count this time; the five failed runs were three attribution flags, one false "not mentioned"
+not an improvement or a regression. No tuning run failed on the eight-cars statement or the
+passenger count this time; the five failed runs were three attribution flags, one false "not mentioned"
 and one judge verdict.
 
 - **Headline: 62/69.** The 64/69 is not an independent second measurement. Its one change is a
@@ -391,7 +391,8 @@ and one judge verdict.
   both times. The cause was the preference grounding check, which rejected a count normalized
   to digits when the user wrote it as a word. CW-405 fixed that check after this run, and
   CW-606 now adds the eight-cars statement in code when a recommendation or ranking lacks it;
-  these failures stay in this run's numbers, and the post-review run above measured both fixes.
+  these failures stay in this run's numbers; the post-review run above measured both fixes (one
+  hold-out ranking run still lacked the eight-cars statement).
   None of the failures was a retrieval failure or a post-check fallback, and no trap failed.
 - **Stability:** the same behavior in 23/23 questions, the same numbers in 15/23, identical text
   in 28% of answer pairs.
@@ -411,8 +412,8 @@ prose-only MG S6 top speed: the answer says the figure is not mentioned in the a
 of inventing one. The post-review run
 ([report](eval/reports/answer/holdout-post-review/answer-holdout-final.md)) scored **16/18**: the
 MG S6 top speed passed in 2 of 3 runs, because those rewrites of the question retrieved the
-chunk with the figure, not because of a fix; one run of the most-expensive ranking missed a
-required keyword.
+chunk with the figure, not because of a fix; one run of the most-expensive ranking missed the
+eight-cars statement, which the CW-606 code did not add.
 
 ### Caveats
 
@@ -577,6 +578,9 @@ From the measurements and the Backlog in [`BOARD.md`](BOARD.md):
   consumption, but not figures some articles give only in the text (for example top speed). In
   the hold-out, the MG S6 top speed is not retrieved, and the answer says it is not mentioned.
   Next: measure `per_car_cap` 4, or a section-aware query, on new questions, not the hold-out.
+- **The CW-606 eight-cars note can still be missing.** In the post-review hold-out, one run of
+  the most-expensive ranking had neither the statement nor the code-added note; the cause is
+  not yet investigated.
 - **A wrong "not mentioned" is not caught in the pipeline.** An eval-only check found one answer
   in 207 that said a figure was missing while a retrieved chunk stated it. A first version had
   8 false positives in 9 flags. Next: promote it to the post-check (a regenerate on a hit) once

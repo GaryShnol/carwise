@@ -228,7 +228,7 @@ with the checker and judge frozen (judge criteria v3). Reports:
 
 - Tuning: **64/69** (single_fact 12/12, comparison 17/18, recommendation 4/6, ranking 4/6,
   follow_up 6/6, trap 21/21). Hold-out: **16/18** (single_fact 9/9, comparison 5/6, ranking 2/3).
-- Cost $0.5233 for both sets, judge included. Graded turn p50 2445 ms, p95 4659 ms.
+- Cost $0.5233 for both sets, judge included. Tuning graded turn p50 2445 ms, p95 4659 ms.
 - Stability: same behavior in 23/23, same numbers in 12/23. Post-check clean on 60 + 18 answers.
 - Against the re-scored 64/69, two questions went down and two went up: run-to-run noise, not a
   change in the system. The hold-out gain on the MG S6 top speed comes from variation in how the
