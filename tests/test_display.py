@@ -58,7 +58,7 @@ def test_cli_shows_the_short_label_and_citation_keeps_the_full_name(tmp_path: Pa
     long_source = answer.sources[0].model_copy(update={"section": LONG})
     answer = answer.model_copy(update={"sources": [long_source]})
 
-    printed = format_answer(answer, show_cost=False, max_section_chars=MAX)
+    printed = format_answer(answer, show_cost=False, max_section_chars=MAX, registry=REGISTRY)
     assert section_label(LONG, MAX) in printed and LONG not in printed
     assert isinstance(answer.sources[0], Citation) and answer.sources[0].section == LONG
 

@@ -448,7 +448,8 @@ A real conversation on the `final` profile, recorded on 2026-10-31 with
 unedited. Two layout changes: the URLs were removed from the source lines, marked
 "(shortened)", and the questions were piped in, so the terminal did not echo them; each is
 shown after its `שאלה>` prompt the way it looks when typed. The notes in italics after each turn are mine, not part of the output. The whole
-conversation cost $0.021.
+conversation cost $0.021. The recordings keep the inline "(car, section)" markers as the model
+wrote them; the current CLI and UI hide them and show the sources list instead.
 
 A first recording asked about the Toyota as the last turn. By then the history named MG S6 and
 Aion HT, so the turn carried known cars as well as the unknown one, and it went to generation
@@ -604,6 +605,8 @@ From the measurements and the Backlog in [`BOARD.md`](BOARD.md):
 - **Section titles sometimes leak into the answer text.** Citations name the section, and long
   merged section names (an article's FAQ headings run together) end up inside the sentence, as
   in the UI screenshot above. It is in the Backlog in [`BOARD.md`](BOARD.md).
+  The markers are now hidden in the display (CW-627); the cause (the model copies merged chunk
+  titles) remains.
 - **The car-name post-check sees only names it knows.** It matches the eight cars' aliases and
   the outside-brand list. Another model of a corpus brand (Kia EV6), a model named without its
   brand, and a brand missing from the list pass unflagged. On the scripted adversarial set it

@@ -18,7 +18,8 @@ from carwise.llm.openai_client import OpenAIClient
 from carwise.pipeline import Pipeline
 from carwise.preferences import RESET_REPLY, Session
 from carwise.preferences import describe as describe_preferences
-from carwise.registry import load_registry
+from carwise.presentation import strip_inline_citations
+from carwise.registry import Registry, load_registry
 from carwise.retrieval.retriever import open_retriever
 from carwise.retrieval.store import IndexNotReadyError
 from carwise.schemas import Answer, RefusalReason
@@ -55,8 +56,16 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def format_answer(answer: Answer, *, show_cost: bool, max_section_chars: int) -> str:
-    lines = [answer.text]
+def format_answer(
+    answer: Answer, *, show_cost: bool, max_section_chars: int, registry: Registry
+) -> str:
+    """The answer as printed. A generated answer's inline "(car, section)" markers are
+    hidden (CW-627): the sources list below already names every cited chunk. A
+    refusal is code-built text and is printed as is."""
+    text = (
+        answer.text if answer.refusal is not None else strip_inline_citations(answer.text, registry)
+    )
+    lines = [text]
     if answer.sources:
         lines.append("\nמקורות:")
         seen: set[tuple[str, str]] = set()
@@ -95,9 +104,8 @@ def run(args: argparse.Namespace) -> int:
         profile=profile_name,
         models={"understand": profile.understand_model, "generate": profile.generate_model},
     )
-    pipeline = Pipeline(
-        settings, load_registry(), retriever, llm, profile=profile_name, logger=logger
-    )
+    registry = load_registry()
+    pipeline = Pipeline(settings, registry, retriever, llm, profile=profile_name, logger=logger)
     print("טוען את מודל החיפוש...", flush=True)
     retriever.warm_up()  # otherwise the first question pays the model load (~1 min cold)
     print(pipeline.greeting())
@@ -123,6 +131,7 @@ def run(args: argparse.Namespace) -> int:
                 answer,
                 show_cost=args.show_cost,
                 max_section_chars=settings.display.max_section_chars,
+                registry=registry,
             )
         )
         if ends_session(answer):

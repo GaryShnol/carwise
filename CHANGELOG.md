@@ -3,6 +3,12 @@
 Release notes per tag. Tickets and their acceptance criteria are in [BOARD.md](BOARD.md);
 measurements are in the ADRs under [docs/decisions/](docs/decisions/).
 
+## Unreleased
+
+- Stray comma removed from the greeting (CW-625).
+- README note on exclusivity claims built from absence (CW-626).
+- Inline "(car, section)" citation markers hidden in the CLI and UI display (CW-627).
+
 ## v1.0.1 (2026-11-02)
 
 Fixes from the independent code review of `v1.0`
