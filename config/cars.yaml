@@ -6,6 +6,12 @@
 #   that contains Hebrew letters goes in aliases_he, a pure Latin one in
 #   aliases_latin. Brand-only names and very generic model codes ("HT", "N",
 #   "01") are left out, because they would match unrelated text.
+# - brand_names and other_models keep a short alias ("S6", "C3", "Aion",
+#   "אלנטרה") from naming another model (CW-601). An alias is not this car when
+#   another car's brand_names or an outside brand (settings.yaml) stands right
+#   before it ("אאודי S6"), or one of the car's other_models words follows it
+#   ("C3 איירקרוס", "Aion Y"). Such a name is reported as not covered. These
+#   lists only steer name matching; nothing in them is shown as a fact.
 # - body_type and powertrain come from the article text only, never from outside
 #   knowledge. The *_quote field holds the few words of the article that support
 #   the value. If the article does not say it, the value and the quote are null.
@@ -18,6 +24,8 @@ cars:
     display_name: סיטרואן C3
     aliases_he: [סיטרואן C3]
     aliases_latin: [C3]
+    brand_names: [סיטרואן, Citroen, Citroën]
+    other_models: [איירקרוס, אירקרוס, Aircross]
     body_type: supermini
     body_type_quote: סופרמיני מוגבהת
     powertrain: mild_hybrid
@@ -29,6 +37,8 @@ cars:
     display_name: אודי RS3
     aliases_he: [אודי RS3]
     aliases_latin: [RS3]
+    brand_names: [אודי, אאודי, Audi]
+    other_models: []
     body_type: sedan  # offered as hatchback and sedan; the sedan is the tested car
     body_type_quote: ובסדאן … והיא זו שנבחנת כאן
     powertrain: petrol
@@ -40,6 +50,8 @@ cars:
     display_name: קיה EV9
     aliases_he: [קיה EV9]
     aliases_latin: [EV9]
+    brand_names: [קיה, Kia]
+    other_models: []
     body_type: suv
     body_type_quote: רכב פנאי גדול וחשמלי
     powertrain: electric
@@ -51,6 +63,8 @@ cars:
     display_name: MG S6
     aliases_he: []
     aliases_latin: [MG S6, S6]
+    brand_names: [MG, אם ג'י]
+    other_models: [אוונט, Avant]
     body_type: suv
     body_type_quote: רכב פנאי בגודל בינוני (D-SUV)
     powertrain: electric
@@ -62,6 +76,8 @@ cars:
     display_name: יונדאי אלנטרה N
     aliases_he: [יונדאי אלנטרה N, אלנטרה N, אלנטרה]
     aliases_latin: []
+    brand_names: [יונדאי, Hyundai]
+    other_models: [היברידית, היברידי, הייבריד, Hybrid, ליין, Line]
     body_type: null  # the article names the body type of its rivals, not of the Elantra
     body_type_quote: null
     powertrain: petrol
@@ -73,6 +89,8 @@ cars:
     display_name: GAC איון HT
     aliases_he: [GAC איון HT, איון HT]
     aliases_latin: [Aion]  # the article writes the Latin name once, as "איון (Aion)"
+    brand_names: [GAC]
+    other_models: [Y, S, V, LX]
     body_type: suv_coupe
     body_type_quote: רכב פנאי-קופה בגודל בינוני (D-SUV)
     powertrain: electric
@@ -84,6 +102,8 @@ cars:
     display_name: לינק אנד קו 01
     aliases_he: [לינק אנד קו 01, לינק & קו 01]
     aliases_latin: []
+    brand_names: [לינק אנד קו, לינק & קו, Lynk & Co, Lynk]
+    other_models: []
     body_type: suv
     body_type_quote: דגם הפנאי הקומפקטי הזה (C-SUV)
     powertrain: plug_in_hybrid
@@ -95,6 +115,8 @@ cars:
     display_name: ג'נסיס GV80
     aliases_he: [ג'נסיס GV80]
     aliases_latin: [GV80]
+    brand_names: [ג'נסיס, Genesis]
+    other_models: [קופה, Coupe]
     body_type: suv
     body_type_quote: דגם פנאי גדול (E-SUV)
     powertrain: petrol

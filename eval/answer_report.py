@@ -33,6 +33,7 @@ from eval.answer import (
 from eval.judge import PROMPT_VERSION as JUDGE_PROMPT
 from eval.judge import Judged, criteria_change, criteria_version, judge, load_criteria
 from eval.questions import Behavior, Category, Question
+from eval.report import corpus_line, corpus_stamp
 from eval.retrieval import percentile
 
 RUNS_DIR = Path(__file__).parent / "runs"
@@ -111,6 +112,9 @@ class AnswerReport(BaseModel):
     # of identical answer pairs. Empty for reports made before the metric existed.
     stability: dict[str, float] = {}
     post_check: dict[str, int]  # outcome -> count over graded turns
+    # CW-610: which index and which pinned corpus the run used (None in older reports).
+    index_fingerprint: str | None = None
+    corpus_manifest_sha256: str | None = None
 
 
 def run_answer_eval(
@@ -221,6 +225,7 @@ def run_answer_eval(
     for run in every:
         if run.post_check:
             outcomes[run.post_check] = outcomes.get(run.post_check, 0) + 1
+    stamp = corpus_stamp(settings)
     return AnswerReport(
         created=datetime.now(UTC).isoformat(timespec="seconds"),
         question_set=question_set,
@@ -261,6 +266,8 @@ def run_answer_eval(
         notes=[f"judge criteria {criteria_version()}: {criteria_change()}"]
         if criteria_change()
         else [],
+        index_fingerprint=stamp.index_fingerprint,
+        corpus_manifest_sha256=stamp.corpus_manifest_sha256,
     )
 
 
@@ -323,6 +330,7 @@ def markdown(report: AnswerReport) -> str:
         + ("" if report.complete else "; STOPPED EARLY at a cost cap")
         + ".",
         "",
+        *corpus_line(report.index_fingerprint, report.corpus_manifest_sha256),
         f"Cost: answers ${report.cost_usd['answer']:.4f}, judge ${report.cost_usd['judge']:.4f}. "
         f"Tokens: answers {report.tokens['answer_in']} in / {report.tokens['answer_out']} out, "
         f"judge {report.tokens['judge_in']} in / {report.tokens['judge_out']} out.",

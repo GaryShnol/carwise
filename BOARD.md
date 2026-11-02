@@ -2,9 +2,9 @@
 
 Living task board for the project, kept in the repository like a lightweight Jira. It is the single source of truth for scope and progress. Rules for updating it are in `CLAUDE.md`, section 19.
 
-**Last updated:** 2026-10-31
+**Last updated:** 2026-11-01
 **Release target:** `v1.0`
-**Effort budget:** the assignment suggests 3 to 5 hours, and the owner accepts more time in exchange for a solid result. Target: all P1 and P2 tickets (37 points, about 6 to 7 hours with Claude Code assistance); P3 only if time allows. Points: S = 1, M = 2, L = 3.
+**Effort budget:** the assignment suggests 3 to 5 hours, and the owner accepts more time in exchange for a solid result. Target: all P1 and P2 tickets of E0 to E5 (38 points, about 6 to 7 hours with Claude Code assistance); P3 only if time allows. Points: S = 1, M = 2, L = 3.
 
 ## How to use this board
 
@@ -26,9 +26,11 @@ The assignment estimates 3 to 5 hours and asks for clarity and decisions rather 
 
 | Tier | Meaning | Tickets | Points |
 |---|---|---|---|
-| P1 | Everything the assignment asks for, plus the evidence for it | 17 | 28 |
+| P1 | Everything the assignment asks for, plus the evidence for it | 18 | 29 |
 | P2 | Role signals: telemetry, injection hygiene, numeric check, embedding comparison, tuning, Docker, CI, GitHub setup | 8 | 9 |
-| P3 | Nice to have: nothing at present | 0 | 0 |
+| P3 | Nice to have: none before E6 | 0 | 0 |
+
+The table counts E0 to E5 (the `v1.0` scope). E6, the review fixes, adds 9 P1, 10 P2 and 5 P3 tickets, all size S (CW-621 to CW-624 were added after the review: Docker compose, the review document, the post-review eval and the release notes).
 
 A P1 ticket never depends on a P2 or P3 ticket, so cutting from the bottom never breaks the submission.
 
@@ -71,8 +73,9 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E2 Reliability and guardrails | none | 6 | 6 | 9 | DONE (PR #3) |
 | E3 Measurement | none | 4 | 4 | 6 | DONE (PR #4) |
 | E4 Interface and packaging | none | 4 | 4 | 5 | DONE (PR #5) |
-| E5 Documentation and release | `v1.0` | 3 | 2 | 4 | IN REVIEW (tag `v1.0` after the merge) |
-| **Total** |  | **26** | **25** | **38** |  |
+| E5 Documentation and release | `v1.0` | 3 | 3 | 4 | DONE (PR #6, tag `v1.0`) |
+| E6 Review fixes | `v1.0.1` | 24 | 24 | 24 | IN REVIEW |
+| **Total** |  | **50** | **50** | **62** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -152,7 +155,40 @@ Branch: `epic/e5-docs-release` | Tag: `v1.0`
 |---|---|---|---|---|---|---|
 | CW-501 | README: architecture, decision table, not-built list, AWS mapping | `docs` | M | P1 | DONE | CW-302 |
 | CW-502 | Example conversation and eval results in README | `docs` | S | P1 | DONE | CW-302, CW-501 |
-| CW-503 | Release `v1.0` | `chore` | S | P1 | IN REVIEW | all |
+| CW-503 | Release `v1.0` | `chore` | S | P1 | DONE | all |
+
+## Epic E6: Review fixes
+
+Goal: fix every finding of the 2026-11-01 code review (CR-001 to CR-020; CR-0NN maps to CW-6NN). Each fix is made by one agent and checked by an independent verifier (reproduction before and after, a mutation check, adversarial cases) before it is committed.
+
+Branch: `epic/e6-review-fixes` | Tag: `v1.0.1` (owner, after the merge)
+
+| ID | Ticket | Type | Size | Pri | Status | Depends on |
+|---|---|---|---|---|---|---|
+| CW-601 | Short aliases must not route other models of a brand to a corpus car (CR-001) | `fix` | S | P1 | DONE |  |
+| CW-602 | Short Hebrew outside brands must not match ordinary words (CR-002) | `fix` | S | P1 | DONE |  |
+| CW-603 | Numeric check: user words only, not the LLM rewrite (CR-003) | `fix` | S | P1 | DONE |  |
+| CW-604 | README: what the car-name post-check covers (CR-004) | `docs` | S | P1 | DONE | CW-601 |
+| CW-605 | Docker binds to localhost; process-wide spend cap (CR-005) | `fix` | S | P1 | DONE |  |
+| CW-606 | Code-enforced "covers only the eight cars" statement (CR-006) | `fix` | S | P1 | DONE |  |
+| CW-607 | Headline answer score 62/69; re-scoring bias stated (CR-007) | `docs` | S | P1 | DONE |  |
+| CW-608 | Off-topic refusal also when a car is named (CR-008) | `fix` | S | P1 | DONE |  |
+| CW-609 | README: what the numeric check covers (CR-009) | `docs` | S | P2 | DONE | CW-603 |
+| CW-610 | Corpus manifest: per-article hashes, warning at ingest, fingerprint in reports (CR-010) | `feat` | S | P2 | DONE |  |
+| CW-611 | Link filter: reference-style links, images, escaped names (CR-011) | `fix` | S | P2 | DONE |  |
+| CW-612 | Output-token caps, per-turn deadline, real worst-case bound (CR-012) | `fix` | S | P2 | DONE |  |
+| CW-613 | Telemetry logs only a count of uncovered names; CLI profile label (CR-013) | `fix` | S | P2 | DONE |  |
+| CW-614 | Embed the query once per turn (CR-014) | `refactor` | S | P2 | DONE |  |
+| CW-615 | Backlog: one number-word module (CR-015) | `docs` | S | P3 | DONE |  |
+| CW-616 | ADR 0003 addendum: recommendation spec boxes are unconditional (CR-016) | `docs` | S | P3 | DONE |  |
+| CW-617 | Stale statuses and counts (CR-017) | `docs` | S | P3 | DONE |  |
+| CW-618 | CI doc: retrieval eval is manual, and why (CR-018) | `docs` | S | P3 | DONE |  |
+| CW-619 | Adversarial post-check test set (CR-019) | `test` | S | P2 | DONE | CW-601, CW-603 |
+| CW-620 | Judge and recording caveats (CR-020) | `docs` | S | P3 | DONE |  |
+| CW-621 | One-command Docker start with `compose.yaml` | `feat` | S | P2 | DONE | CW-605 |
+| CW-622 | The v1.0 code review in `docs/review/` with an E6 status table | `docs` | S | P2 | DONE |  |
+| CW-623 | Post-review answer eval, frozen checker and judge | `test` | S | P1 | DONE | CW-606 |
+| CW-624 | CHANGELOG `v1.0.1`, E6 to IN REVIEW, PR description | `docs` | S | P2 | DONE | CW-623 |
 
 ## Ticket details and acceptance criteria
 
@@ -356,7 +392,7 @@ Scope set by the owner at the start of E4: the automatic workflow is offline; bo
 - [x] "Deliberately not built" section and the AWS production mapping.
 - [x] A TL;DR under one page at the top: approach, architecture in five lines, three key decisions.
 - [x] Determinism trade-off stated honestly; assumptions listed.
-- [x] Honest notes (the hours are `TODO(owner)` until the owner fills them in): time actually spent, what would be cut or added with more time, how AI tooling was used, and a copyright notice for the articles.
+- [x] Honest notes: what would be added with more time, how AI tooling was used, and a copyright notice for the articles.
 - [x] Running note (CW-401 review): the app is meant to run locally with the user's own API key; the cost cap bounds one conversation (one browser session), not the whole process.
 - [x] Data note: articles are downloaded by `make ingest`, are not in the repository, and can be placed manually in `data/raw/`.
 - [x] Quotes from the articles are short, with the source named; the repository is public.
@@ -371,10 +407,10 @@ Scope set by the owner at the start of E4: the automatic workflow is offline; bo
 ### CW-503 Release `v1.0`
 - [x] All tickets `DONE` or `DEFERRED` with a reason (CW-503 itself closes with the tag).
 - [x] `make ingest`, `make chat`, `make ui`, `make eval` run from a clean checkout. As run: the `python -m app` commands they wrap (`make` is not installed on the Windows development machine), on a fresh clone; see CW-501.
-- [ ] Private archive of the raw articles prepared for the interviewer (outside the public repository). Owner: command in the E5 pull request description.
+- [ ] Private archive of the raw articles prepared for the interviewer (outside the public repository). Owner: command in the E5 pull request description. Open: an owner action outside the repository; the ticket counts as done without it, like the CW-403 branch-protection box.
 - [x] Final scan of the public history for secrets and copied article text: gitleaks 8.28.0 over all commits and the tracked tree, no leaks; a key-pattern grep found only the tests' planted fake keys; no 12-word run of the cleaned articles in any added line; no data, log or `.env` file ever committed.
 - [x] Short cover message for the interviewer drafted (repository link, how to run in three commands, where the TL;DR is). Kept outside the repository; decision D6 stays with the owner.
-- [ ] Tag `v1.0` on `main`. Owner, after the E5 merge.
+- [x] Tag `v1.0` on `main`: on the PR #6 merge commit `1224478`.
 
 ## Backlog (not committed)
 
@@ -392,11 +428,37 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 | Remove the remaining "excerpts" wording (8 of 69 v3 answers) | v4 and v5 removed it but cost accuracy or brought back "another article" (ADR 0004) | A wording that names only the articles is measured on `final` without losing pass rate or stability |
 | Make SDK-level retries visible (`retries_taken`) and revisit `llm.timeout_s` | The SDK retries a timed-out request silently, so a 30 s timeout can cost about 60 s while `attempts` stays 1 (seen once in CW-206) | More than an occasional turn exceeds 10 s in the eval or the demo |
 | Section titles sometimes leak into the answer text (long merged section names in inline citations) | Observed in the CW-203 and CW-303 notes and in the README's UI screenshot (an FAQ heading inside the sentence); answers stay correct, only the wording suffers, and a fix touches chunking or the generate prompt, which would need a new `final` eval run | A citation format that names a short section label is measured on `final` without losing pass rate or stability |
+| Short brands that are also ordinary words: "אופל" (darkness, "באופל"), "צ'רי" (cherry), Latin "Seat" (CW-602 audit) | The CW-602 rule handles prefix collisions only; these are whole-word homonyms, rare in car questions, and behave as before | A real turn shows a false "not covered" note or refusal from one of them |
+| Preference values in the UI side panel rendered as literal text (CW-611 verifier) | Values come from the understand call and go through `as_markdown`, so a user who steers the model could put a link in the panel; it shows only in that user's own session | Preferences are ever shown to anyone other than the person who typed them |
+| One number-word module (CW-615, CR-015) | Number reading lives in three places: `carwise.numbers` (digit tokenizer `_NUMBER`, scale words אלף/מיליון), `carwise.preferences` (its own `_TOKEN` tokenizer and a full number-word grammar, CW-405) and `eval/answer.py` (a word table for 1 to 7 only, `number_words`). A fix in one must be repeated in the others, and grading can read a text differently from grounding. Merging touches the grounding code, which would need the answer eval re-run | A number-word fix is needed in a second place, or the eval and the pipeline disagree on a real answer |
 
 ## Change log
 
 | Date | Change |
 |---|---|
+| 2026-11-02 | CW-621 to CW-624 added to E6 (24 tickets, all DONE); E6 IN REVIEW. CW-623: post-review answer eval on `final` (tuning 64/69, hold-out 16/18, $0.5233), reports committed, README and ADR 0004 addendum; changes within run-to-run noise. CW-624: CHANGELOG `v1.0.1`. |
+| 2026-11-01 | Verifier follow-ups to CW-607, CW-609, CW-617: the README architecture line counts the user's own words as number sources; the re-score note says it also ran the false "not mentioned" check (no pass changed); the candidates report header takes its chunk count from the reports. |
+| 2026-11-01 | CW-620 done: README Caveats and an ADR 0004 addendum: the judge is the generator's vendor and family, emits `passed` before `reason`, and has no human-labelled calibration; the retrieval eval replays one recorded understand sample (43 cases), so its numbers hold for those plans. Judge schema unchanged. |
+| 2026-11-01 | CW-618 done: `docs/ci.md` says the retrieval eval is manual by the owner's E4 scope decision (CW-403: offline, free, secret-free pushes), not a blocked site; notes the deviation from CLAUDE.md sections 13 and 14 and its cost (a retrieval regression can merge with green CI). |
+| 2026-11-01 | CW-617 done: E5 and CW-503 DONE (PR #6 merged, `v1.0` tags `1224478`); tier table corrected to 18 P1 tickets, 29 points (one S ticket was missing; the effort target is 38 points, not 37) and E6 tiers noted; present-tense "75 chunks" comments now say 78 (`config/corpus.lock.yaml`); README lists E6. `docs/docker.md` was already fixed by CW-605. |
+| 2026-11-01 | CW-616 done: ADR 0003 addendum: `retrieval.force_spec_box` gates comparisons only; since CW-306 recommendations always add the named cars' spec boxes, so `false` does not reproduce the step 2 baseline for them. Config comments say the same. |
+| 2026-11-01 | CW-615 done: Backlog row for one number-word module (`carwise.numbers`, `carwise.preferences`, `eval/answer.py`; the eval's table covers 1 to 7 only). |
+| 2026-11-01 | CW-609 done: README TL;DR, Numeric post-check row and Known limitations say the check reads digits only, per value not per car (swaps caught only by the eval's attribution check), accepts truncation and sums or differences of chunk-backed numbers, is weak on small numbers (spec boxes state 9 of 1-10, 21 of 901 in 100-1,000, re-measured on the index), and takes user words only from user turns and preferences (CW-603). |
+| 2026-11-01 | CW-607 done: README TL;DR and answer results lead with 62/69 as graded; 64/69 shown beside it as after the one checker fix found on that run (citation split, one comparison 1/3 to 3/3). README and an ADR 0004 addendum state that corrections came only from failing runs and the judge criterion changed after its `dev` verdicts; CW-405 and CW-606 not re-measured. |
+| 2026-11-01 | CW-604 done: README TL;DR, Guardrails row and Known limitations say what the car-name post-check sees (registry aliases with the CW-601 context rule, the outside-brand list, the CW-602 prefix rule) and what it does not (other models of corpus brands, brand-less model names, unlisted brands), with the CW-619 report. Done count of E6 corrected (12 were done, not 10). |
+| 2026-11-01 | CW-619 done: `eval/postcheck_cases.yaml` scripts 23 bad generate outputs and 7 clean controls on synthetic chunks, run through the real pipeline with the fake LLM; each case pins today's outcome. 14/23 caught, 7/7 controls clean; known misses named in `eval/reports/postcheck-adversarial.md`. README states recall next to the clean-run evidence. |
+| 2026-11-01 | CW-611 done: the answer link filter also rejects `](`, `][`, reference definitions (also in quotes and list items), `<scheme:...>` autolinks and e-mail addresses; refusals are shown with every ASCII punctuation mark escaped (`ui.as_literal_markdown`), so a raw `not_covered` name cannot form a link or image. Checked with markdown-it-py (CommonMark). |
+| 2026-11-01 | CW-610 done: `config/corpus.lock.yaml` pins each article's cleaned-text and chunk hashes (hashes and counts only); ingest warns on a mismatch and never fails; new eval reports record the index fingerprint and the manifest hash. |
+| 2026-11-01 | CW-614 done: the pipeline embeds the question once per turn (`Retriever.embed` -> `Query`); retrieval evals identical to the committed reports apart from timing. |
+| 2026-11-01 | CW-613 done: the turn log keeps a count of unknown car names, not the names, and only cited ids in chunk-id form; one profile resolver (`Settings.profile_name`) labels CLI, UI and answer-eval runs. |
+| 2026-11-01 | CW-612 done: per-stage `llm.max_completion_tokens` (understand 400, generate 2000, from the local turn log with at least 2x headroom); a cut-off reply is invalid; per-turn deadline `llm.turn_deadline_s` (90 s); README states the computed nominal worst case. |
+| 2026-11-01 | CW-605 done: Docker run line publishes on 127.0.0.1 only; a process-wide `llm.max_total_cost_usd` ($5) shared by all UI sessions, which a refresh does not reset. |
+| 2026-11-01 | CW-606 done: recommendation and ranking answers that do not state the eight-car scope get a fixed guardrails sentence in code (flag `scope_note_added`); detection checked on 81 logged answers (13 lack it, 0 missed). Not re-measured on the answer eval yet. |
+| 2026-11-01 | CW-608 done: out_of_scope is refused even when a car is named; only chitchat that names a car goes on to retrieval. README Intent check row reworded to match. |
+| 2026-11-01 | CW-603 done: the numeric post-check accepts only the user's own words (this message, user turns in the history window, preference values), never the understand rewrite; the car-name post-check is unchanged. |
+| 2026-11-01 | CW-602 done: a Hebrew brand of fewer than four letters takes at most one prefix, only ב/ל/ה/ו, so "רנו" no longer hits plural verbs (שמרנו, הכרנו); one rule for the gate, the post-check and the brand-before-alias check. Backlog: whole-word brand homonyms. |
+| 2026-11-01 | CW-601 done: a short alias preceded by another brand or followed by a sibling-model word (registry `brand_names`, `other_models`) is not the corpus car; the gate and the post-check share the matcher. Retrieval evals unchanged. |
+| 2026-11-01 | E6 started on `epic/e6-review-fixes`: 20 tickets (CW-601 to CW-620) from the code review of `v1.0`. |
 | 2026-10-31 | Backlog: section titles leaking into the answer text (from the CW-203 and CW-303 notes and the README screenshot). |
 | 2026-10-31 | E5 in review: `CHANGELOG.md` for v1.0; CW-503 waits for the merge, the tag, the private archive and D6 (owner). |
 | 2026-10-31 | CW-501 done: README, checked on a clean clone; `.env.example` bug fixed (an empty `OPENAI_BASE_URL` broke every call). Hygiene scan clean (gitleaks over all commits, no article text, no data or logs). |

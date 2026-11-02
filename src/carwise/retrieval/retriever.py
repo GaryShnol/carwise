@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import threading
 from collections import Counter
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
@@ -17,6 +18,20 @@ from carwise.retrieval.embedder import Embedder, Vector, make_embedder
 from carwise.retrieval.lexical import LexicalIndex, fuse
 from carwise.retrieval.store import ChunkStore
 from carwise.schemas import Chunk, RetrievedChunk
+
+
+@dataclass(frozen=True)
+class Query:
+    """A question with its embedding, so one turn embeds it once (CW-614).
+
+    Why a value passed down and not a memo of the last query inside the Retriever:
+    the UI shares one Retriever between sessions, so a memo would be state shared
+    across threads; a Query belongs to the turn that made it. The text travels with
+    the vector because lexical fusion ranks on the text.
+    """
+
+    text: str
+    vector: Vector
 
 
 class CandidateSource(Protocol):
@@ -28,21 +43,26 @@ class CandidateSource(Protocol):
 
 
 class ChunkRetriever(Protocol):
-    """What the pipeline needs; the Retriever below is the only production implementation."""
+    """What the pipeline needs; the Retriever below is the only production implementation.
+
+    Every search takes the question as text (embedded for that call) or as a Query
+    from `embed` (reused across the calls of one turn)."""
+
+    def embed(self, text: str) -> Query: ...
 
     def search(
-        self, query: str, car_ids: list[str] | None = None, top_k: int | None = None
+        self, query: str | Query, car_ids: list[str] | None = None, top_k: int | None = None
     ) -> list[RetrievedChunk]: ...
 
     def search_per_car(
-        self, query: str, car_ids: list[str], top_k_per_car: int | None = None
+        self, query: str | Query, car_ids: list[str], top_k_per_car: int | None = None
     ) -> list[RetrievedChunk]: ...
 
     def search_all(
-        self, query: str, top_k: int | None = None, per_car_cap: int | None = None
+        self, query: str | Query, top_k: int | None = None, per_car_cap: int | None = None
     ) -> list[RetrievedChunk]: ...
 
-    def spec_boxes(self, query: str, car_ids: list[str]) -> list[RetrievedChunk]: ...
+    def spec_boxes(self, query: str | Query, car_ids: list[str]) -> list[RetrievedChunk]: ...
 
 
 class SerializedRetriever:
@@ -61,25 +81,29 @@ class SerializedRetriever:
         self._inner = inner
         self._lock = threading.Lock()
 
+    def embed(self, text: str) -> Query:
+        with self._lock:  # the tokenizer is the part that is not thread safe
+            return self._inner.embed(text)
+
     def search(
-        self, query: str, car_ids: list[str] | None = None, top_k: int | None = None
+        self, query: str | Query, car_ids: list[str] | None = None, top_k: int | None = None
     ) -> list[RetrievedChunk]:
         with self._lock:
             return self._inner.search(query, car_ids, top_k)
 
     def search_per_car(
-        self, query: str, car_ids: list[str], top_k_per_car: int | None = None
+        self, query: str | Query, car_ids: list[str], top_k_per_car: int | None = None
     ) -> list[RetrievedChunk]:
         with self._lock:
             return self._inner.search_per_car(query, car_ids, top_k_per_car)
 
     def search_all(
-        self, query: str, top_k: int | None = None, per_car_cap: int | None = None
+        self, query: str | Query, top_k: int | None = None, per_car_cap: int | None = None
     ) -> list[RetrievedChunk]:
         with self._lock:
             return self._inner.search_all(query, top_k, per_car_cap)
 
-    def spec_boxes(self, query: str, car_ids: list[str]) -> list[RetrievedChunk]:
+    def spec_boxes(self, query: str | Query, car_ids: list[str]) -> list[RetrievedChunk]:
         with self._lock:
             return self._inner.spec_boxes(query, car_ids)
 
@@ -103,41 +127,46 @@ class Retriever:
         """Load the embedding model now (about a minute on a cold CPU start, not mid-chat)."""
         self._embedder.warm_up()
 
-    def _ranked(self, query: str, car_ids: list[str] | None) -> list[RetrievedChunk]:
+    def embed(self, text: str) -> Query:
+        """Embed a question once, for every search of its turn."""
+        return Query(text, self._embedder.embed_query(text))
+
+    def _ranked(self, query: str | Query, car_ids: list[str] | None) -> list[RetrievedChunk]:
         if car_ids is not None and not car_ids:
             raise ValueError("car_ids must be None (all cars) or name at least one car")
-        vector = self._embedder.embed_query(query)
+        if isinstance(query, str):
+            query = self.embed(query)
         hits = [
             RetrievedChunk(chunk=chunk, score=score)
-            for chunk, score in self._store.candidates(vector, car_ids)
+            for chunk, score in self._store.candidates(query.vector, car_ids)
         ]
         # Score first, chunk id breaks ties: same index and query, same order, always.
         ranked = sorted(hits, key=lambda hit: (-hit.score, hit.chunk.chunk_id))
         if self._lexical is None:
             return ranked
-        return fuse(query, ranked, self._lexical, self._config.lexical.rrf_k)
+        return fuse(query.text, ranked, self._lexical, self._config.lexical.rrf_k)
 
     def search(
-        self, query: str, car_ids: list[str] | None = None, top_k: int | None = None
+        self, query: str | Query, car_ids: list[str] | None = None, top_k: int | None = None
     ) -> list[RetrievedChunk]:
         """Best chunks overall, or among the given cars (single-car fact questions)."""
         return self._ranked(query, car_ids)[: _default(top_k, self._config.top_k)]
 
     def search_per_car(
-        self, query: str, car_ids: list[str], top_k_per_car: int | None = None
+        self, query: str | Query, car_ids: list[str], top_k_per_car: int | None = None
     ) -> list[RetrievedChunk]:
         """The best chunks of each car separately, so no car crowds out another."""
         cap = _default(top_k_per_car, self._config.per_car_cap)
         return _capped(self._ranked(query, car_ids), cap, limit=None)
 
     def search_all(
-        self, query: str, top_k: int | None = None, per_car_cap: int | None = None
+        self, query: str | Query, top_k: int | None = None, per_car_cap: int | None = None
     ) -> list[RetrievedChunk]:
         """Across all cars with a cap per car, for ranking and recommendation questions."""
         cap = _default(per_car_cap, self._config.per_car_cap)
         return _capped(self._ranked(query, None), cap, _default(top_k, self._config.top_k))
 
-    def spec_boxes(self, query: str, car_ids: list[str]) -> list[RetrievedChunk]:
+    def spec_boxes(self, query: str | Query, car_ids: list[str]) -> list[RetrievedChunk]:
         """Each car's spec box (its chunk with the most table rows), scored for the query.
 
         A car without a table has none. Ties go to the earlier chunk id.

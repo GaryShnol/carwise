@@ -69,3 +69,20 @@ def test_real_retrieval_is_deterministic(retriever: Retriever) -> None:
     second = [(hit.chunk.chunk_id, hit.score) for hit in retriever.search(query, top_k=5)]
     same = first == second
     assert same
+
+
+def test_one_embedding_per_turn_gives_the_old_results(retriever: Retriever) -> None:
+    # CW-614: a Query embedded once must rank exactly as each call embedding the text.
+    cars = ["mg_s6", "aion_ht"]
+    for text in (QUERIES["kia_ev9"], QUERIES["citroen_c3"], "איזו מכונית הכי חסכונית?"):
+        query = retriever.embed(text)
+        pairs = [
+            (retriever.search_per_car(query, cars, 3), retriever.search_per_car(text, cars, 3)),
+            (retriever.search_all(query, 12, 2), retriever.search_all(text, 12, 2)),
+            (retriever.spec_boxes(query, cars), retriever.spec_boxes(text, cars)),
+        ]
+        same = all(
+            [(h.chunk.chunk_id, h.score) for h in new] == [(h.chunk.chunk_id, h.score) for h in old]
+            for new, old in pairs
+        )
+        assert same

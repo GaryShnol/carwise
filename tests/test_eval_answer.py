@@ -294,6 +294,30 @@ def test_run_keeps_answers_out_of_the_committed_report(tmp_path: Path) -> None:
     assert json.loads(logged)["turns"][0]["answer"] == GOOD.answer  # kept locally, gitignored
 
 
+def test_answer_report_header_names_the_index_and_the_corpus_manifest(tmp_path: Path) -> None:
+    """CW-610: new reports carry the stamp of the configured paths; the header shows it."""
+    from carwise.ingest.manifest import manifest_sha256
+    from carwise.retrieval.store import build_index, stored_fingerprint
+
+    index_dir = tmp_path / "index"
+    build_index([_chunk("mg_s6", 0, "מחיר סינתטי")], FakeEmbedder(), SETTINGS.chunking, index_dir)
+    settings = SETTINGS.model_copy(
+        update={"paths": SETTINGS.paths.model_copy(update={"index_dir": str(index_dir)})}
+    )
+    llm = FakeLLMClient([PLAN, GOOD])
+    report = run_answer_eval(
+        [COMPARE], lambda: _pipeline(llm), None, settings, REGISTRY, profile="dev",
+        models={"understand": "m", "generate": "m", "judge": "j"}, runs=1,
+        question_set="tuning", runs_dir=tmp_path / "runs",
+    )  # fmt: skip
+    assert report.index_fingerprint == stored_fingerprint(index_dir) is not None
+    assert report.corpus_manifest_sha256 == manifest_sha256(Path(SETTINGS.paths.corpus_manifest))
+    assert report.corpus_manifest_sha256 is not None  # the committed manifest
+    header = markdown(report).split("## Summary")[0]
+    assert f"Corpus: manifest sha256 {report.corpus_manifest_sha256}" in header
+    assert f"index fingerprint {report.index_fingerprint}" in header
+
+
 def test_excerpt_wording_is_counted() -> None:
     from eval.answer import excerpt_wording_count
 

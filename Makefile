@@ -1,4 +1,4 @@
-.PHONY: ingest chat ui eval test lint docker
+.PHONY: ingest chat ui eval test lint docker docker-up
 
 # Thin wrappers: the real entry point is `python -m app <command>`,
 # so everything also works in PowerShell without make.
@@ -25,3 +25,7 @@ lint:
 # Builds the image; run it with the line in README.md (the key is passed with -e).
 docker:
 	docker build -t carwise .
+
+# Builds and starts the UI with compose.yaml (key from the shell or .env).
+docker-up:
+	docker compose up --build

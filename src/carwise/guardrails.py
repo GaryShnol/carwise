@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import re
 import unicodedata
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
+from dataclasses import dataclass
 from decimal import Decimal
+from functools import lru_cache
 from itertools import combinations, product
 from typing import TYPE_CHECKING, TypeVar
 
@@ -25,6 +27,13 @@ _K = TypeVar("_K", BodyType, Powertrain)
 # Hebrew attaches up to a few one-letter prefixes to a name: "לאודי", "ובטויוטה".
 HEBREW_PREFIXES = "והבכלמש"
 _MAX_PREFIXES = 3
+# A brand with fewer Hebrew letters than this is "short" (CW-602): it takes at most one
+# prefix, and only one of _SHORT_BRAND_PREFIXES. With ש, כ, מ or stacked prefixes a short
+# brand forms ordinary words: "שמרנו", "הכרנו", "מכרנו", "שברנו" all end in "רנו".
+_MIN_LETTERS_FOR_PREFIXES = 4
+_SHORT_BRAND_PREFIXES = "בלהו"
+# What may stand between a name and the brand before it or the model word after it.
+_JOIN = r"[\s\-־]+"
 # Geresh and gershayim have look-alikes (׳ ’ ` and ״ ”); one form makes names comparable.
 _APOSTROPHES = str.maketrans({"׳": "'", "’": "'", "`": "'", "״": '"', "“": '"', "”": '"'})
 
@@ -35,10 +44,20 @@ _FIELD_ASSIGNMENT = re.compile(r"\b[a-z]+(?:_[a-z]+)+\s*[=:]")
 _OWN_FIELD_NAMES = re.compile(r"\b(?:used_chunk_ids|answer)\b")
 _CHUNK_ID = re.compile(r"\b[a-z0-9]+(?:_[a-z0-9]+)*:\d{3}\b")
 _HEBREW_LETTER = re.compile("[א-ת]")
-# Links and images (CW-401): a URL, "www." (which markdown renders as a link), or
-# markdown link and image syntax. The UI renders answers as markdown, so a link
+# Links and images (CW-401, CW-611): the UI renders answers as markdown, so a link
 # the model wrote would be clickable; the only links shown come from the registry.
-_LINK = re.compile(r"https?://|\bwww\.|!?\[[^\]]*\]\([^)]*\)", re.IGNORECASE)
+# Caught: a URL or "www." (GFM links both bare); "](" and "][" (inline, full and
+# collapsed reference links and images, nested brackets included); a reference
+# definition ("[1]: //host"), also inside a quote or list item, which a shortcut
+# reference "[1]" needs; an autolink "<scheme:...>"; an e-mail address (GFM links
+# it bare). Brackets alone ("[לפי הכתבה]") and "[x]: y" mid-line still pass.
+_LINK = re.compile(
+    r"https?://|\bwww\.|\]\(|\]\["
+    r"|^(?:[ \t]*(?:>|[-*+](?=[ \t])|\d{1,9}[.)](?=[ \t])))*[ \t]*\[(?:[^\]\\]|\\.)+\]:"
+    r"|<[a-z][a-z0-9+.\-]{1,31}:[^\s<>]*>"
+    r"|[\w.+\-]+@[\w\-]+\.[\w.\-]+",
+    re.IGNORECASE | re.MULTILINE,
+)
 
 
 def answer_text_problem(text: str) -> str | None:
@@ -111,10 +130,47 @@ def normalize(text: str) -> str:
     return " ".join(text.casefold().split())
 
 
-def _name_pattern(name: str) -> re.Pattern[str]:
-    words = r"\s+".join(re.escape(word) for word in normalize(name).split())
-    prefixes = f"[{HEBREW_PREFIXES}]{{0,{_MAX_PREFIXES}}}"
-    return re.compile(rf"(?<!\w){prefixes}{words}(?!\w)")
+def _words(name: str) -> str:
+    return r"\s+".join(re.escape(word) for word in normalize(name).split())
+
+
+@lru_cache(maxsize=1024)
+def _name_pattern(
+    name: str, letters: str = HEBREW_PREFIXES, max_prefixes: int = _MAX_PREFIXES
+) -> re.Pattern[str]:
+    prefixes = f"[{letters}]{{0,{max_prefixes}}}"
+    return re.compile(rf"(?<!\w){prefixes}{_words(name)}(?!\w)")
+
+
+def _brand_pattern(brand: str) -> re.Pattern[str]:
+    """A brand as a whole word, with fewer prefixes allowed on a short Hebrew brand.
+
+    A brand with fewer than _MIN_LETTERS_FOR_PREFIXES Hebrew letters ("רנו", "צ'רי",
+    "ב.מ.ו", "קיה") takes at most one prefix, from ב, ל, ה, ו: "לרנו", "ברנו", "הרנו",
+    "ורנו" match; "שמרנו", "הכרנו", "מכרנו", "שהרנו", "ולרנו" do not. Given up: the
+    short brand after ש, כ or מ, or after two prefixes ("שרנו" as "that Renault",
+    "מרנו", "ולרנו"). The gate then relies on the understand call's unrecognized_cars;
+    the post-check does not catch those forms. Every other brand, Hebrew or Latin,
+    keeps up to _MAX_PREFIXES of any prefix letter, so a longer Hebrew brand can still
+    match an ordinary word ("באופל", "in the dark").
+    """
+    hebrew = len(_HEBREW_LETTER.findall(brand))
+    if 0 < hebrew < _MIN_LETTERS_FOR_PREFIXES:
+        return _name_pattern(brand, _SHORT_BRAND_PREFIXES, 1)
+    return _name_pattern(brand)
+
+
+@lru_cache(maxsize=1024)
+def _before_pattern(brand: str) -> re.Pattern[str]:
+    """The brand as the last word before a name: "אאודי S6", "לאאודי S6"."""
+    return re.compile(rf"{_brand_pattern(brand).pattern}{_JOIN}$")
+
+
+@lru_cache(maxsize=1024)
+def _after_pattern(word: str) -> re.Pattern[str]:
+    """A model word right after a name, without a prefix: "C3 איירקרוס", "Aion-Y".
+    A prefix would make it a second car ("C3 והאיירקרוס" is "C3 and the Aircross")."""
+    return re.compile(rf"^{_JOIN}{_words(word)}(?!\w)")
 
 
 def mentioned(text: str, names: Iterable[str]) -> list[str]:
@@ -123,35 +179,97 @@ def mentioned(text: str, names: Iterable[str]) -> list[str]:
     return [name for name in names if _name_pattern(name).search(haystack)]
 
 
-def car_mentions(text: str, registry: Registry) -> list[tuple[int, int, str]]:
-    """Every car name in an already normalized text: (start, end, car id), in text order.
+@dataclass(frozen=True)
+class _Mention:
+    start: int
+    end: int
+    car_id: str
+    other_model: str | None  # set when the alias names another model, not this car
 
-    Where two names overlap ("GAC איון HT" and "איון HT"), the longer one wins.
+
+def _first(text: str, words: Iterable[str], pattern: Callable[[str], re.Pattern[str]]) -> str:
+    return next((word for word in words if pattern(word).search(text)), "")
+
+
+def _scan(text: str, registry: Registry, outside_brands: Iterable[str]) -> list[_Mention]:
+    """Every car name in a normalized text, in text order; of two overlapping, the longer wins.
+
+    Why the context check (CW-601): short aliases ("S6", "C3", "Aion", "אלנטרה")
+    are also parts of other models' names. A name is the corpus car only when no
+    other brand (another car's `brand_names`, or an outside brand) stands right
+    before it ("אאודי S6"), and none of the car's `other_models` words follows it
+    ("C3 איירקרוס"). Otherwise it names another model, which callers treat as a
+    car the articles do not cover. Ordinary words after it ("C3 החדשה") do not block.
     """
-    found: list[tuple[int, int, str]] = []
+    found: list[tuple[int, int, Car, str]] = []
     for car in registry.cars:
-        for name in (car.display_name, *car.aliases):
-            found += [(m.start(), m.end(), car.id) for m in _name_pattern(name).finditer(text)]
-    kept: list[tuple[int, int, str]] = []
-    for start, end, car_id in sorted(found, key=lambda item: (item[0], -item[1])):
-        if not kept or start >= kept[-1][1]:
-            kept.append((start, end, car_id))
-    return kept
+        for name in car.aliases:
+            found += [(m.start(), m.end(), car, name) for m in _name_pattern(name).finditer(text)]
+    brands = list(outside_brands)
+    mentions: list[_Mention] = []
+    for start, end, car, name in sorted(found, key=lambda item: (item[0], -item[1])):
+        if mentions and start < mentions[-1].end:
+            continue
+        others = [brand for c in registry.cars if c is not car for brand in c.brand_names]
+        before = _first(text[:start], [*others, *brands], _before_pattern)
+        after = _first(text[end:], car.other_models, _after_pattern)
+        other = None
+        if before or after:
+            brand = before or _first(text[:start], car.brand_names, _before_pattern)
+            other = " ".join(part for part in (brand, name, after) if part)
+        mentions.append(_Mention(start, end, car.id, other))
+    return mentions
 
 
-def cars_in_text(text: str, registry: Registry) -> list[str]:
+def car_mentions(
+    text: str, registry: Registry, outside_brands: Iterable[str] = ()
+) -> list[tuple[int, int, str]]:
+    """Every corpus car name in an already normalized text: (start, end, car id), in text order.
+
+    Where two names overlap ("GAC איון HT" and "איון HT"), the longer one wins. A
+    name of another model ("אאודי S6", "Aion Y") is left out.
+    """
+    return [
+        (m.start, m.end, m.car_id)
+        for m in _scan(text, registry, outside_brands)
+        if m.other_model is None
+    ]
+
+
+def cars_in_text(text: str, registry: Registry, outside_brands: Iterable[str] = ()) -> list[str]:
     """Registry car ids named in the text by any alias, in registry order."""
-    return [car.id for car in registry.cars if mentioned(text, car.aliases)]
+    named = {car_id for _, _, car_id in car_mentions(normalize(text), registry, outside_brands)}
+    return [car.id for car in registry.cars if car.id in named]
+
+
+def other_models_in_text(
+    text: str, registry: Registry, outside_brands: Iterable[str] = ()
+) -> list[str]:
+    """Names built on a corpus alias that name another model ("אאודי S6", "C3 איירקרוס").
+
+    Spelled from the config (brand, alias, model word), because matching sees the
+    text case-folded.
+    """
+    names = [m.other_model for m in _scan(normalize(text), registry, outside_brands)]
+    return list(dict.fromkeys(name for name in names if name))
+
+
+def _other_model_cars(text: str, registry: Registry, outside_brands: list[str]) -> set[str]:
+    """The corpus cars whose aliases the text uses for another model."""
+    return {m.car_id for m in _scan(normalize(text), registry, outside_brands) if m.other_model}
 
 
 def outside_brands_in_text(text: str, brands: Iterable[str]) -> list[str]:
-    return mentioned(text, brands)
+    """The brands that occur in the text, under the short-brand rule of `_brand_pattern`."""
+    haystack = normalize(text)
+    return [brand for brand in brands if _brand_pattern(brand).search(haystack)]
 
 
-def not_covered(llm_names: list[str], brand_hits: list[str]) -> list[str]:
-    """Unknown car names for the reply: the model's raw names, plus brands it missed."""
+def not_covered(llm_names: list[str], code_hits: list[str]) -> list[str]:
+    """Unknown car names for the reply: the model's raw names, plus names code found
+    that the model missed (other models on a corpus alias, then outside brands)."""
     names = [name.strip() for name in llm_names if name.strip()]
-    for brand in brand_hits:
+    for brand in code_hits:
         if not any(normalize(brand) in normalize(name) for name in names):
             names.append(brand)
     return list(dict.fromkeys(names))
@@ -172,23 +290,33 @@ def unsupported_cars(
     a retrieved chunk that names it, or by the user's own question (`not_covered`,
     where the answer is expected to say the articles do not cover it). Anything
     else came from the model's own knowledge, which is what this check exists for.
+    Another model named on a corpus alias ("Aion Y", "אאודי S6") is not the corpus
+    car; it is backed like an outside car, by a chunk or the question naming another
+    model on that alias (in any spelling: "Audi S6" asked backs "אאודי S6" answered).
     Limit: a model name with no registry alias and no listed brand is not caught.
     """
     hits = list(hits)
     sources = "\n".join(hit.chunk.text for hit in hits)
     retrieved = {hit.chunk.car for hit in hits}
     asked = "\n".join(not_covered)
+    outside_brands = list(outside_brands)
+    in_sources = cars_in_text(sources, registry, outside_brands)
     problems = [
-        car.display_name
-        for car in registry.cars
-        if car.id not in retrieved
-        and mentioned(answer, car.aliases)
-        and not mentioned(sources, car.aliases)
+        registry.get(car_id).display_name
+        for car_id in cars_in_text(answer, registry, outside_brands)
+        if car_id not in retrieved and car_id not in in_sources
+    ]
+    backed = _other_model_cars(f"{sources}\n{asked}", registry, outside_brands)
+    problems += [
+        name
+        for name in other_models_in_text(answer, registry, outside_brands)
+        if not _other_model_cars(name, registry, outside_brands) <= backed
     ]
     problems += [
         brand
-        for brand in mentioned(answer, outside_brands)
-        if not mentioned(sources, [brand]) and not mentioned(asked, [brand])
+        for brand in outside_brands_in_text(answer, outside_brands)
+        if not outside_brands_in_text(sources, [brand])
+        and not outside_brands_in_text(asked, [brand])
     ]
     return problems
 
@@ -424,6 +552,57 @@ def budget_reply(max_cost_usd: float) -> str:
         f"הגעתי למגבלת העלות שהוגדרה לשיחה הזאת (${max_cost_usd:g}), ולכן השיחה נעצרת כאן. "
         "אפשר להתחיל שיחה חדשה בהפעלה הבאה."
     )
+
+
+def server_budget_reply(max_total_cost_usd: float) -> str:
+    """The shared cap of every session on this server (CW-605); a refresh cannot help."""
+    return (
+        "הגעתי למגבלת העלות הכוללת שהוגדרה לשרת הזה "
+        f"(${max_total_cost_usd:g} לכל השיחות יחד), ולכן אין אפשרות לענות על שאלות נוספות."
+    )
+
+
+# --- scope of a recommendation (CW-606) ------------------------------------------------
+# Prompt rule 8 asks every recommendation or ranking to say it covers only the eight
+# reviewed cars; the eval showed the model leaving it out, so code adds it when missing.
+# No digits and no car names: the post-check could never count it as a claim.
+SCOPE_NOTE = "אני מתייחס רק לשמונה הרכבים שנבחנו בכתבות."
+# "Eight" stated about the reviewed cars, in the phrasings answers use (up to three
+# prefixes on "eight": "מבין שמונה", "לשמונת", "מ-8", "השמונה"):
+# - eight, then a word for the cars or their articles: "שמונה הרכבים", "8 כתבות";
+# - eight, then a relative clause about the review: "השמונה שנבחנו", "שמונת שבכתבות";
+# - the cars, then eight: "הרכבים השמונה";
+# - "among the eight" with no noun ("מבין השמונה", "מתוך ה-8", "מהשמונה"), only where
+#   the phrase ends: punctuation, the end of the text, a review clause, or a pronoun or
+#   "יש"/"אין" that starts the next clause ("הזול מהשמונה הוא ..."). So "בין השמונה
+#   לתשע שניות" or "כל ה-8 שניות" is not a scope statement. Attached ב is left out:
+#   "בשמונה" is "in eight", as in "בשמונה שניות".
+# A bare "שמונה" is not enough: "שמונה הילוכים", "בשמונה שניות" or "שמונה שנות
+# אחריות" say nothing about the scope. The clause verbs are listed, not any word
+# starting with ש, because "שניות", "שנים" and "שעות" start with it too.
+# Accepted limits (they only leave the note out): an "eight cars" phrase about
+# something else, such as "8 רכבים נמכרו" or "שמונה דגמים של מותג אחר".
+_EIGHT = rf"(?<!\w)[{HEBREW_PREFIXES}]{{0,{_MAX_PREFIXES}}}[-־]?(?:שמונה|שמונת|8)"
+_FLEET = r"ה?(?:רכבים|רכבי|מכוניות|דגמים|דגמי|כתבות|מבחנים|מבחני)|כלי\s+ה?רכב"
+_REVIEWED = r"ש(?:נבחנו|נסקרו|נבדקו|הוצגו|נכללו|מופיעים|מופיעות|בכתבות|במבחנים|במבחן|במאגר)"
+_FLEET_FIRST = rf"(?<!\w)[{HEBREW_PREFIXES}]{{0,{_MAX_PREFIXES}}}ה(?:רכבים|מכוניות|דגמים|כתבות)"
+_AMONG = r"(?<!\w)ו?(?:(?:מבין|מתוך|בין|מכל|לכל|כל)\s+|מ)ה[-־]?(?:שמונה|8)"
+# A decimal point is not the end of a phrase ("ה-8.5"), and a dash ends it only with a
+# space before it: "8-9" and "8–9" are ranges.
+_NEXT_CLAUSE = rf"(?:{_REVIEWED}|הוא|היא|הם|הן|זה|זו|יש|אין)(?!\w)"
+_PHRASE_END = rf"(?=\s*(?:[.,](?!\d)|[:;!?)])|\s+[-–—]|\s*$|\s+{_NEXT_CLAUSE})"
+_EIGHT_CARS = re.compile(
+    rf"{_EIGHT}\s+(?:{_FLEET}|{_REVIEWED})(?!\w)"
+    rf"|{_FLEET_FIRST}\s+ה[-־]?(?:שמונה|8)(?!\w)"
+    rf"|{_AMONG}{_PHRASE_END}"
+)
+# Markdown emphasis and quotes may sit inside the phrase: "**שמונה** הרכבים".
+_EMPHASIS = str.maketrans("", "", '*"')
+
+
+def states_scope(answer: str) -> bool:
+    """True when the answer already says it covers only the eight reviewed cars."""
+    return bool(_EIGHT_CARS.search(normalize(answer).translate(_EMPHASIS)))
 
 
 EMPTY_REPLY = "לא התקבלה שאלה. על איזה רכב אפשר לעזור?"

@@ -1,0 +1,26 @@
+# carwise in one command (CW-621): docker compose up --build
+#
+# - Loopback only: the UI has no login and every question is paid for with your key,
+#   so the port is published on 127.0.0.1, never on every interface (CR-005).
+# - The key comes from your shell or from a .env file next to this file (the shell
+#   wins); it is never written here. ":?" stops with a readable error when it is
+#   missing or empty.
+# - carwise-data is the same named volume as `docker run -v carwise-data:/app/data`,
+#   so the articles, the model and the index are shared and survive `docker compose down`.
+# - The healthcheck comes from the Dockerfile.
+services:
+  carwise:
+    build: .
+    image: carwise
+    ports:
+      - "127.0.0.1:8501:8501"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?set OPENAI_API_KEY in your shell or in a .env file}
+      CARWISE_PROFILE: ${CARWISE_PROFILE:-dev}
+    volumes:
+      - carwise-data:/app/data
+    restart: "no"
+
+volumes:
+  carwise-data:
+    name: carwise-data

@@ -83,3 +83,12 @@ def test_comparison_puts_candidates_side_by_side() -> None:
     # Overlap: probes (0.82, 0.88) above the answerable median.
     assert "| a | " in text and "| 1/2 | " in text
     assert "| a | 512 | 5 (None) |" in text
+
+
+def test_index_build_header_states_the_reports_own_chunk_count() -> None:
+    a, b = _report("a", 0.85), _report("b", 0.87)
+    assert "| Index build s |" in comparison_markdown({"a": a, "b": b})  # count unknown
+    a.resources["chunks"] = b.resources["chunks"] = 78
+    assert "| Index build s (78 chunks) |" in comparison_markdown({"a": a, "b": b})
+    b.resources["chunks"] = 75  # reports from different corpora: no single count
+    assert "| Index build s |" in comparison_markdown({"a": a, "b": b})

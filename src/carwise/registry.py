@@ -51,6 +51,10 @@ class Car(BaseModel):
     display_name: str
     aliases_he: list[str]
     aliases_latin: list[str]
+    # Name matching only (CW-601): a short alias is this car only when no other
+    # brand stands before it and none of these model words follows it.
+    brand_names: list[str] = []
+    other_models: list[str] = []
     body_type: BodyType | None
     body_type_quote: str | None
     powertrain: Powertrain | None
@@ -97,6 +101,10 @@ class Registry(BaseModel):
                 if alias in owner:
                     raise ValueError(f"alias '{alias}' used by {owner[alias]} and {car.id}")
                 owner[alias] = car.id
+        for car in self.cars:
+            for brand in car.brand_names:
+                if normalize_alias(brand) in owner:
+                    raise ValueError(f"{car.id}: brand '{brand}' is also a car alias")
         return self
 
     def get(self, car_id: str) -> Car:

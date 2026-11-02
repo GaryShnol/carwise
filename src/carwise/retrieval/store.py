@@ -1,7 +1,7 @@
 """Local persistent Chroma collection holding the chunk vectors.
 
 Why Chroma: an embedded store with metadata filters and on-disk persistence,
-no server to run, which is all 75 chunks need. Why a fingerprint: embedding the
+no server to run, which is all 78 chunks need. Why a fingerprint: embedding the
 corpus takes a while on CPU, so `ingest` should be a no-op when nothing that
 affects the vectors changed, and must rebuild when anything did (model,
 revision, prefixes, chunk limits, chunk ids or chunk text).
@@ -168,7 +168,7 @@ class ChunkStore:
     def candidates(self, vector: Vector, car_ids: list[str] | None) -> list[tuple[Chunk, float]]:
         """Every chunk (of the given cars), with cosine similarity, unsorted.
 
-        Asking for all of them, not top-k, keeps the ranking exact: with 75
+        Asking for all of them, not top-k, keeps the ranking exact: with 78
         chunks the approximate HNSW search has nothing to approximate, and the
         caller sorts and cuts deterministically.
         """

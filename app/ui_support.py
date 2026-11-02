@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import string
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -23,12 +24,15 @@ from app.ui_text import (
     INDEX_MISSING,
     MISSING_KEY,
     SOURCES_HEADERS,
+    STOPPED,
+    STOPPED_SERVER,
     UNEXPECTED,
 )
 from carwise.config import Settings, load_settings
 from carwise.guardrails import section_label
 from carwise.ingest.run import ingest
 from carwise.llm.base import LLMClient, LLMConfigError
+from carwise.llm.budget import SharedBudget
 from carwise.llm.openai_client import OpenAIClient
 from carwise.pipeline import Pipeline
 from carwise.preferences import FIELD_LABELS
@@ -84,20 +88,27 @@ def load_resources(settings: Settings, *, ingest_if_missing: bool = False) -> Re
             ) from None
         retriever = open_retriever(settings, embedder)
     retriever.warm_up()
-    profile = settings.profile()
+    profile_name = settings.profile_name()
+    profile = settings.profiles[profile_name]
     logger = TurnLogger(
         Path(settings.paths.log_dir),
-        profile=os.environ.get("CARWISE_PROFILE") or settings.default_profile,
+        profile=profile_name,
         models={"understand": profile.understand_model, "generate": profile.generate_model},
     )
     # Shared by every browser session's thread: one retrieval at a time.
     return Resources(settings, load_registry(), SerializedRetriever(retriever), logger)
 
 
-def new_llm(settings: Settings) -> LLMClient:
+def new_budget(settings: Settings) -> SharedBudget:
+    """The spend of every browser session in this process together (CW-605)."""
+    return SharedBudget(settings.llm.max_total_cost_usd)
+
+
+def new_llm(settings: Settings, budget: SharedBudget) -> LLMClient:
     """One client per browser session, so the cost cap bounds one conversation, as
-    in the CLI. Raises LLMConfigError when the API key is missing (no network call)."""
-    return OpenAIClient(settings, settings.profile())
+    in the CLI; all of them charge the process's shared budget, which a refresh does
+    not reset. Raises LLMConfigError when the API key is missing (no network call)."""
+    return OpenAIClient(settings, settings.profile(), shared_budget=budget)
 
 
 def new_pipeline(resources: Resources, llm: LLMClient) -> Pipeline:
@@ -221,6 +232,11 @@ def stops_session(answer: Answer) -> bool:
     return answer.refusal is RefusalReason.BUDGET_EXCEEDED
 
 
+def stopped_message(answer: Answer) -> str:
+    """Which cap stopped the session: only the session's own cap is reset by a refresh."""
+    return STOPPED_SERVER if "server_budget_exceeded" in answer.flags else STOPPED
+
+
 def preference_rows(preferences: Preferences) -> list[tuple[str, str, str]]:
     """(label, value, the user's message it came from) for each stated preference."""
     return [(FIELD_LABELS[name], pref.value, pref.source) for name, pref in preferences.items()]
@@ -229,6 +245,29 @@ def preference_rows(preferences: Preferences) -> list[tuple[str, str, str]]:
 def as_markdown(text: str) -> str:
     """Text for st.markdown: "$" would otherwise start LaTeX ("$0.5" in the budget reply)."""
     return text.replace("$", "\\$")
+
+
+def as_literal_markdown(text: str) -> str:
+    """Text for st.markdown that must render exactly as written: no link, image,
+    autolink, emphasis or LaTeX can form (CW-611).
+
+    Why every ASCII punctuation mark: CommonMark lets each one be escaped with a
+    backslash and shows it as is, so nothing else changes. Hebrew letters and
+    spaces are left alone, so the right-to-left line reads the same. The escaped
+    "." and ":" also break a bare "www." or "https://" that GFM would link.
+    It replaces `as_markdown` (which escapes only "$"); never apply both.
+    """
+    return "".join("\\" + char if char in string.punctuation else char for char in text)
+
+
+def answer_markdown(answer: Answer) -> str:
+    """A refusal is code-built plain text that can carry names straight from the
+    understand call (`not_covered`), so it is shown literally. A generated answer
+    keeps its markdown (bold, lists); `guardrails.answer_text_problem` has already
+    rejected any link or image in it."""
+    if answer.refusal is not None:
+        return as_literal_markdown(answer.text)
+    return as_markdown(answer.text)
 
 
 # --- `python -m app ui` --------------------------------------------------------------

@@ -11,7 +11,9 @@ the eval runner all call `Pipeline.ask`; none of them holds logic of its own.
 
 from __future__ import annotations
 
+import math
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from carwise import guardrails
@@ -25,6 +27,7 @@ from carwise.llm.base import (
     LLMResult,
     LLMUnavailableError,
     Message,
+    SharedBudgetExceededError,
     T,
     Usage,
 )
@@ -38,7 +41,7 @@ from carwise.prompts import (
     understand_system,
 )
 from carwise.registry import Registry
-from carwise.retrieval.retriever import ChunkRetriever
+from carwise.retrieval.retriever import ChunkRetriever, Query
 from carwise.schemas import (
     Answer,
     CheckFindings,
@@ -54,8 +57,6 @@ from carwise.schemas import (
     Understanding,
 )
 from carwise.telemetry import TurnLogger
-
-NO_RETRIEVAL_INTENTS = (Intent.CHITCHAT, Intent.OUT_OF_SCOPE)
 
 
 @dataclass
@@ -74,6 +75,8 @@ class _Turn:
     rejected_preferences: list[str] = field(default_factory=list)
 
     calls: list[LLMCall] = field(default_factory=list)
+    # Clock reading after which no model call starts (CW-612); set by Pipeline.ask.
+    deadline: float = math.inf
 
     def charge(self, result: LLMResult[T], stage: str) -> T:
         self.usage += result.usage
@@ -122,6 +125,13 @@ def _call(
     )
 
 
+class TurnDeadlineError(LLMUnavailableError):
+    """The turn ran past llm.turn_deadline_s before a model call (CW-612).
+
+    A subclass of LLMUnavailableError, so each stage takes the path it already has
+    for a provider that does not answer, and no call is made or charged."""
+
+
 @dataclass
 class _Plan:
     """What the understanding step decided, after code checked it against the registry."""
@@ -131,6 +141,13 @@ class _Plan:
     not_covered: list[str] = field(default_factory=list)
     question: str = ""
     message: str = ""  # the user's own words, which may state numbers (CW-206)
+    # The user turns in the history window: also the user's own words (CW-603).
+    earlier_user_turns: list[str] = field(default_factory=list)
+
+    def user_texts(self) -> list[str]:
+        """What the user wrote this turn and in the history window. Never the
+        standalone question (the understand model's rewrite) or an assistant turn."""
+        return [*self.earlier_user_turns, self.message]
 
 
 class Pipeline:
@@ -144,8 +161,10 @@ class Pipeline:
         profile: str | None = None,
         logger: TurnLogger | None = None,
         generate_version: str | None = None,
+        clock: Callable[[], float] = time.monotonic,
     ) -> None:
         self._settings = settings
+        self._clock = clock  # for the turn deadline only; injectable for tests
         # The configured generate prompt unless the eval asks for another version.
         self._generate_system = (
             generate_system(generate_version) if generate_version else GENERATE_SYSTEM
@@ -172,9 +191,16 @@ class Pipeline:
     ) -> Answer:
         """Stateless turn: the caller passes the memory in and keeps what comes back."""
         started = time.perf_counter()
-        turn = _Turn(preferences=preferences or Preferences())
+        deadline = self._clock() + self._settings.llm.turn_deadline_s
+        turn = _Turn(preferences=preferences or Preferences(), deadline=deadline)
         try:
             answer = self._ask(message.strip(), history, turn)
+        except SharedBudgetExceededError:
+            # The UI server's total over every session (CW-605): a new session (a
+            # refresh) would be refused too, so the reply does not suggest one.
+            turn.flags += ["budget_exceeded", "server_budget_exceeded"]
+            text = guardrails.server_budget_reply(self._settings.llm.max_total_cost_usd)
+            answer = self._reply(turn, text, RefusalReason.BUDGET_EXCEEDED)
         except BudgetExceededError:
             # The cap is per client (one chat session or one eval run): the refused
             # call never reached the provider (nothing to charge), and every later
@@ -210,7 +236,10 @@ class Pipeline:
             suggested = self._suggest(message, history, [])
             text = guardrails.unknown_car_reply(plan.not_covered, self._registry, suggested)
             return self._reply(turn, text, RefusalReason.UNKNOWN_CAR, plan, suggested=suggested)
-        if plan.intent in NO_RETRIEVAL_INTENTS and not plan.cars:
+        # Off-topic is refused even when a car is named ("a poem about the RS3", CR-008);
+        # chitchat that names a car ("thanks for the RS3 info") goes on to retrieval.
+        off_topic = plan.intent is Intent.OUT_OF_SCOPE
+        if off_topic or (plan.intent is Intent.CHITCHAT and not plan.cars):
             text = guardrails.out_of_scope_reply(self._registry)
             return self._reply(turn, text, RefusalReason.OUT_OF_SCOPE, plan)
 
@@ -280,9 +309,10 @@ class Pipeline:
         cars = guardrails.unsupported_cars(
             generation.answer, hits, plan.not_covered, self._registry, config.outside_brands
         )
-        # The user's words may state numbers: the question as written and as rewritten,
-        # and the preference values the generate call received.
-        user_texts = [plan.message, plan.question, *(p.value for _, p in turn.preferences.items())]
+        # The user's words may state numbers: this message and the user turns in the
+        # history window, never the rewritten question (CW-603), plus the preference
+        # values the generate call received.
+        user_texts = [*plan.user_texts(), *(p.value for _, p in turn.preferences.items())]
         numbers = guardrails.unsupported_numbers(
             generation.answer, hits, user_texts, self._registry, config.numbers_always_allowed
         )
@@ -319,6 +349,7 @@ class Pipeline:
             *({"role": item["role"], "content": escape_text(item["content"])} for item in history),
             {"role": "user", "content": escape_text(message)},
         ]
+        self._before_call(turn)
         started = time.perf_counter()
         try:
             result = self._llm.complete_json(
@@ -326,6 +357,7 @@ class Pipeline:
                 messages,
                 Understanding,
                 model=self._models.understand_model,
+                max_completion_tokens=self._settings.llm.max_completion_tokens.understand,
             )
             understanding = turn.charge(result, "understand")
         except LLMOutputError as error:
@@ -336,9 +368,16 @@ class Pipeline:
             understanding = None
         finally:
             turn.latency_ms["understand"] = (time.perf_counter() - started) * 1000
-        return self._plan(message, understanding, turn)
+        earlier = [item["content"] for item in history if item["role"] == "user"]
+        return self._plan(message, earlier, understanding, turn)
 
-    def _plan(self, message: str, understanding: Understanding | None, turn: _Turn) -> _Plan:
+    def _plan(
+        self,
+        message: str,
+        earlier_user_turns: list[str],
+        understanding: Understanding | None,
+        turn: _Turn,
+    ) -> _Plan:
         """Trust the model's car ids only when the registry knows them; add name matches."""
         known = {car.id for car in self._registry.cars}
         question = understanding.standalone_question.strip() if understanding else ""
@@ -347,11 +386,12 @@ class Pipeline:
         invented = [car for car in llm_cars if car not in known]
         if invented:
             turn.flags.append("understand_unknown_ids")
-        matched = guardrails.cars_in_text(f"{message}\n{question}", self._registry)
+        outside_brands = self._settings.guardrails.outside_brands
+        matched = guardrails.cars_in_text(f"{message}\n{question}", self._registry, outside_brands)
         cars = list(dict.fromkeys([*(c for c in llm_cars if c in known), *matched]))
-        brands = guardrails.outside_brands_in_text(
-            message, self._settings.guardrails.outside_brands
-        )
+        # "אאודי S6", "C3 איירקרוס": an alias naming another model is a car not covered.
+        others = guardrails.other_models_in_text(message, self._registry, outside_brands)
+        brands = guardrails.outside_brands_in_text(message, outside_brands)
         unrecognized = understanding.unrecognized_cars if understanding else []
         if understanding:
             intent = understanding.intent
@@ -366,41 +406,45 @@ class Pipeline:
             turn.flags += merged.flags
         else:
             intent = Intent.COMPARE if len(cars) > 1 else Intent.FACT
-        not_covered = guardrails.not_covered(unrecognized, brands)
-        return _Plan(intent, cars, not_covered, question, message)
+        not_covered = guardrails.not_covered(unrecognized, [*others, *brands])
+        return _Plan(intent, cars, not_covered, question, message, earlier_user_turns)
 
     def _retrieve(self, plan: _Plan) -> list[RetrievedChunk]:
         """One car: filter on it. Several: each car separately. None: all cars, capped.
 
         A recommendation (or ranking) always searches all cars (CW-306): the cars the
         plan names, often carried over from earlier answers, are only a hint, so a
-        car the user never mentioned can still be the best match.
+        car the user never mentioned can still be the best match. The question is
+        embedded once and reused by the spec-box search (CW-614).
         """
         config = self._settings.retrieval
+        query = self._retriever.embed(plan.question)
         if plan.intent is Intent.RECOMMEND:
             hits = self._retriever.search_all(
-                plan.question, config.cross_car_top_k, config.cross_car_per_car_cap
+                query, config.cross_car_top_k, config.cross_car_per_car_cap
             )
             # The hint: each named car's spec box joins the candidates, never filters them.
-            return self._with_spec_boxes(plan, hits) if plan.cars else hits
+            return self._with_spec_boxes(query, plan, hits) if plan.cars else hits
         if len(plan.cars) > 1:
-            hits = self._retriever.search_per_car(plan.question, plan.cars, config.per_car_cap)
+            hits = self._retriever.search_per_car(query, plan.cars, config.per_car_cap)
         elif plan.cars:
-            hits = self._retriever.search(plan.question, plan.cars, config.top_k)
+            hits = self._retriever.search(query, plan.cars, config.top_k)
         else:
             return self._retriever.search_all(
-                plan.question, config.cross_car_top_k, config.cross_car_per_car_cap
+                query, config.cross_car_top_k, config.cross_car_per_car_cap
             )
         if config.force_spec_box and plan.intent is Intent.COMPARE:
             # Option B: comparisons need each car's price and figures, which sit in its
             # spec box, whatever its similarity to the wording of the question.
-            hits = self._with_spec_boxes(plan, hits)
+            hits = self._with_spec_boxes(query, plan, hits)
         return hits
 
-    def _with_spec_boxes(self, plan: _Plan, hits: list[RetrievedChunk]) -> list[RetrievedChunk]:
+    def _with_spec_boxes(
+        self, query: Query, plan: _Plan, hits: list[RetrievedChunk]
+    ) -> list[RetrievedChunk]:
         """The hits, then each named car's spec box that is not among them yet."""
         have = {hit.chunk.chunk_id for hit in hits}
-        extra = self._retriever.spec_boxes(plan.question, plan.cars)
+        extra = self._retriever.spec_boxes(query, plan.cars)
         return hits + [hit for hit in extra if hit.chunk.chunk_id not in have]
 
     def _suggest(
@@ -444,10 +488,15 @@ class Pipeline:
                 {"role": "user", "content": regenerate_instruction(findings.problems())},
             ]
         stage = "regenerate" if retry_of else "generate"
+        self._before_call(turn)
         started = time.perf_counter()
         try:
             result = self._llm.complete_json(
-                self._generate_system, messages, Generation, model=self._models.generate_model
+                self._generate_system,
+                messages,
+                Generation,
+                model=self._models.generate_model,
+                max_completion_tokens=self._settings.llm.max_completion_tokens.generate,
             )
             return turn.charge(result, stage)
         finally:
@@ -461,7 +510,9 @@ class Pipeline:
         generation: Generation,
         check: PostCheck,
     ) -> Answer:
-        """Citations are checked in code: an id the model did not receive is dropped."""
+        """Citations are checked in code: an id the model did not receive is dropped.
+        A recommendation or ranking (both are Intent.RECOMMEND) that does not say it
+        covers only the eight reviewed cars gets guardrails.SCOPE_NOTE first (CW-606)."""
         by_id = {hit.chunk.chunk_id: hit.chunk for hit in hits}
         cited = list(dict.fromkeys(generation.used_chunk_ids))
         dropped = [chunk_id for chunk_id in cited if chunk_id not in by_id]
@@ -477,11 +528,25 @@ class Pipeline:
             )
             for chunk in (by_id[chunk_id] for chunk_id in cited if chunk_id in by_id)
         ]
-        return self._reply(
-            turn, generation.answer, None, plan, hits, sources, dropped, post_check=check
-        )
+        text = generation.answer
+        # Added after the post-check, which judges only the model's words; the note
+        # has no number or car name, and refusals and the fallback never get it. A blank
+        # line keeps it its own paragraph, so an answer opening with a list still renders.
+        if plan.intent is Intent.RECOMMEND and not guardrails.states_scope(text):
+            text = f"{guardrails.SCOPE_NOTE}\n\n{text}"
+            turn.flags.append("scope_note_added")
+        return self._reply(turn, text, None, plan, hits, sources, dropped, post_check=check)
 
     # --- helpers ------------------------------------------------------------------------
+    def _before_call(self, turn: _Turn) -> None:
+        """Checked before every model call: a call already running is bounded by the
+        SDK timeout and retries, so the deadline only stops the next one from starting."""
+        if self._clock() >= turn.deadline:
+            turn.flags.append("turn_deadline_exceeded")
+            raise TurnDeadlineError(
+                f"the turn ran past llm.turn_deadline_s ({self._settings.llm.turn_deadline_s:g} s)"
+            )
+
     @staticmethod
     def _reply(
         turn: _Turn,

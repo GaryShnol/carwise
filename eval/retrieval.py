@@ -27,7 +27,7 @@ from carwise.schemas import Answer, RefusalReason, RetrievedChunk
 from eval.questions import Behavior, Category, Negative, ProbePurpose, Question, Source
 from eval.recording import Case, RecordedTurn, ReplayClient
 
-CAR_RANK_DEPTH = 10_000  # "every chunk of the car": the corpus has 75 in total
+CAR_RANK_DEPTH = 10_000  # "every chunk of the car": the corpus has 78 in total
 REFUSALS = {RefusalReason.UNKNOWN_CAR: "refusal", RefusalReason.LOW_RELEVANCE: "refusal"}
 
 

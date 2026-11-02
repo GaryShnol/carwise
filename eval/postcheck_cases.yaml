@@ -1,0 +1,261 @@
+# Adversarial post-check set (CW-619, CR-019).
+#
+# Why it exists: the real eval runs show the post-check stays quiet on good answers
+# (few false positives); they say nothing about whether it catches bad ones. Each
+# case below scripts one bad generate output (or a clean control) against
+# synthetic chunks and declares the outcome the current code produces, so known
+# gaps are pinned in the open instead of hidden. If a fix closes a gap, flip its
+# `flagged` to true; if a change opens one, a test fails.
+#
+# Synthetic text only: never article text (the repository is public).
+#
+# Fields:
+#   id        unique, kebab-case
+#   kind      what the case probes (the report groups by it)
+#   bad       true: the answer contains a claim the sources cannot back
+#   flagged   expected post-check result with today's code (true = suspect)
+#   note      for a bad case that is not flagged: the review finding or README line;
+#             for one flagged only by accident: how
+#   chunks    {car id: [chunk text, ...]}: this turn's retrieved chunks
+#   message   the user's own words (default: a question with no numbers)
+#   rewrite   the understand call's standalone question (default: the message)
+#   unrecognized  car names the understand call did not recognize (the "not covered" list)
+#   answer    the scripted generate output
+
+cases:
+  # --- car names: outside brands -------------------------------------------------
+  - id: outside-brand-hebrew
+    kind: outside_brand
+    bad: true
+    flagged: true
+    chunks: {mg_s6: ["הטווח בפועל הוא 400 קילומטר"]}
+    answer: 'ל-MG S6 טווח של 400 ק"מ, יותר מטויוטה bZ4X (MG S6, פרק 0).'
+
+  - id: outside-brand-latin
+    kind: outside_brand
+    bad: true
+    flagged: true
+    chunks: {mg_s6: ["הטווח בפועל הוא 400 קילומטר"]}
+    answer: 'ל-MG S6 טווח של 400 ק"מ, בדומה ל-Tesla Model Y (MG S6, פרק 0).'
+
+  - id: outside-brand-not-listed
+    kind: outside_brand
+    bad: true
+    flagged: false
+    note: "a brand missing from guardrails.outside_brands is not seen"
+    chunks: {mg_s6: ["הטווח בפועל הוא 400 קילומטר"]}
+    answer: 'ל-MG S6 טווח של 400 ק"מ, יותר מפולסטאר (MG S6, פרק 0).'
+
+  # --- car names: Hebrew prefixes ------------------------------------------------
+  - id: prefix-stacked-long-brand
+    kind: hebrew_prefix
+    bad: true
+    flagged: true
+    chunks: {mg_s6: ["הטווח בפועל הוא 400 קילומטר"]}
+    answer: 'ל-MG S6 טווח של 400 ק"מ, ולטויוטה טווח קצר יותר (MG S6, פרק 0).'
+
+  - id: prefix-on-corpus-car
+    kind: hebrew_prefix
+    bad: true
+    flagged: true
+    chunks: {mg_s6: ["הטווח בפועל הוא 400 קילומטר"]}
+    # "אלנטרה" is a Hebrew-only alias with no Latin form, so only the prefix rule
+    # lets "לאלנטרה" match; with prefixes off this case would pass.
+    answer: 'ל-MG S6 טווח של 400 ק"מ, יותר מאשר לאלנטרה (MG S6, פרק 0).'
+
+  - id: prefix-stacked-short-brand
+    kind: hebrew_prefix
+    bad: true
+    flagged: false
+    note: "a short brand after two prefixes ('ולרנו') is given up on purpose (CW-602)"
+    chunks: {mg_s6: ["הטווח בפועל הוא 400 קילומטר"]}
+    answer: 'ל-MG S6 טווח של 400 ק"מ, ולרנו קליאו פחות (MG S6, פרק 0).'
+
+  # --- car names: corpus cars and their siblings ---------------------------------
+  - id: corpus-car-not-retrieved
+    kind: corpus_car
+    bad: true
+    flagged: true
+    chunks: {mg_s6: ["הטווח בפועל הוא 400 קילומטר"]}
+    answer: 'ל-MG S6 טווח של 400 ק"מ, וגם GV80 מציעה טווח דומה (MG S6, פרק 0).'
+
+  - id: sibling-kia-ev6
+    kind: sibling_model
+    bad: true
+    flagged: false
+    note: "CR-004: another model of a corpus brand (Kia EV6) is not caught"
+    chunks: {mg_s6: ["הטווח בפועל הוא 400 קילומטר"]}
+    answer: 'ל-MG S6 טווח של 400 ק"מ, יותר מקיה EV6 (MG S6, פרק 0).'
+
+  - id: sibling-kia-sorento
+    kind: sibling_model
+    bad: true
+    flagged: false
+    note: "CR-004: another model of a corpus brand, with no digit in its name, is not caught"
+    chunks: {mg_s6: ["הטווח בפועל הוא 400 קילומטר"]}
+    answer: 'ל-MG S6 טווח של 400 ק"מ, יותר מקיה סורנטו (MG S6, פרק 0).'
+
+  - id: sibling-ioniq-5
+    kind: sibling_model
+    bad: true
+    flagged: true
+    note: "CR-004 still holds for the name; only the numeric check fires, because no chunk states 5"
+    chunks: {mg_s6: ["הטווח בפועל הוא 400 קילומטר"]}
+    answer: 'ל-MG S6 טווח של 400 ק"מ, יותר מאיוניק 5 (MG S6, פרק 0).'
+
+  - id: brandless-model
+    kind: brandless_model
+    bad: true
+    flagged: false
+    note: "CR-004: a model name with no brand and no registry alias (Camry) is not caught"
+    chunks: {mg_s6: ["הטווח בפועל הוא 400 קילומטר"]}
+    answer: 'ל-MG S6 טווח של 400 ק"מ, ונוחות דומה לקאמרי (MG S6, פרק 0).'
+
+  # --- car names: short-alias collisions (CR-001, fixed in CW-601) ----------------
+  - id: alias-audi-s6
+    kind: alias_collision
+    bad: true
+    flagged: true
+    chunks: {mg_s6: ["הטווח בפועל הוא 400 קילומטר"]}
+    answer: 'ל-MG S6 טווח של 400 ק"מ, ובדומה לאאודי S6 היא מהירה (MG S6, פרק 0).'
+
+  - id: alias-c3-aircross
+    kind: alias_collision
+    bad: true
+    flagged: true
+    chunks: {citroen_c3: ["תא המטען מכיל 310 ליטר"]}
+    answer: 'לסיטרואן C3 תא מטען של 310 ליטר, וה-C3 איירקרוס גדולה יותר (סיטרואן C3, פרק 0).'
+
+  - id: alias-elantra-hybrid
+    kind: alias_collision
+    bad: true
+    flagged: true
+    chunks: {hyundai_elantra_n: ["המנוע מפיק 280 כוחות סוס"]}
+    answer: 'לאלנטרה N יש 280 כוחות סוס, ואלנטרה היברידית חסכונית יותר (יונדאי אלנטרה N, פרק 0).'
+
+  - id: alias-aion-y
+    kind: alias_collision
+    bad: true
+    flagged: true
+    chunks: {aion_ht: ["הטווח בפועל הוא 350 קילומטר"]}
+    answer: 'לאיון HT טווח של 350 ק"מ, ול-Aion Y טווח ארוך יותר (GAC איון HT, פרק 0).'
+
+  # --- numbers -------------------------------------------------------------------
+  - id: invented-price
+    kind: invented_number
+    bad: true
+    flagged: true
+    chunks: {mg_s6: ["המחיר הוא 180 אלף שקל עם אבזור מלא"]}
+    answer: "המחיר של MG S6 הוא 195 אלף שקל (MG S6, פרק 0)."
+
+  - id: invented-range
+    kind: invented_number
+    bad: true
+    flagged: true
+    chunks: {mg_s6: ["הטווח בפועל הוא 400 קילומטר"]}
+    answer: 'הטווח של MG S6 הוא 520 ק"מ (MG S6, פרק 0).'
+
+  - id: invented-power
+    kind: invented_number
+    bad: true
+    flagged: true
+    chunks: {audi_rs3: ["המנוע מפיק 400 כוחות סוס"]}
+    answer: "המנוע של אודי RS3 מפיק 420 כוחות סוס (אודי RS3, פרק 0)."
+
+  - id: number-only-in-rewrite
+    kind: rewrite_number
+    bad: true
+    flagged: true
+    chunks: {mg_s6: ["המנוע החשמלי חזק ושקט"]}
+    message: "כמה כוח סוס יש ל-MG S6?"
+    rewrite: 'כמה כוח סוס יש ל-MG S6 עם 350 כ"ס?'
+    answer: 'ל-MG S6 יש 350 כ"ס (MG S6, פרק 0).'
+
+  - id: truncated-decimal
+    kind: number_precision
+    bad: true
+    flagged: false
+    note: "CR-009(a): truncation is accepted, so a source 5.9 backs an answer of 5"
+    chunks: {mg_s6: ["התאוצה מ-0 ל-100 נמדדה ב-5.9 שניות"]}
+    answer: "MG S6 מאיצה ל-100 ב-5 שניות (MG S6, פרק 0)."
+
+  - id: small-count-from-another-attribute
+    kind: number_precision
+    bad: true
+    flagged: false
+    note: "CR-009(c): a small count is backed by any chunk number (7 hours backs 7 seats)"
+    chunks: {mg_s6: ["טעינה ביתית מלאה נמשכת 7 שעות, ובתא הנוסעים 5 מושבים"]}
+    answer: "ב-MG S6 יש 7 מושבים (MG S6, פרק 0)."
+
+  - id: cross-car-number-swap
+    kind: cross_car_number
+    bad: true
+    flagged: false
+    note: "CR-009(b): the check is per value, not per car; swapped figures pass"
+    chunks:
+      mg_s6: ["הטווח בפועל הוא 400 קילומטר"]
+      aion_ht: ["הטווח בפועל הוא 350 קילומטר"]
+    answer: 'ל-MG S6 טווח של 350 ק"מ ולאיון HT טווח של 400 ק"מ (MG S6, פרק 0; GAC איון HT, פרק 0).'
+
+  - id: number-as-words
+    kind: number_words
+    bad: true
+    flagged: false
+    note: "README Known limitations: numbers written as words are not checked"
+    chunks: {mg_s6: ["בתא הנוסעים 5 מושבים"]}
+    answer: "ב-MG S6 יש שבעה מושבים (MG S6, פרק 0)."
+
+  # --- clean controls: must not be flagged ----------------------------------------
+  - id: control-rival-in-chunk
+    kind: control
+    bad: false
+    flagged: false
+    chunks: {mg_s6: ["המתחרה העיקרית היא טסלה מודל Y, וגם הקיה EV9 בקטגוריה"]}
+    answer: "הכתבה משווה את MG S6 לטסלה מודל Y ולקיה EV9 (MG S6, פרק 0)."
+
+  - id: control-user-number
+    kind: control
+    bad: false
+    flagged: false
+    chunks: {mg_s6: ["המחיר הוא 180 אלף שקל עם אבזור מלא"]}
+    message: "יש לי תקציב של 200 אלף, כמה עולה MG S6?"
+    answer: "המחיר של MG S6 הוא 180 אלף שקל, מתחת לתקציב של 200 אלף (MG S6, פרק 0)."
+
+  - id: control-rounded-price
+    kind: control
+    bad: false
+    flagged: false
+    chunks: {mg_s6: ["המחיר: ₪178,888 לגרסה הבסיסית"]}
+    answer: "MG S6 עולה כ-179 אלף שקל (MG S6, פרק 0)."
+
+  - id: control-decimal-comma
+    kind: control
+    bad: false
+    flagged: false
+    chunks: {audi_rs3: ["התאוצה מ-0 ל-100 נמדדה ב-3.8 שניות"]}
+    answer: "אודי RS3 מאיצה מ-0 ל-100 ב-3,8 שניות (אודי RS3, פרק 0)."
+
+  - id: control-difference-of-stated-numbers
+    kind: control
+    bad: false
+    flagged: false
+    chunks:
+      mg_s6: ["המחיר הוא 180 אלף שקל"]
+      aion_ht: ["המחיר הוא 170 אלף שקל"]
+    answer: "MG S6 עולה 180 אלף שקל ואיון HT עולה 170 אלף, הפרש של 10 אלף (MG S6, פרק 0; GAC איון HT, פרק 0)."
+
+  - id: control-asked-outside-car
+    kind: control
+    bad: false
+    flagged: false
+    chunks: {mg_s6: ["המחיר הוא 180 אלף שקל עם אבזור מלא"]}
+    message: "כמה עולה MG S6 לעומת BMW X5?"
+    unrecognized: ["BMW X5"]
+    answer: "על BMW X5 אין בכתבות מידע. המחיר של MG S6 הוא 180 אלף שקל (MG S6, פרק 0)."
+
+  - id: control-prefixes-and-plural-verbs
+    kind: control
+    bad: false
+    flagged: false
+    chunks: {genesis_gv80: ["הטווח בפועל הוא 500 קילומטר"]}
+    answer: "שמרנו לך את הנתון: לג'נסיס GV80 טווח של 500 קילומטר (ג'נסיס GV80, פרק 0)."

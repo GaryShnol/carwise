@@ -1,0 +1,38 @@
+# Corpus manifest (CW-610): SHA-256 of each article's cleaned text and chunks.
+# Hashes and counts only, no article text. Written by
+# `python -m app ingest --write-manifest`; see src/carwise/ingest/manifest.py.
+format: 1
+corpus_sha256: 3bf27d9994bbb624441f36bb9eb088560a308bf850eb6cf38c12098c458dfbaf
+articles:
+  citroen_c3:
+    text_sha256: 3e0818f6a5e50ab2dc57f9597d29bb76d2a42402a8796a29cb9da4d4b14dfc47
+    chunks_sha256: 5fd0bd97f2ad2097d4767d17a83fde23acb95f210ebff681f8e89a635759385b
+    chunks: 10
+  audi_rs3:
+    text_sha256: e4003f71d42f13a516de405280274a35aec4955ab75d5974e3139b4fba7d292b
+    chunks_sha256: ee9f7b73526a21ad0c1584ea0c180c316cdc360d4d21ab7699a6cf70a24b88fc
+    chunks: 11
+  kia_ev9:
+    text_sha256: 3f505c8d4cf2a0fdd81f84f6878da2672caa0111c6d044582042177e42cd1512
+    chunks_sha256: 1c1827c6d59060aa66dcb29e5d42fdc53f3bf6a1674f5ec4949801bbea1bc16c
+    chunks: 3
+  mg_s6:
+    text_sha256: e2f706ae78c967f474e583f0c8947845eedb9d2b3359e14d2ab20d7c0fa3acdd
+    chunks_sha256: 32b31a2c18ad9f4989daa218fddf9b6baf154912a57d33d3becf7180fe9776d9
+    chunks: 13
+  hyundai_elantra_n:
+    text_sha256: 0c9a73b67bc8d6e00d1e9d0e3b4bb2a8c0703353fed4335765c70334b826320f
+    chunks_sha256: 3c4f4f514bc6c5bb0c766772a397f08b5df04e6323ef1efe078314c4ed763363
+    chunks: 9
+  aion_ht:
+    text_sha256: 40d2d67d0bf743802a1758e7b480699c54a96d8fa784f56cf2bebc741e4bc6ed
+    chunks_sha256: 324dead0c1421f6facc19c1a15556901aa247aea577f8a3cba09c3158599b75e
+    chunks: 11
+  link_and_co_01:
+    text_sha256: 64c9d87d10bbf935c9a5c570ecfa9577de843c38c3587c405dd3061f79781b1f
+    chunks_sha256: 56ddcb6640d3b5db1849f0b6f29a204a28594e21876b5b823276b842ec2987ae
+    chunks: 11
+  genesis_gv80:
+    text_sha256: 1b58e391873b082ff83ab59547c3effe62f51aaebb66ee46af770cbe31bf65dd
+    chunks_sha256: 02dc66d2410c676f603fec19c682d28d83d7bae27084e5f6017422da4c42274d
+    chunks: 10

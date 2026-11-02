@@ -28,6 +28,13 @@ class ProfileConfig(_Strict):
     generate_model: str
 
 
+class CompletionCapsConfig(_Strict):
+    """Output-token cap per pipeline stage (CW-612); regenerate shares generate's."""
+
+    understand: int
+    generate: int
+
+
 class LLMConfig(_Strict):
     temperature: float | None
     reasoning_effort: Literal["none", "minimal", "low", "medium", "high"] | None
@@ -36,6 +43,9 @@ class LLMConfig(_Strict):
     retries: int
     history_window: int
     max_cost_usd: float
+    max_total_cost_usd: float  # shared by every UI session in one process (CW-605)
+    max_completion_tokens: CompletionCapsConfig
+    turn_deadline_s: float  # no new model call starts after this much of a turn (CW-612)
 
 
 class Price(_Strict):
@@ -75,7 +85,8 @@ class RetrievalConfig(_Strict):
     cross_car_per_car_cap: int
     relevance_threshold: float
     lexical: LexicalConfig
-    force_spec_box: bool  # CW-303 option B: comparisons get each named car's spec box
+    # CW-303 option B, for comparisons only: recommendations add spec boxes regardless (CW-306)
+    force_spec_box: bool
 
 
 class GuardrailsConfig(_Strict):
@@ -118,6 +129,7 @@ class PathsConfig(_Strict):
     raw_dir: str
     index_dir: str
     log_dir: str
+    corpus_manifest: str  # committed hashes of the cleaned articles (CW-610)
 
 
 class Settings(_Strict):
@@ -136,13 +148,20 @@ class Settings(_Strict):
     eval: EvalConfig
     paths: PathsConfig
 
-    def profile(self, name: str | None = None) -> ProfileConfig:
-        """Resolve a profile: explicit name, then CARWISE_PROFILE, then the default."""
+    def profile_name(self, name: str | None = None) -> str:
+        """The profile in use: explicit name, then CARWISE_PROFILE, then the default.
+
+        The one resolver behind `profile()` and every log or report label, so a label
+        always names the models that ran (CW-613)."""
         chosen = name or os.environ.get("CARWISE_PROFILE") or self.default_profile
         if chosen not in self.profiles:
             known = ", ".join(sorted(self.profiles))
             raise ValueError(f"Unknown profile '{chosen}'. Known profiles: {known}.")
-        return self.profiles[chosen]
+        return chosen
+
+    def profile(self, name: str | None = None) -> ProfileConfig:
+        """Resolve a profile the way `profile_name` does."""
+        return self.profiles[self.profile_name(name)]
 
 
 def load_settings(path: Path | None = None) -> Settings:

@@ -12,6 +12,7 @@ import re
 from pathlib import Path
 
 import pytest
+import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 DOCKERFILE = (ROOT / "Dockerfile").read_text(encoding="utf-8")
@@ -124,3 +125,65 @@ def test_healthcheck_and_first_start_command() -> None:
     assert "HEALTHCHECK" in INSTRUCTIONS and "/_stcore/health" in INSTRUCTIONS
     command = re.findall(r"^CMD\s+(.+)$", INSTRUCTIONS, re.MULTILINE)[-1]
     assert '"--address", "0.0.0.0"' in command and '"--ingest-if-missing"' in command
+
+
+@pytest.mark.parametrize("doc", ["README.md", "docs/docker.md", "Dockerfile"])
+def test_documented_run_command_publishes_on_loopback_only(doc: str) -> None:
+    """CW-605: a bare -p 8501:8501 publishes the unauthenticated UI on every interface."""
+    text = (ROOT / doc).read_text(encoding="utf-8")
+    runs = [line for line in text.splitlines() if "docker run" in line]
+    assert runs and all("-p 127.0.0.1:8501:8501" in line for line in runs), runs
+
+
+# --- compose.yaml (CW-621): the same loopback, key and volume rules as docker run ---
+
+
+def _compose_service() -> dict[str, object]:
+    compose = yaml.safe_load((ROOT / "compose.yaml").read_text(encoding="utf-8"))
+    service = compose["services"]["carwise"]
+    assert isinstance(service, dict)
+    return service
+
+
+def test_compose_publishes_on_loopback_only() -> None:
+    ports = _compose_service()["ports"]
+    assert isinstance(ports, list) and ports
+    assert all(str(port).startswith("127.0.0.1:") for port in ports), ports
+
+
+def test_compose_takes_the_key_from_the_shell_or_env_file_never_a_literal() -> None:
+    environment = _compose_service()["environment"]
+    assert isinstance(environment, dict)
+    assert re.fullmatch(r"\$\{OPENAI_API_KEY:\?[^}]+\}", str(environment["OPENAI_API_KEY"]))
+    assert not any("sk-" in str(value) for value in environment.values())
+    assert "sk-" not in (ROOT / "compose.yaml").read_text(encoding="utf-8")
+
+
+def test_compose_uses_the_same_named_volume_as_docker_run() -> None:
+    compose = yaml.safe_load((ROOT / "compose.yaml").read_text(encoding="utf-8"))
+    assert compose["volumes"]["carwise-data"]["name"] == "carwise-data"
+    assert "carwise-data:/app/data" in _compose_service()["volumes"]  # type: ignore[operator]
+
+
+def test_compose_builds_the_repo_image_and_keeps_its_healthcheck() -> None:
+    service = _compose_service()
+    assert service["build"] == "."
+    assert service["image"] == "carwise"
+    assert service.get("restart", "no") == "no"
+    assert "healthcheck" not in service
+    # host networking would bypass the loopback-only port mapping
+    assert "network_mode" not in service
+
+
+def test_makefile_has_a_compose_target() -> None:
+    makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
+    assert re.search(r"^docker-up:\n\tdocker compose up --build$", makefile, re.MULTILINE)
+    assert re.search(r"^\.PHONY:.*\bdocker-up\b", makefile, re.MULTILINE)
+
+
+@pytest.mark.parametrize("doc", ["README.md", "docs/docker.md"])
+def test_every_documented_port_mapping_is_loopback(doc: str) -> None:
+    """CW-621: covers compose and prose too, not only docker run lines."""
+    text = (ROOT / doc).read_text(encoding="utf-8")
+    lines = [line for line in text.splitlines() if "8501:8501" in line]
+    assert all("127.0.0.1:8501:8501" in line for line in lines), lines

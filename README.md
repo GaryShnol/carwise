@@ -18,24 +18,31 @@ loop. The model writes the answer, and code decides what goes into the model and
 3. Retrieve and gate (no LLM): per-car retrieval. Code refuses a car outside the eight, and
    off-topic messages, before any generation call.
 4. Generate (LLM call 2): JSON with the answer and the ids of the chunks it used. Code checks the
-   ids, the car names and every number against the retrieved chunks. A suspect answer is
-   regenerated once, then replaced by a fixed reply.
+   ids, the car names it knows and the numbers written in digits against the retrieved chunks
+   and the user's own words.
+   A suspect answer is regenerated once, then replaced by a fixed reply.
 5. Telemetry: one JSON line per turn (chunk ids, scores, tokens, cost, latency, check results),
-   never the message text.
+   never the user's words: not the message, and not the unknown car names taken from it
+   (counted only).
 
 **Three key decisions.**
 1. **The registry gate, not a similarity threshold, does the refusing.** On this corpus,
    similarity scores do not separate answerable questions from unanswerable ones
    ([ADR 0003](docs/decisions/0003-retrieval-tuning.md)), so a car outside the eight is refused
    in code, before generation.
-2. **Post-checks in code.** Every car name and every number in an answer must appear in the
-   chunks retrieved for that turn; an answer that fails is regenerated once, then replaced.
+2. **Post-checks in code.** The car names code can recognize (the eight cars' aliases and a
+   list of outside brands) and every number written in digits must appear in the chunks
+   retrieved for that turn or in the user's own words; an answer that fails is regenerated
+   once, then replaced. A car name the code does not know, such as another Kia model, is not
+   seen, and a number is checked as a value, not per car
+   ([what the checks cover](#guardrails-and-reliability)).
 3. **Measure before changing.** The embedding model, the retrieval settings and the generate
    prompt were each chosen from an eval run, and a prompt change that lost accuracy was rolled
    back ([ADR 0004](docs/decisions/0004-answer-eval-and-generate-prompt.md)).
 
-On the `final` profile, 3 runs of 23 tuning questions passed 64 of 69, and 6 questions written
-after tuning passed 15 of 18 (details under [Evaluation](#evaluation)).
+On the `final` profile, 3 runs of 23 tuning questions passed 62 of 69 as graded (64 after a
+grading fix found by reading the failures, which could only raise the score), and 6 questions
+written after tuning passed 15 of 18 (details under [Evaluation](#evaluation)).
 
 ## Contents
 
@@ -116,16 +123,29 @@ uv run --env-file .env python -m app chat
 ### Docker
 
 ```bash
-docker build -t carwise .
-docker run --rm -e OPENAI_API_KEY -v carwise-data:/app/data -p 8501:8501 carwise
+cp .env.example .env    # then fill in OPENAI_API_KEY, or export it (PowerShell: copy .env.example .env)
+docker compose up --build    # or: make docker-up
 ```
 
-Set `OPENAI_API_KEY` in your shell first. `-e OPENAI_API_KEY` passes it by name, so the key is
-not typed on the command line or stored in the image. Open http://localhost:8501. The first
-start fetches the articles, downloads the embedding model and builds the index into the
-`carwise-data` volume while the page shows a loading message (177 s on the development machine).
-Later starts reuse the volume (17 s). Add `-e CARWISE_PROFILE=final` for the `final` profile.
-Details and measurements: [docs/docker.md](docs/docker.md).
+Compose reads the key from your shell or from `.env` next to `compose.yaml` (the shell wins),
+and stops with a clear message if it is missing. Open http://localhost:8501; the UI is
+published on the host's loopback address only. The first start fetches the articles, downloads
+the embedding model (2.2 GB) and builds the index into the `carwise-data` volume while the page
+shows a loading message (about 3 minutes, 177 s on the development machine). Later starts reuse
+the volume (17 s). Stop with `docker compose down` (the volume is kept); start over with
+`docker volume rm carwise-data`. Set `CARWISE_PROFILE=final` in the shell or `.env` for the
+`final` profile.
+
+Without compose, with the key set in your shell:
+
+```bash
+docker build -t carwise .
+docker run --rm -e OPENAI_API_KEY -v carwise-data:/app/data -p 127.0.0.1:8501:8501 carwise
+```
+
+`-e OPENAI_API_KEY` passes the key by name, so it is not typed on the command line or stored in
+the image. Add `-e CARWISE_PROFILE=final` for the `final` profile. Both ways share the same
+volume. Details and measurements: [docs/docker.md](docs/docker.md).
 
 ### Ollama (optional, not evaluated)
 
@@ -171,8 +191,9 @@ $0.2447 for the answers (400,092 input and 18,764 output tokens) and $0.2017 for
 6-question hold-out, 3 runs, cost $0.0409. Prices per model are in
 [`config/settings.yaml`](config/settings.yaml), checked against OpenAI's pricing page
 ([ADR 0001](docs/decisions/0001-llm-sampling-controls.md)). Every chat session stops at
-`llm.max_cost_usd` ($2.00). In the UI that cap applies to one browser session, not to the whole
-process.
+`llm.max_cost_usd` ($2.00). In the UI that cap applies to one browser session, and a refresh
+starts a new one, so every UI session also charges one total for the whole process,
+`llm.max_total_cost_usd` ($5.00); only a restart resets it.
 
 ## Architecture
 
@@ -239,8 +260,8 @@ ADRs hold the measurements; [docs/README.md](docs/README.md) indexes them.
 | Recommendations search all cars; named cars are a hint ([ADR 0003](docs/decisions/0003-retrieval-tuning.md), CW-306) | Tuning set 23/23, sources 26/26, MRR 0.631 | Searching only the cars the plan names | — |
 | k and caps unchanged (`top_k` 5, `per_car_cap` 3) ([ADR 0003](docs/decisions/0003-retrieval-tuning.md)) | Every setting in the sweep passed the same questions | `per_car_cap` 2 (17% less chunk text, same hits): picking inside a flat region on 23 questions fits noise | Generation cost matters: it is the first lever |
 | Registry gate as the primary refusal; threshold 0.80 only as an off-topic backstop ([ADR 0003](docs/decisions/0003-retrieval-tuning.md)) | Answerable minimum 0.846, probe minimum 0.847: the score distributions overlap completely | A tuned similarity threshold as the main gate | An embedding model that separates the two groups |
-| Post-check in code (cars and numbers), regenerate once, then a fixed fallback | Clean on every answer of the 3-run `final` eval | Trusting the prompt alone; an LLM claim check at runtime | — |
-| Generate prompt v3 kept ([ADR 0004](docs/decisions/0004-answer-eval-and-generate-prompt.md)) | v3 64/69, v4 60/69, v5 63/69 and less stable | v4 (made mini name the wrong winner of a range comparison); v5 (brought back "in another article") | A variant passes as many questions and is as stable |
+| Post-check in code (cars and numbers), regenerate once, then a fixed fallback | Clean on every answer of the 3-run `final` eval (few false positives). Recall on a scripted adversarial set ([report](eval/reports/postcheck-adversarial.md)): 14/23 bad answers caught (one only through the number check), 7/7 controls clean; it misses sibling models of corpus brands, model names with no brand, unlisted brands, a short brand after two prefixes, truncated, small or swapped numbers, and numbers as words | Trusting the prompt alone; an LLM claim check at runtime | — |
+| Generate prompt v3 kept ([ADR 0004](docs/decisions/0004-answer-eval-and-generate-prompt.md)) | v3 64/69, v4 60/69, v5 63/69 and less stable (all three re-scored with the same checks) | v4 (made mini name the wrong winner of a range comparison); v5 (brought back "in another article") | A variant passes as many questions and is as stable |
 | `final` profile: nano understands, mini generates | Published numbers on this profile; `dev` (nano for both) is for development | Gemini 2.5 Flash-Lite (cheaper; a second provider and key) | Provider switching becomes a requirement |
 | Own thin `LLMClient` on the OpenAI SDK | One provider, a linear flow, full control of prompts and checks | LiteLLM, LangChain, LangGraph | Several providers, or loops and tools |
 | Local Chroma | 78 chunks; no server to run | A hosted vector database | Many corpora or teams (see the production path) |
@@ -256,17 +277,18 @@ Retrieval itself is deterministic: the same index and query return the same chun
 | Guardrail | Where | What it does |
 |---|---|---|
 | Registry gate | before retrieval | If the only cars in the message are outside the eight (unrecognized names from the understand call, or a brand from `guardrails.outside_brands`), code returns a templated refusal and never calls generation. It suggests the closest of the eight, using hint words from the user's own messages (body type, powertrain), never the model's knowledge of the unknown car. |
-| Intent check | before retrieval | Chitchat and off-topic messages get a fixed reply saying what the bot can do, with no retrieval. |
+| Intent check | before retrieval | Off-topic messages, even ones that name a car, and chitchat that names no car get a fixed reply saying what the bot can do, with no retrieval. |
 | Similarity gate | after retrieval | A best score below 0.80 is refused with suggestions. It is a backstop for off-topic text, not the main refusal (see Key decisions). |
 | Citation check | after generation | The model returns the ids of the chunks it used; ids not retrieved this turn are dropped and flagged. |
-| Car-name post-check | after generation | Every car named in the answer must be retrieved this turn or appear in a retrieved chunk (articles mention rivals). It normalizes Hebrew prefixes (ב, ל, ה, ו, מ, ש) and also checks the outside-brand list. |
-| Numeric post-check | after generation | Every number must appear in the retrieved chunks or in the user's own words. Formatting is normalized (commas, decimal comma, "אלף", ranges, percent). |
+| Car-name post-check | after generation | Checks only names code knows. One of the eight cars (any registry alias) must be retrieved this turn or named in a retrieved chunk (articles mention rivals). A brand from `guardrails.outside_brands`, or another model written on a corpus alias ("Audi S6", "C3 Aircross": another brand right before the alias or a listed model word right after it, CW-601), must be named in a retrieved chunk or be a name the user asked about (the turn's not-covered names). Up to three Hebrew prefixes (ו, ה, ב, כ, ל, מ, ש) are allowed; a Hebrew brand of fewer than four letters takes at most one, from ב, ל, ה, ו (CW-602). Not seen: other models of the corpus brands not built on an alias (Kia EV6, Kia Sorento), model names with no brand, and brands missing from the outside list ([adversarial report](eval/reports/postcheck-adversarial.md)). |
+| Numeric post-check | after generation | Digits only. Each number must be stated in some retrieved chunk (its text, car name or section) or in the user's own words: this message, the user turns in the history window and the preference values, never the understand step's rewrite or an earlier answer (CW-603). The check is per value, not per car: a figure from one retrieved car backs the same figure stated for another, so swapped figures pass (only the eval's attribution check looks at that). The answer may round or cut the source to the precision it writes (5.9 backs "5"). A sum or difference of two chunk-backed numbers in the answer is accepted, within the coarsest unit. Formatting is normalized (commas, decimal comma, "אלף", ranges, percent); 0 is always allowed. |
 | Regenerate once, then fall back | after a failed post-check | One stricter retry that includes the findings. If that is still suspect, a fixed reply built by code says where in the articles the closest information is. At most one extra call per turn. |
 | Prompt-injection hygiene | prompt building | The prompt says article text is data, never instructions. Every outside value (chunk text, attributes, the question, preferences, history) is escaped: `<` and `>`, fake headers, role labels such as "System:". Links and images in an answer are rejected; the only links shown come from the registry. |
 | Input limits | before understand | A message is at most 500 characters. Message plus history window is at most 6,000 characters, with the oldest messages dropped first. |
 | Preference grounding | after understand | A preference value is kept only if it is grounded in the user's current message (number words compared by value). Values lifted from an answer or an article are dropped and flagged. |
-| Cost cap | LLM client | Each call's cost comes from token counts and config prices. A chat session stops at `llm.max_cost_usd` ($2.00) with a fixed Hebrew message. Eval runs have their own caps ($0.50 answers, $0.30 judge). |
-| Secrets | everywhere | The API key comes only from the environment. The turn log never holds the key or the message text (tested with a planted key). |
+| Cost cap | LLM client | Each call's cost comes from token counts and config prices. A chat session stops at `llm.max_cost_usd` ($2.00) with a fixed Hebrew message; in the UI all sessions of one process together stop at `llm.max_total_cost_usd` ($5.00). Eval runs have their own caps ($0.50 answers, $0.30 judge). |
+| Turn bounds | LLM client and pipeline | Each reply is capped at `llm.max_completion_tokens` (400 understand, 2,000 generate and regenerate), and a reply cut off by the cap is invalid: one corrective retry, then the fallback. No call starts once a turn has run `llm.turn_deadline_s` (90 s): the turn ends with the "something went wrong" reply, or with the code-built unverified reply when the deadline falls before a regeneration. |
+| Secrets | everywhere | The API key comes only from the environment. The turn log never holds the key or the user's words: the message, unknown car names taken from it and cited ids not in chunk-id form are left out or only counted (tested with a planted key and a planted word). |
 
 ## Evaluation
 
@@ -323,34 +345,62 @@ top speed), ranked fourth within its car against a cap of 3.
 
 ### Answer level (`final` profile, 3 runs)
 
-Generate prompt v3, understand on gpt-5.4-nano, generate on gpt-5.4-mini
+Generate prompt v3, understand on gpt-5.4-nano, generate on gpt-5.4-mini. One run of the eval,
+graded twice: as run ([report](eval/reports/answer/final/v3/answer-tuning-final.md)), and
+re-scored from the logged answers after a checker fix (the re-score also ran the new false
+"not mentioned" check, which changed no pass)
 ([report](eval/reports/answer/final/v3/answer-tuning-rescored-final.md)):
 
-| Category | Passed |
-|---|---|
-| single_fact | 12/12 |
-| comparison | 17/18 |
-| recommendation | 4/6 |
-| ranking | 4/6 |
-| follow_up | 6/6 |
-| trap | 21/21 |
-| **total** | **64/69 (93%)** |
+| Category | As graded | After the checker fix |
+|---|---|---|
+| single_fact | 12/12 | 12/12 |
+| comparison | 15/18 | 17/18 |
+| recommendation | 4/6 | 4/6 |
+| ranking | 4/6 | 4/6 |
+| follow_up | 6/6 | 6/6 |
+| trap | 21/21 | 21/21 |
+| **total** | **62/69 (90%)** | 64/69 (93%) |
 
-- **Failures (5 runs):** one range comparison declined (Kia EV9 against Aion HT), two rankings
-  missing the "only the eight reviewed cars" statement, and two runs of the family scenario where
-  the passenger count was not stored. The recommendation itself passed the judge both times.
-  The cause was the preference grounding check, which rejected a count normalized to digits
-  when the user wrote it as a word. CW-405 fixed that check after this run; the published
-  numbers were not re-run. None of the failures was a retrieval failure or a post-check
-  fallback, and no trap failed.
-- **Re-scoring:** the reported number is re-scored. Reading the failures turned up four grading
-  corrections: three checker bugs, fixed with tests, and one judge criterion aligned with the
-  question's own keyword check. The logged answers were then graded again, with no new model
-  calls. The report before re-scoring says 62/69; both reports are committed.
+**Post-review run (2026-11-01), frozen checker and judge**, a fresh 3-run eval after the E6
+fixes, CW-405 and CW-606 included ([report](eval/reports/answer/final/v3-post-review/answer-tuning-final.md),
+[diff](eval/reports/answer/final/v3-post-review/diff-v3-post-review.md)): tuning **64/69**
+(single_fact 12/12, comparison 17/18, recommendation 4/6, ranking 4/6, follow_up 6/6,
+trap 21/21); hold-out **16/18** (single_fact 9/9, comparison 5/6, ranking 2/3); cost $0.5233 for
+both sets, judge included; tuning graded turn p50 2445 ms, p95 4659 ms; stability: same behavior in
+23/23, same numbers in 12/23; post-check clean on all 60 + 18 generated answers. Against the
+re-scored 64/69, two questions went down and two went up; that is within the run-to-run noise,
+not an improvement or a regression. No tuning run failed on the eight-cars statement or the
+passenger count this time; the five failed runs were three attribution flags, one false "not mentioned"
+and one judge verdict.
+
+- **Headline: 62/69.** The 64/69 is not an independent second measurement. Its one change is a
+  price comparison (Elantra N against Link & Co 01) going from 1/3 to 3/3: the attribution
+  check split a citation at the "?" ending a section name and read the car names in it as
+  claims. Reading this run's failures found that bug; it was fixed with a test and the logged
+  answers were graded again, with no new model calls.
+- **The corrections went one way.** Only failing runs were read, so passing runs were never
+  checked for false passes, and a correction could only raise the score. Three earlier
+  corrections were found the same way on `dev` runs and were already in place for this run,
+  including a judge criterion for the Kia/Aion range question that was changed after its
+  verdicts on `dev` were seen ([ADR 0004](docs/decisions/0004-answer-eval-and-generate-prompt.md)).
+  The prompt comparison (v3, v4, v5) uses re-scored numbers for all three, so it is like for
+  like.
+- **Failures (5 runs after the fix):** one range comparison declined (Kia EV9 against Aion HT),
+  two rankings missing the "only the eight reviewed cars" statement, and two runs of the family
+  scenario where the passenger count was not stored. The recommendation itself passed the judge
+  both times. The cause was the preference grounding check, which rejected a count normalized
+  to digits when the user wrote it as a word. CW-405 fixed that check after this run, and
+  CW-606 now adds the eight-cars statement in code when a recommendation or ranking lacks it;
+  these failures stay in this run's numbers; the post-review run above measured both fixes (one
+  hold-out ranking run still lacked the eight-cars statement).
+  None of the failures was a retrieval failure or a post-check fallback, and no trap failed.
 - **Stability:** the same behavior in 23/23 questions, the same numbers in 15/23, identical text
   in 28% of answer pairs.
 - **Post-check:** clean on all 60 generated answers. The other 9 runs were refusals (3
-  questions × 3 runs), which never reach generation.
+  questions × 3 runs), which never reach generation. Clean answers show few false positives,
+  not recall; recall is measured on scripted bad answers instead
+  ([report](eval/reports/postcheck-adversarial.md), `uv run python -m eval.postcheck`): 14 of 23
+  caught (one only through the number check), every clean control left clean.
 - **Latency of the graded turn:** p50 2.8 s, p95 4.1 s, from one laptop to the OpenAI API, with
   retrieval on CPU.
 - **Cost:** $0.2447 for answers and $0.2017 for the judge.
@@ -359,7 +409,11 @@ Generate prompt v3, understand on gpt-5.4-nano, generate on gpt-5.4-mini
 ([report](eval/reports/answer/final/holdout-v3/answer-holdout-final.md)): **15/18**. Single facts
 9/9, comparisons 3/6, ranking 3/3; post-check clean on all 18; $0.0409. All three misses are the
 prose-only MG S6 top speed: the answer says the figure is not mentioned in the articles instead
-of inventing one.
+of inventing one. The post-review run
+([report](eval/reports/answer/holdout-post-review/answer-holdout-final.md)) scored **16/18**: the
+MG S6 top speed passed in 2 of 3 runs, because those rewrites of the question retrieved the
+chunk with the figure, not because of a fix; one run of the most-expensive ranking missed the
+eight-cars statement, which the CW-606 code did not add.
 
 ### Caveats
 
@@ -372,8 +426,20 @@ of inventing one.
 - **The threshold does not separate probes from answerable questions.** Every threshold probe
   scored at or above the lowest answerable question. A known car asked about a missing detail
   always reaches generation, and the "not mentioned in the articles" rule has to handle it.
-- **The judge is a model too.** It grades seven questions against stated criteria, and its
-  verdicts are kept with reasons in `eval/runs/` for review.
+- **The judge is a model too, and not calibrated.** It grades seven questions against stated
+  criteria. It is gpt-5.4, the same vendor and family as the generator (gpt-5.4-mini), so it
+  may share its blind spots. Its output puts `passed` before `reason`
+  ([`eval/judge.py`](eval/judge.py)), so the verdict comes before the justification. No
+  human-labelled set measures how often it agrees with a person; its verdicts are kept with
+  reasons in `eval/runs/` for review. Changing the schema would need a new judged run.
+- **The retrieval eval replays one sample of the understand step.** The understand outputs
+  (gpt-5.4-nano, 43 cases) were recorded once, and every retrieval run replays them, so its
+  numbers are deterministic but hold for those plans only: another sample of the same call
+  could name other cars or rewrite the question differently. The answer eval makes fresh
+  understand calls.
+- **Grading was corrected only after failures.** Each checker fix and the one judge-criterion
+  change came from reading failing runs, so they could only raise the score; 62/69 is the
+  number before the last of them.
 
 ## Example conversation
 
@@ -512,6 +578,9 @@ From the measurements and the Backlog in [`BOARD.md`](BOARD.md):
   consumption, but not figures some articles give only in the text (for example top speed). In
   the hold-out, the MG S6 top speed is not retrieved, and the answer says it is not mentioned.
   Next: measure `per_car_cap` 4, or a section-aware query, on new questions, not the hold-out.
+- **The CW-606 eight-cars note can still be missing.** In the post-review hold-out, one run of
+  the most-expensive ranking had neither the statement nor the code-added note; the cause is
+  not yet investigated.
 - **A wrong "not mentioned" is not caught in the pipeline.** An eval-only check found one answer
   in 207 that said a figure was missing while a retrieved chunk stated it. A first version had
   8 false positives in 9 flags. Next: promote it to the post-check (a regenerate on a hit) once
@@ -522,15 +591,39 @@ From the measurements and the Backlog in [`BOARD.md`](BOARD.md):
   wording rule that names only "the articles" without listing the forbidden phrases.
 - **The turn log is not persisted in Docker.** It goes to `/app/logs` inside the container and
   is lost with it. Next: mount a second volume or ship the lines to a log service.
-- **Local use with your own key.** There is no authentication. The cost cap bounds one browser
-  session, not the whole process, so the UI should not be exposed to other users.
+- **Local use with your own key.** There is no authentication, so the UI should not be exposed
+  to other users; the documented Docker command publishes it on the host's loopback address
+  only. Each browser session has its own cap, and all of them share one total per process
+  (`llm.max_total_cost_usd`, $5.00), which a refresh does not reset.
 - **Section titles sometimes leak into the answer text.** Citations name the section, and long
   merged section names (an article's FAQ headings run together) end up inside the sentence, as
   in the UI screenshot above. It is in the Backlog in [`BOARD.md`](BOARD.md).
-- **Numbers written as words** are not checked by the numeric post-check (digits only).
-- **SDK-level retries are silent.** The OpenAI SDK retries a timed-out request itself, so one
-  slow turn can take about twice `llm.timeout_s`. Next: log `retries_taken` and revisit the
-  timeout.
+- **The car-name post-check sees only names it knows.** It matches the eight cars' aliases and
+  the outside-brand list. Another model of a corpus brand (Kia EV6), a model named without its
+  brand, and a brand missing from the list pass unflagged. On the scripted adversarial set it
+  flags 9 of the 15 bad car-name answers, and the number check catches one more
+  ([report](eval/reports/postcheck-adversarial.md)). Next: flag a corpus brand followed by a
+  model token that is not a registry alias.
+- **The numeric post-check is per value and weak on small numbers.** Any retrieved chunk can
+  back a number, whichever car or attribute it belongs to, so figures swapped between two cars
+  pass; the attribution check that would see it runs only in the eval. Truncation is accepted
+  (5.9 backs "5"). Small counts (seats, gears) are almost always stated somewhere: on the
+  current index the eight spec boxes alone state 9 of the integers 1 to 10, against 21 of the
+  901 integers from 100 to 1,000, so the check is strict only for larger figures. Numbers
+  written as words are not checked at all. On the scripted adversarial set it catches 4 of the
+  8 bad number answers ([report](eval/reports/postcheck-adversarial.md)). Next: accept rounding
+  only, and run the attribution check in comparisons.
+- **SDK-level retries are silent, and the slowest turn is long.** The OpenAI SDK retries a
+  timed-out request itself (`llm.retries`: 1), so `attempts` stays 1. Nominal bounds, computed
+  from the settings, not measured, and assuming each HTTP request ends within `llm.timeout_s`
+  (30 s); httpx applies that timeout to each connect, read and write operation, not to the
+  whole request, so a reply that keeps arriving slowly can take longer. On that assumption one
+  request waits 2 × 30 s plus a 0.5 s backoff = 60.5 s; one call makes at most 2 attempts (the
+  corrective retry) = 121 s; a turn makes at most 3 calls (understand, generate, regenerate) =
+  363 s. No call starts after the turn deadline (`llm.turn_deadline_s`, 90 s), so a turn waits
+  about 90 + 121 = 211 s at most. A provider `Retry-After` header, which the SDK honors up to
+  120 s, can raise that to 90 + 2 × (2 × 30 + 120) = 450 s. Next: log `retries_taken` and
+  revisit the timeout.
 
 ## Production path (AWS)
 
@@ -556,6 +649,10 @@ How this proof of concept would map to a service shared by many teams. None of t
   3 s between requests, respects `robots.txt`, retries once, and never works around a block.
 - If the download fails, the command says so. You can then place the eight HTML files in
   `data/raw/` by hand and run `ingest` again.
+- `config/corpus.lock.yaml` pins the corpus with a SHA-256 of each cleaned article and of the
+  chunk list (hashes only, no text). `ingest` warns, without failing, when an article differs,
+  and every new eval report records this manifest's hash and the index fingerprint. After a
+  deliberate re-pin, run `python -m app ingest --write-manifest`.
 - Committed eval reports hold chunk ids and metrics, never chunk or answer text. Quotes in the
   documentation are a few words, with the source named.
 - No secrets are in the repository. `.env`, `data/`, `logs/` and `eval/runs/` are gitignored, and
@@ -567,8 +664,9 @@ How this proof of concept would map to a service shared by many teams. None of t
 The work was planned and tracked in [`BOARD.md`](BOARD.md) (epics, tickets with acceptance
 criteria, a Backlog and a change log), following [`CLAUDE.md`](CLAUDE.md).
 
-- Six epics, E0 to E5: scaffold and source check, thin vertical slice, reliability and guardrails,
-  measurement, interface and packaging, documentation and release.
+- Six epics, E0 to E5, up to `v1.0`: scaffold and source check, thin vertical slice, reliability
+  and guardrails, measurement, interface and packaging, documentation and release. A seventh,
+  E6, fixes the findings of a code review of `v1.0`.
 - One branch and one pull request per epic. Merged without squashing, so the per-ticket commits
   (`feat(CW-102): ...`) stay readable in the history.
 - Tags: `v0.1` at the end of the first working vertical slice, `v1.0` for the release; release
@@ -588,9 +686,10 @@ criteria, a Backlog and a change log), following [`CLAUDE.md`](CLAUDE.md).
 
 ## Notes
 
-- **Time spent:** 14 hours in total over the project.
 - **What I would add with more time:** the next steps above, mainly the prose-only figure gap,
   the false "not mentioned" check in the pipeline, and a larger question set with a bigger
   hold-out.
 - **AI tooling:** the project was built with Claude Code under my direction and review.
   Decisions, tests and measurements were reviewed by me.
+- **Independent code review:** [docs/review/code-review-2026-11-01.md](docs/review/code-review-2026-11-01.md),
+  a review of `v1.0` by a separate read-only session; the E6 fix status table is at the end.

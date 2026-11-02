@@ -40,6 +40,7 @@ from eval.report import (
     REPORTS_DIR,
     RetrievalReport,
     comparison_markdown,
+    corpus_stamp,
     load_report,
     spread_rows,
     summary_rows,
@@ -213,6 +214,7 @@ def retrieval_report(
     ]
     latencies = [ms for result in results for ms in result.retrieve_ms]
     embedder = settings.embeddings
+    stamp = corpus_stamp(settings)
     return RetrievalReport(
         created=datetime.now(UTC).isoformat(timespec="seconds"),
         embedder={
@@ -235,6 +237,8 @@ def retrieval_report(
         scores=score_spreads(results, probe_results),
         questions=results,
         probes=probe_results,
+        index_fingerprint=stamp.index_fingerprint,
+        corpus_manifest_sha256=stamp.corpus_manifest_sha256,
     )
 
 
@@ -333,8 +337,8 @@ def _answer(
     answer_cap = settings.eval.answer_max_cost_usd
     judge_cap = settings.eval.judge_max_cost_usd
     answer_settings = with_cost_cap(settings, answer_cap)
-    profile = answer_settings.profile(profile_name)
-    name = profile_name or settings.default_profile
+    name = settings.profile_name(profile_name)  # the label names the models that run (CW-613)
+    profile = answer_settings.profiles[name]
     try:
         answer_client = OpenAIClient(answer_settings, profile)
         judge_client = OpenAIClient(with_cost_cap(settings, judge_cap), profile)

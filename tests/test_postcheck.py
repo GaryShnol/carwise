@@ -59,11 +59,65 @@ def test_rival_named_in_a_retrieved_chunk_is_allowed() -> None:
     assert check(answer, hits) == []
 
 
+def test_sibling_model_in_the_answer_is_not_read_as_the_retrieved_car() -> None:
+    hits = [hit("aion_ht", "הטווח בפועל הוא 350 קילומטר")]
+    answer = 'לאיון HT טווח של 350 ק"מ, ול-Aion Y טווח ארוך יותר (GAC איון HT, פרק).'
+    assert check(answer, hits) == ["Aion Y"]
+    assert check(answer, hits, ["GAC Aion Y"]) == []  # the user asked about it
+
+
+def test_other_brand_before_a_code_is_not_the_corpus_car_in_the_answer() -> None:
+    hits = [hit("audi_rs3", "ההספק הוא 400 כוחות סוס")]
+    assert check("לאודי RS3 400 כוחות סוס, כמו לאאודי S6 (אודי RS3, פרק).", hits) == ["אאודי S6"]
+
+
+def test_sibling_model_named_in_a_retrieved_chunk_is_allowed() -> None:
+    hits = [hit("genesis_gv80", "המערכת קיימת גם ב-GV80 קופה")]
+    assert check("המערכת קיימת גם ב-GV80 קופה (ג'נסיס GV80, פרק).", hits) == []
+
+
+def test_plural_verbs_in_the_answer_are_not_an_outside_brand() -> None:
+    hits = [hit("mg_s6", "הטווח בפועל הוא 400 קילומטר")]
+    assert check("שמרנו לך את הנתונים, והכרנו את הטווח: 400 קילומטר (MG S6, פרק).", hits) == []
+
+
+def test_short_brand_in_the_answer_is_flagged_bare_or_with_one_prefix() -> None:
+    hits = [hit("mg_s6", "הטווח בפועל הוא 400 קילומטר")]
+    assert check("ל-MG S6 טווח של 400 קילומטר, כמו רנו קליאו (MG S6, פרק).", hits) == ["רנו"]
+    assert check("ל-MG S6 טווח של 400 קילומטר, בדומה לרנו קליאו.", hits) == ["רנו"]
+    assert check("ל-MG S6 טווח של 400 קילומטר, כמו בצ'רי טיגו.", hits) == ["צ'רי"]
+    assert check("ל-MG S6 טווח של 400 קילומטר, כמו בב.מ.ו.", hits) == ["ב.מ.ו"]
+
+
+def test_short_brand_after_two_prefixes_is_not_caught_in_the_answer() -> None:
+    # The accepted loss of the short-brand rule (see guardrails._brand_pattern).
+    hits = [hit("mg_s6", "הטווח בפועל הוא 400 קילומטר")]
+    assert check("ל-MG S6 טווח של 400 קילומטר, ולרנו קליאו פחות.", hits) == []
+
+
 def test_brand_the_user_asked_about_may_be_named_as_not_covered() -> None:
     hits = [hit("mg_s6", "המחיר הוא 180 אלף שקל")]
     answer = "אין בכתבות מידע על BMW X5. המחיר של MG S6 הוא 180 אלף שקל (MG S6, פרק)."
     assert check(answer, hits, ["BMW X5"]) == []
     assert check(answer, hits) == ["BMW"]
+
+
+PRICE_ANSWER = generation(
+    "המחיר של MG S6 הוא 180 אלף שקל, ועל BMW X5 אין בכתבות מידע (MG S6, פרק 1).",
+    ids=["mg_s6:001"],
+)
+
+
+def test_car_named_only_in_the_rewritten_question_or_an_answer_is_flagged() -> None:
+    history = [
+        {"role": "user", "content": "מה הכי זול?"},
+        {"role": "assistant", "content": "אין לי מידע על BMW X5."},
+    ]
+    plan = understanding(cars=["mg_s6"], question="כמה עולה MG S6 לעומת BMW X5?")
+    pipeline, _, _ = make([plan, PRICE_ANSWER, PRICE_ANSWER])
+    answer = pipeline.ask("ומה עם MG S6?", history)
+    assert answer.post_check is not None
+    assert answer.post_check.attempts[0].cars == ["BMW"]
 
 
 # --- regenerate or fall back -------------------------------------------------------------

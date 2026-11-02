@@ -190,3 +190,48 @@ again because the default did not change.
 > stayed: changes are kept only when the measurement says so. An eval-only check for answers that
 > wrongly say a figure is "not mentioned" found one such case in 207 answers. The samples are
 > small; numbers are reported per run and per question.
+
+## Addendum (2026-11-01, CW-607): which number is the headline
+
+The published headline for generate v3 on `final` is now **62/69, as graded**; 64/69 is reported
+next to it as "after a checker fix". The README note above, which leads with 64, is superseded.
+
+Why: all four corrections listed above were found by reading failing runs only. Passing runs were
+never audited for false passes, so each correction could only raise a score. When they came in:
+
+- Corrections 1, 2 and 4 (the judge criterion for the Kia/Aion question, changed after its
+  verdicts on `dev` runs were seen) were made on `dev` runs, before the `final` runs. The `final`
+  v3 run was graded with them in place: 62/69 (`final/v3/answer-tuning-final.md`).
+- Correction 3 (sentences split inside citations) was found by reading that run's failures. It
+  changes one question, `compare-pricier-elantra-link`, from 1/3 to 3/3: 64/69
+  (`final/v3/answer-tuning-rescored-final.md`).
+
+The v3 / v4 / v5 decision above is unaffected: it compares re-scored numbers produced by the same
+checks for all three prompts. The hold-out (15/18) was graded once and not re-scored. Later code
+changes that would touch these answers (CW-405 preference grounding, CW-606 the eight-cars
+statement added in code) were not measured in that run; the post-review run in the addendum
+below measured them.
+
+## Addendum (2026-11-01, CW-620): judge caveats
+
+Three limits of the judge, stated here and in the README Caveats, not changed, because a change
+would need a new judged run: the judge (gpt-5.4) is the same vendor and family as the generator
+(gpt-5.4-mini); its `Verdict` schema in `eval/judge.py` emits `passed` before `reason`, so the
+verdict is written before its justification; and no human-labelled set measures its agreement
+with a person.
+
+## Addendum (2026-11-01, CW-623): post-review answer eval
+
+A fresh 3-run eval of generate v3 on `final`, after the E6 fixes (CW-405 and CW-606 included),
+with the checker and judge frozen (judge criteria v3). Reports:
+`final/v3-post-review/answer-tuning-final.md` and `holdout-post-review/answer-holdout-final.md`.
+
+- Tuning: **64/69** (single_fact 12/12, comparison 17/18, recommendation 4/6, ranking 4/6,
+  follow_up 6/6, trap 21/21). Hold-out: **16/18** (single_fact 9/9, comparison 5/6, ranking 2/3).
+- Cost $0.5233 for both sets, judge included. Tuning graded turn p50 2445 ms, p95 4659 ms.
+- Stability: same behavior in 23/23, same numbers in 12/23. Post-check clean on 60 + 18 answers.
+- Against the re-scored 64/69, two questions went down and two went up: run-to-run noise, not a
+  change in the system. The hold-out gain on the MG S6 top speed comes from variation in how the
+  question was rewritten (two of three rewrites retrieved the chunk with the figure), not from a fix.
+
+The decision to keep v3 stands.
