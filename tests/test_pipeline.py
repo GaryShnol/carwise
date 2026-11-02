@@ -420,6 +420,12 @@ def test_greeting_says_knowledge_is_limited_to_the_eight_cars() -> None:
     assert "שמונה" in text and all(car.display_name in text for car in REGISTRY.cars)
 
 
+def test_greeting_has_no_comma_before_the_corpus_limit() -> None:
+    pipeline, _, _ = make([])
+    text = pipeline.greeting()
+    assert "על רכבים רק לפי" in text and "על רכבים, רק" not in text
+
+
 # --- name matching and telemetry -----------------------------------------------------------
 def test_name_matching_handles_prefixes_and_apostrophe_variants() -> None:
     assert mentioned("כמה עולה לאודי RS3?", ["אודי RS3"]) == ["אודי RS3"]

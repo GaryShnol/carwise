@@ -497,7 +497,7 @@ def _suggestion_text(registry: Registry, suggested: list[str]) -> str:
 
 def greeting(registry: Registry) -> str:
     return (
-        "שלום! אני עונה על שאלות על רכבים, רק לפי כתבות המבחן של שמונה רכבים מאתר "
+        "שלום! אני עונה על שאלות על רכבים רק לפי כתבות המבחן של שמונה רכבים מאתר "
         f"auto.co.il: {_car_list(registry)}. אפשר לשאול על נתונים, להשוות בין רכבים "
         "או לבקש המלצה."
     )

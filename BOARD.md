@@ -30,7 +30,7 @@ The assignment estimates 3 to 5 hours and asks for clarity and decisions rather 
 | P2 | Role signals: telemetry, injection hygiene, numeric check, embedding comparison, tuning, Docker, CI, GitHub setup | 8 | 9 |
 | P3 | Nice to have: none before E6 | 0 | 0 |
 
-The table counts E0 to E5 (the `v1.0` scope). E6, the review fixes, adds 9 P1, 10 P2 and 5 P3 tickets, all size S (CW-621 to CW-624 were added after the review: Docker compose, the review document, the post-review eval and the release notes).
+The table counts E0 to E5 (the `v1.0` scope). E6, the review fixes, adds 9 P1, 10 P2 and 8 P3 tickets, all size S (CW-621 to CW-624 were added after the review: Docker compose, the review document, the post-review eval and the release notes; CW-625 onward are display and documentation polish after `v1.0.1`, on `fix/display-polish`).
 
 A P1 ticket never depends on a P2 or P3 ticket, so cutting from the bottom never breaks the submission.
 
@@ -74,8 +74,8 @@ Items outside the code that must not be forgotten. Update the status as each is 
 | E3 Measurement | none | 4 | 4 | 6 | DONE (PR #4) |
 | E4 Interface and packaging | none | 4 | 4 | 5 | DONE (PR #5) |
 | E5 Documentation and release | `v1.0` | 3 | 3 | 4 | DONE (PR #6, tag `v1.0`) |
-| E6 Review fixes | `v1.0.1` | 24 | 24 | 24 | DONE (PR #7, tag `v1.0.1`) |
-| **Total** |  | **50** | **50** | **62** |  |
+| E6 Review fixes | `v1.0.1` | 27 | 27 | 27 | DONE (PR #7, tag `v1.0.1`; CW-625 onward on `fix/display-polish`) |
+| **Total** |  | **53** | **53** | **65** |  |
 
 ## Epic E0: Scaffold and source check
 
@@ -189,6 +189,9 @@ Branch: `epic/e6-review-fixes` | Tag: `v1.0.1` (owner, after the merge)
 | CW-622 | The v1.0 code review in `docs/review/` with an E6 status table | `docs` | S | P2 | DONE |  |
 | CW-623 | Post-review answer eval, frozen checker and judge | `test` | S | P1 | DONE | CW-606 |
 | CW-624 | CHANGELOG `v1.0.1`, E6 to IN REVIEW, PR description | `docs` | S | P2 | DONE | CW-623 |
+| CW-625 | Remove a stray comma in the greeting | `fix` | S | P3 | DONE |  |
+| CW-626 | README: exclusivity claims built from absence | `docs` | S | P3 | DONE |  |
+| CW-627 | Hide inline citation markers in the CLI and UI display | `feat` | S | P3 | DONE |  |
 
 ## Ticket details and acceptance criteria
 
@@ -436,6 +439,9 @@ Ideas that are out of scope unless promoted to a ticket with a reason.
 
 | Date | Change |
 |---|---|
+| 2026-11-02 | CW-627 done: `carwise.presentation.strip_inline_citations` hides inline "(car, section)" markers in the CLI and UI display only (balanced scan, registry name matching from guardrails, ";"-joined groups); pipeline, guardrails, eval and the Answer text unchanged. Verifier edge cases fixed by the orchestrator: doubled full stop, list item left with only its marker, spacing around a removed marker. README and CHANGELOG "Unreleased". |
+| 2026-11-02 | CW-626 done: README Known limitations notes exclusivity claims built from absence ("only X offers Y" when retrieval missed Y for the other cars); same cause as the wrong "not mentioned", next step named. |
+| 2026-11-02 | CW-625 done: the greeting reads "על רכבים רק לפי כתבות המבחן" (stray comma removed); a test in `tests/test_pipeline.py` guards it. |
 | 2026-11-02 | E6 merged (PR #7) and released as v1.0.1. |
 | 2026-11-02 | CW-621 to CW-624 added to E6 (24 tickets, all DONE); E6 IN REVIEW. CW-623: post-review answer eval on `final` (tuning 64/69, hold-out 16/18, $0.5233), reports committed, README and ADR 0004 addendum; changes within run-to-run noise. CW-624: CHANGELOG `v1.0.1`. |
 | 2026-11-01 | Verifier follow-ups to CW-607, CW-609, CW-617: the README architecture line counts the user's own words as number sources; the re-score note says it also ran the false "not mentioned" check (no pass changed); the candidates report header takes its chunk count from the reports. |

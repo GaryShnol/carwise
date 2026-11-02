@@ -118,16 +118,19 @@ def test_unknown_car_names_cannot_form_links_or_images(name: str) -> None:
     pipeline, _, _ = make([understanding(unrecognized=[name], question=TOYOTA)])
     answer = pipeline.ask(TOYOTA, [])
     assert answer.refusal is RefusalReason.UNKNOWN_CAR and name.split("\n")[0] in answer.text
-    html = _render(ui.answer_markdown(answer))
+    html = _render(ui.answer_markdown(answer, REGISTRY))
     assert "<a " not in html and "<img" not in html
     assert "evil.example" in html  # shown as text, not dropped
     assert "\\" not in html  # every escape was consumed: no stray backslash on screen
 
 
 def test_generated_answer_keeps_its_markdown() -> None:
-    pipeline, _, _ = make([understanding(cars=["mg_s6"]), generation()])
+    reply = generation('**הטווח** בפועל הוא 400 ק"מ ($) (MG S6, פרק 0).')
+    pipeline, _, _ = make([understanding(cars=["mg_s6"]), reply])
     answer = pipeline.ask(QUESTION, [])
-    assert answer.refusal is None and ui.answer_markdown(answer) == ui.as_markdown(answer.text)
+    shown = ui.answer_markdown(answer, REGISTRY)
+    # Bold kept, "$" escaped, the marker hidden (CW-627).
+    assert answer.refusal is None and shown == '**הטווח** בפועל הוא 400 ק"מ (\\$).'
 
 
 # --- smoke test of app/ui.py -------------------------------------------------------------

@@ -36,6 +36,7 @@ from carwise.llm.budget import SharedBudget
 from carwise.llm.openai_client import OpenAIClient
 from carwise.pipeline import Pipeline
 from carwise.preferences import FIELD_LABELS
+from carwise.presentation import strip_inline_citations
 from carwise.registry import Registry, load_registry
 from carwise.retrieval.embedder import make_embedder
 from carwise.retrieval.retriever import ChunkRetriever, SerializedRetriever, open_retriever
@@ -260,14 +261,15 @@ def as_literal_markdown(text: str) -> str:
     return "".join("\\" + char if char in string.punctuation else char for char in text)
 
 
-def answer_markdown(answer: Answer) -> str:
+def answer_markdown(answer: Answer, registry: Registry) -> str:
     """A refusal is code-built plain text that can carry names straight from the
     understand call (`not_covered`), so it is shown literally. A generated answer
     keeps its markdown (bold, lists); `guardrails.answer_text_problem` has already
-    rejected any link or image in it."""
+    rejected any link or image in it. Its inline "(car, section)" markers are hidden
+    (CW-627): the sources table and article links below show every cited chunk."""
     if answer.refusal is not None:
         return as_literal_markdown(answer.text)
-    return as_markdown(answer.text)
+    return as_markdown(strip_inline_citations(answer.text, registry))
 
 
 # --- `python -m app ui` --------------------------------------------------------------
